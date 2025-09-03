@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'next/navigation'
+import Link from 'next/link'
 import { Navigation } from '@/components/layout/Navigation'
 import { ToastContainer } from '@/components/ui/Toast'
 import { useLocationStore } from '@/stores/locationStore'
@@ -164,9 +165,9 @@ export default function WatchPage() {
             <p className="text-gray-600 mb-4">
               The sharing session you&apos;re looking for doesn&apos;t exist or has ended.
             </p>
-            <a href="/" className="text-blue-600 hover:text-blue-800">
+            <Link href="/" className="text-blue-600 hover:text-blue-800">
               Return to Home
-            </a>
+            </Link>
           </div>
         </main>
       </div>

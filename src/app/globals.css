@@ -188,20 +188,26 @@ body {
     text-wrap: balance;
   }
 
-  /* Mobile-first spacing */
+  /* Mobile-first spacing - using raw CSS for Tailwind 4 compatibility */
   .container-mobile {
-    @apply px-4 mx-auto max-w-7xl;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 80rem;
   }
 
   @screen sm {
     .container-mobile {
-      @apply px-6;
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
     }
   }
 
   @screen lg {
     .container-mobile {
-      @apply px-8;
+      padding-left: 2rem;
+      padding-right: 2rem;
     }
   }
 }
@@ -243,8 +249,18 @@ body {
 }
 
 .map-control-btn {
-  @apply glass rounded-lg p-2 shadow-md transition-smooth hover:bg-white/90;
-  backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.map-control-btn:hover {
+  background: rgba(255, 255, 255, 0.9);
 }
 
 /* Status indicators */
@@ -253,24 +269,36 @@ body {
   top: 1rem;
   left: 1rem;
   z-index: 1000;
-  @apply glass-dark text-white px-3 py-1 rounded-full text-sm font-medium;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 
 .status-live {
-  @apply gradient-bg-success;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
 }
 
 .status-offline {
-  @apply bg-gray-500;
+  background: #6b7280;
 }
 
 /* Loading states */
 .skeleton {
-  @apply animate-pulse bg-gray-200 rounded;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  background-color: #e5e7eb;
+  border-radius: 0.25rem;
 }
 
 .skeleton-dark {
-  @apply animate-pulse bg-gray-700 rounded;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  background-color: #374151;
+  border-radius: 0.25rem;
 }
 
 /* Animations */
