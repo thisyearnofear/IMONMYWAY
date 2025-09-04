@@ -3,6 +3,8 @@
 @tailwind components;
 @tailwind utilities;
 
+@import '../styles/animations.css';
+
 :root {
   --background: #fafafa;
   --foreground: #0a0a0a;

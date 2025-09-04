@@ -6,21 +6,26 @@
     "dev": "node server.js",
     "build": "next build",
     "start": "NODE_ENV=production node server.js",
-    "lint": "next lint"
+    "lint": "next lint",
+    "docs": "echo 'Documentation available in /docs directory'"
   },
   "dependencies": {
     "clsx": "^2.0.0",
+    "dotenv": "^17.2.2",
+    "ethers": "^6.15.0",
     "leaflet": "^1.9.4",
     "next": "^15.5.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "socket.io": "^4.7.5",
     "socket.io-client": "^4.7.5",
+    "solc": "^0.8.30",
     "tailwind-merge": "^3.3.1",
     "uuid": "^11.1.0",
     "zustand": "^5.0.8"
   },
   "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^6.1.0",
     "@tailwindcss/postcss": "^4.1.12",
     "@types/leaflet": "^1.9.12",
     "@types/node": "^24.3.0",
@@ -30,8 +35,10 @@
     "autoprefixer": "^10.4.21",
     "eslint": "^9.34.0",
     "eslint-config-next": "^15.5.2",
+    "hardhat": "^2.26.3",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.12",
     "typescript": "^5.9.2"
-  }
+  },
+  "type": "module"
 }

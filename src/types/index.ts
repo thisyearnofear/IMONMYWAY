@@ -22,6 +22,20 @@ export interface SharingSession {
   eta: number | null
   createdAt: Date
   lastUpdated: Date
+  // Enhanced with Web3 fields
+  stakeAmount?: bigint
+  commitmentId?: string | null
+  contractAddress?: string | null
+  bettors?: Bettor[]
+  reputationScore?: number
+  isStaked?: boolean
+}
+
+export interface Bettor {
+  address: string
+  amount: bigint
+  bettingFor: boolean
+  timestamp: number
 }
 
 export interface SocketEvents {

@@ -1,17 +1,17 @@
-# Runner ETA - Next.js Edition
+# Punctuality Protocol
 
-A cutting-edge, real-time location sharing application built with the latest Next.js, React 19, and Socket.IO. Share your live location and ETA with blazing-fast real-time tracking capabilities.
+> **Put your money where your mouth is.** Stake tokens on your punctuality and let others bet on your success.
 
-## 🚀 Features
+A decentralized betting protocol that combines real-time location tracking with financial accountability, built for the Somnia DeFi Mini Hackathon.
 
-- **⚡ Real-time Location Tracking**: Share your live location with instant WebSocket updates
-- **🎯 Accurate ETA Calculation**: Precise arrival time estimates using Haversine formula + pace
-- **🗺️ Interactive Route Planning**: Plan runs with start/end points and live visualization
-- **📱 Mobile-First Design**: Touch-optimized UI with safe area handling for iOS/Android
-- **🎨 Glass Morphism UI**: Modern, responsive design with custom animations
-- **🔒 Type-Safe**: Full TypeScript coverage with strict type checking
-- **🔄 Real-time Sync**: Socket.IO WebSocket communication with automatic reconnection
-- **⚡ Lightning Fast**: Zustand state management + React 19 compiler optimizations
+## ✨ Features
+
+- **🔗 Staked Commitments**: Put tokens on the line for punctuality
+- **🎲 Social Betting**: Friends bet on your success for added accountability
+- **📍 GPS Verification**: Blockchain-verified proof of arrival
+- **⭐ Reputation System**: Reliability scoring affects betting odds
+- **📱 Real-time Tracking**: Live location updates via WebSocket
+- **🎨 Premium UX**: Delightful animations and smooth onboarding
 
 ## 🛠️ Tech Stack
 
@@ -89,28 +89,13 @@ A cutting-edge, real-time location sharing application built with the latest Nex
 3. See live ETA calculations
 4. Monitor route progress
 
-## 🏗️ Architecture
+## 📚 Documentation
 
-### Frontend Structure
+For detailed information about the project:
 
-```
-src/
-├── app/                 # Next.js app router pages
-├── components/          # Reusable React components
-│   ├── ui/             # Basic UI components
-│   ├── map/            # Map-related components
-│   └── layout/         # Layout components
-├── lib/                # Utility functions
-├── stores/             # Zustand state stores
-└── types/              # TypeScript type definitions
-```
-
-### Key Components
-
-- **LocationStore**: Manages location data and sharing sessions
-- **UIStore**: Handles UI state, toasts, and map controls
-- **MapContainer**: Leaflet map wrapper with React integration
-- **Socket Manager**: WebSocket connection management
+- **[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)**: System design, core principles, implementation status, and real blockchain integration
+- **[`docs/FEATURES.md`](docs/FEATURES.md)**: Core features, user flows, implementation phases, and UX enhancements
+- **[`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)**: Contract deployment guide, next steps, and development roadmap
 
 ## 🔧 Configuration
 
