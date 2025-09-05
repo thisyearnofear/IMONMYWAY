@@ -1,0 +1,263 @@
+// Punctuality Protocol Database Schema
+// Hybrid Web3-Traditional Architecture for Somnium Blockchain
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// USER MANAGEMENT (PostgreSQL - UX Layer)
+// ============================================================================
+
+model User {
+  id          String   @id @default(cuid())
+  walletAddress String  @unique
+  email       String?  @unique
+  username    String?  @unique
+  displayName String?
+  avatar      String?
+  bio         String?
+  timezone    String   @default("UTC")
+
+  // Preferences
+  notificationsEnabled Boolean @default(true)
+  theme               String   @default("system") // light, dark, system
+  language            String   @default("en")
+
+  // On-chain references (cached)
+  reputationScore      Float    @default(750.0)
+  totalStaked          String   @default("0") // Wei as string
+  totalEarned          String   @default("0") // Wei as string
+
+  // Metadata
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  lastLoginAt         DateTime?
+  isActive            Boolean  @default(true)
+
+  // Relations
+  sessions            Session[]
+  bettingHistory      UserBet[]
+  achievements        UserAchievement[]
+  streaks             Streak[]
+  routes              Route[]
+  commitments         Commitment[]
+  bets                Bet[]
+
+  @@map("users")
+}
+
+model Session {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Session data
+  token       String   @unique
+  ipAddress   String?
+  userAgent   String?
+  expiresAt   DateTime
+
+  // Location tracking (for active sessions)
+  currentLatitude   Float?
+  currentLongitude  Float?
+  lastLocationUpdate DateTime?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("sessions")
+}
+
+// ============================================================================
+// BETTING SYSTEM (PostgreSQL - Cached Blockchain Data)
+// ============================================================================
+
+model Commitment {
+  id                String   @id // On-chain commitment ID
+  userId            String
+  user              User     @relation(fields: [userId], references: [id])
+
+  // Commitment details (from blockchain)
+  stakeAmount       String   // Wei as string
+  deadline          DateTime
+  status            String   @default("active") // active, fulfilled, expired, cancelled
+
+  // Location data
+  startLatitude     Float
+  startLongitude    Float
+  targetLatitude    Float
+  targetLongitude   Float
+  estimatedDistance Float
+  estimatedPace     Float
+
+  // Blockchain data
+  transactionHash   String?
+  blockNumber       Int?
+  gasUsed           String?
+
+  // Results
+  actualArrivalTime DateTime?
+  success           Boolean?
+  payoutAmount      String?  // Wei as string
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  bets              Bet[]
+
+  @@map("commitments")
+}
+
+model Bet {
+  id            String     @id @default(cuid())
+  commitmentId  String
+  commitment    Commitment @relation(fields: [commitmentId], references: [id])
+
+  // Bettor info
+  bettorId      String
+  bettor        User       @relation(fields: [bettorId], references: [id])
+
+  // Bet details
+  amount        String     // Wei as string
+  prediction    String     // "success" or "failure"
+  odds          Float      @default(2.0)
+
+  // Blockchain data
+  transactionHash String?
+  blockNumber     Int?
+  gasUsed         String?
+
+  // Results
+  result        String?    // "won", "lost", "pending"
+  payoutAmount  String?    // Wei as string
+
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  @@map("bets")
+}
+
+model UserBet {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+
+  commitmentId  String
+  betId         String?
+
+  // Cached bet data for quick access
+  amount        String
+  prediction    String
+  result        String?
+  payoutAmount  String?
+
+  createdAt     DateTime @default(now())
+
+  @@unique([userId, commitmentId])
+  @@map("user_bets")
+}
+
+// ============================================================================
+// REPUTATION & ACHIEVEMENTS (PostgreSQL - Cached Data)
+// ============================================================================
+
+model UserAchievement {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+
+  achievementId String
+  unlockedAt    DateTime @default(now())
+  progress      Int      @default(0)
+  maxProgress   Int?
+
+  @@unique([userId, achievementId])
+  @@map("user_achievements")
+}
+
+model Streak {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+
+  // Streak data
+  current       Int      @default(0)
+  longest       Int      @default(0)
+  lastActivity  DateTime @default(now())
+
+  // Streak type
+  type          String   @default("commitment") // commitment, betting, etc.
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([userId, type])
+  @@map("streaks")
+}
+
+// ============================================================================
+// ROUTE PLANNING (PostgreSQL - UX Enhancement)
+// ============================================================================
+
+model Route {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+
+  // Route details
+  name          String?
+  startAddress  String
+  endAddress    String
+  startLat      Float
+  endLat        Float
+  startLng      Float
+  endLng        Float
+
+  // Route data
+  distance      Float
+  estimatedTime Int      // minutes
+  pace          Float    // min/mile
+
+  // Route path (GeoJSON)
+  path          Json?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("routes")
+}
+
+// ============================================================================
+// ANALYTICS & METRICS (PostgreSQL - Business Intelligence)
+// ============================================================================
+
+model AnalyticsEvent {
+  id          String   @id @default(cuid())
+  userId      String?
+  eventType   String   // page_view, bet_placed, commitment_created, etc.
+  eventData   Json?    // Additional event data
+  sessionId   String?
+  ipAddress   String?
+  userAgent   String?
+
+  createdAt   DateTime @default(now())
+
+  @@map("analytics_events")
+}
+
+model PerformanceMetric {
+  id          String   @id @default(cuid())
+  metricType  String   // response_time, error_rate, etc.
+  value       Float
+  tags        Json?    // Additional metadata
+  timestamp   DateTime @default(now())
+
+  @@map("performance_metrics")
+}

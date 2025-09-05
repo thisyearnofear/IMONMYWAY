@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useUIStore } from '@/stores/uiStore'
+import { dbService } from '@/lib/db-service'
+import { cacheService } from '@/lib/cache-service'
 
 interface WalletState {
   address: string | null
@@ -102,6 +104,18 @@ export function useWallet(): UseWalletReturn {
 
       await window.ethereum.request({ method: 'eth_requestAccounts' })
       await updateWalletState()
+
+      // Create or update user in database
+      if (walletState.address) {
+        try {
+          await dbService.createUser(walletState.address)
+          await cacheService.invalidateUserProfile(walletState.address)
+          console.log(`✅ User profile created/updated for ${walletState.address}`)
+        } catch (dbError) {
+          console.error('Error creating user in database:', dbError)
+          // Don't fail the connection if database update fails
+        }
+      }
 
       addToast({
         type: 'success',

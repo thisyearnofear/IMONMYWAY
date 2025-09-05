@@ -95,7 +95,8 @@ For detailed information about the project:
 
 - **[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)**: System design, core principles, implementation status, and real blockchain integration
 - **[`docs/FEATURES.md`](docs/FEATURES.md)**: Core features, user flows, implementation phases, and UX enhancements
-- **[`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)**: Contract deployment guide, next steps, and development roadmap
+- **[`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)**: Contract deployment guide and technical implementation
+- **[`docs/ROADMAP.md`](docs/ROADMAP.md)**: Long-term strategic development plan and progress tracking
 
 ## 🔧 Configuration
 

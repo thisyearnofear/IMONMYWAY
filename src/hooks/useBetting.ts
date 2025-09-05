@@ -5,6 +5,8 @@ import { useBettingStore } from '@/stores/bettingStore'
 import { useUIStore } from '@/stores/uiStore'
 import { useAchievements } from './useAchievements'
 import { getContract, estimateGasCost } from '@/lib/contracts'
+import { dbService } from '@/lib/db-service'
+import { cacheService } from '@/lib/cache-service'
 
 /**
  * Hook for betting operations
@@ -72,12 +74,29 @@ export function useBetting() {
       
       // Convert stake amount to wei
       const stakeWei = BigInt(Math.floor(parseFloat(stakeAmount) * 1e18))
-      
+
+      // Store commitment in database
+      await dbService.createCommitment({
+        userId: address,
+        commitmentId,
+        stakeAmount,
+        deadline: new Date(arrivalDeadline),
+        startLatitude: startLocation.lat,
+        startLongitude: startLocation.lng,
+        targetLatitude: targetLocation.lat,
+        targetLongitude: targetLocation.lng,
+        estimatedDistance: Math.round(distance),
+        estimatedPace
+      })
+
+      // Cache the commitment
+      await cacheService.invalidateCommitment(commitmentId)
+
       // Update location store with commitment details
       setCommitmentId(commitmentId)
       setStakeAmount(stakeWei)
       setStaked(true)
-      
+
       // Add to active bets
       addActiveBet({
         commitmentId,
@@ -98,6 +117,9 @@ export function useBetting() {
       // Update user reputation
       const reputation = await contract.getUserReputation(address)
       setUserReputationScore(reputation)
+
+      // Update cached reputation
+      await cacheService.updateUserReputation(address, reputation)
 
       // Unlock first commitment achievement
       unlockAchievement('first_commitment')
