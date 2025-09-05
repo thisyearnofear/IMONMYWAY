@@ -1,4 +1,4 @@
-/* Custom animations for enhanced UX */
+/* Custom animations for enhanced UX - Performance Optimized */
 
 @keyframes bounce-gentle {
   0%, 20%, 53%, 80%, 100% {
@@ -101,9 +101,26 @@
   50% { border-color: transparent; }
 }
 
+/* GPU Acceleration Hints */
+.animate-bounce-gentle,
+.animate-shake,
+.animate-slide-up,
+.animate-slide-down,
+.animate-fade-in,
+.animate-scale-in,
+.animate-glow,
+.animate-progress,
+.animate-confetti,
+.animate-typing {
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
 /* Utility classes */
 .animate-bounce-gentle {
   animation: bounce-gentle 2s infinite;
+  transform: translateZ(0); /* Force GPU acceleration */
 }
 
 .animate-shake {
@@ -179,6 +196,51 @@
   }
 }
 
+/* Skeleton loading states */
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s infinite;
+  border-radius: 4px;
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-text {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s infinite;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.skeleton-circle {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s infinite;
+  border-radius: 50%;
+}
+
+.skeleton-pulse {
+  animation: skeleton-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes skeleton-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: .5;
+  }
+}
+
 /* Success states */
 .success-checkmark {
   stroke-dasharray: 16;
@@ -215,7 +277,79 @@
   animation-delay: calc(var(--stagger-delay, 0.1s) * var(--stagger-index, 0));
 }
 
-/* Responsive animations */
+/* Performance monitoring utilities */
+.performance-monitor {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+/* Animation performance hints */
+@keyframes fade-in-fast {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fade-in-fast {
+  animation: fade-in-fast 0.2s ease-out;
+  will-change: opacity;
+}
+
+/* Optimized keyframe animations using transform3d */
+@keyframes slide-up-optimized {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 20px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes scale-in-optimized {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+/* Hardware-accelerated variants */
+.animate-slide-up-optimized {
+  animation: slide-up-optimized 0.4s ease-out;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+}
+
+.animate-scale-in-optimized {
+  animation: scale-in-optimized 0.3s ease-out;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+}
+
+/* Battery-conscious animations for mobile */
+@media (max-width: 768px) {
+  .animate-bounce-gentle {
+    animation-duration: 3s; /* Slower on mobile to save battery */
+  }
+
+  .animate-glow {
+    animation-duration: 3s; /* Less frequent pulsing */
+  }
+}
+
+/* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -223,5 +357,13 @@
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* Performance budget warnings (development only) */
+@media (max-width: 768px) and (max-height: 600px) {
+  /* Reduce animation complexity on small screens */
+  .animate-confetti {
+    animation: none;
   }
 }

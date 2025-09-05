@@ -3,6 +3,7 @@ import { useWallet } from './useWallet'
 import { useLocationStore } from '@/stores/locationStore'
 import { useBettingStore } from '@/stores/bettingStore'
 import { useUIStore } from '@/stores/uiStore'
+import { useAchievements } from './useAchievements'
 import { getContract, estimateGasCost } from '@/lib/contracts'
 
 /**
@@ -12,16 +13,17 @@ import { getContract, estimateGasCost } from '@/lib/contracts'
 export function useBetting() {
   const { address, isConnected, chainId } = useWallet()
   const { addToast } = useUIStore()
-  const { 
-    setCreatingCommitment, 
+  const { unlockAchievement, updateStreak } = useAchievements()
+  const {
+    setCreatingCommitment,
     setFulfillingCommitment,
     setPlacingBet,
     addActiveBet,
     updateActiveBet
   } = useBettingStore()
-  const { 
-    currentLocation, 
-    setCommitmentId, 
+  const {
+    currentLocation,
+    setCommitmentId,
     setStakeAmount,
     setStaked,
     setUserReputationScore
@@ -82,7 +84,7 @@ export function useBetting() {
         userAddress: address,
         targetAddress: address,
         stakeAmount: stakeWei,
-        betAmount: 0n,
+        betAmount: BigInt(0),
         bettingFor: true,
         deadline: arrivalDeadline,
         status: 'active',
@@ -96,6 +98,12 @@ export function useBetting() {
       // Update user reputation
       const reputation = await contract.getUserReputation(address)
       setUserReputationScore(reputation)
+
+      // Unlock first commitment achievement
+      unlockAchievement('first_commitment')
+
+      // Update streak for activity
+      updateStreak()
 
       addToast({
         type: 'success',
@@ -116,7 +124,7 @@ export function useBetting() {
   }, [isConnected, address, addToast, setCreatingCommitment, setCommitmentId, setStakeAmount, setStaked, addActiveBet])
 
   /**
-   * Place a bet on someone's commitment
+   * Place a bet on someone's commitment with optimistic updates
    */
   const placeBet = useCallback(async (
     commitmentId: string,
@@ -133,28 +141,64 @@ export function useBetting() {
 
     setPlacingBet(true)
 
+    // Optimistic update - immediately show the bet in UI
+    const betWei = BigInt(Math.floor(parseFloat(betAmount) * 1e18))
+    const optimisticBetUpdate = {
+      betAmount: betWei,
+      bettingFor,
+      status: 'pending' as const,
+      bettorAddress: address,
+      betPlacedAt: Date.now()
+    }
+
+    updateActiveBet(commitmentId, optimisticBetUpdate)
+
+    // Show immediate feedback
+    addToast({
+      type: 'info',
+      message: `Placing bet... ${betAmount} STT ${bettingFor ? 'FOR' : 'AGAINST'} success`
+    })
+
     try {
       // Place bet via contract
       const txHash = await contract.placeBet(commitmentId, betAmount, bettingFor)
-      
-      const betWei = BigInt(Math.floor(parseFloat(betAmount) * 1e18))
-      
-      // Update active bet with new bettor
+
+      // Update with confirmed status
       updateActiveBet(commitmentId, {
-        // Add bettor to the bet (this would normally come from contract events)
+        status: 'confirmed',
+        txHash,
+        confirmedAt: Date.now()
       })
-      
+
+      // Unlock first bet achievement
+      unlockAchievement('first_bet')
+
+      // Check for high roller achievement
+      if (parseFloat(betAmount) >= 1.0) {
+        unlockAchievement('high_roller')
+      }
+
       addToast({
         type: 'success',
-        message: `Bet placed! ${betAmount} STT ${bettingFor ? 'FOR' : 'AGAINST'} success`
+        message: `Bet confirmed! ${betAmount} STT ${bettingFor ? 'FOR' : 'AGAINST'} success 🎉`
       })
 
       return true
     } catch (error: any) {
       console.error('Error placing bet:', error)
+
+      // Revert optimistic update on failure
+      updateActiveBet(commitmentId, {
+        betAmount: BigInt(0),
+        bettingFor: true,
+        status: 'active' as const,
+        bettorAddress: undefined,
+        betPlacedAt: undefined
+      })
+
       addToast({
         type: 'error',
-        message: error.message || 'Failed to place bet'
+        message: error.message || 'Failed to place bet - please try again'
       })
       return false
     } finally {
@@ -190,6 +234,9 @@ export function useBetting() {
       })
 
       if (result.success) {
+        // Update streak for successful completion
+        updateStreak()
+
         addToast({
           type: 'success',
           message: `Commitment fulfilled successfully! ${result.reward ? `Reward: ${result.reward} STT` : ''}`

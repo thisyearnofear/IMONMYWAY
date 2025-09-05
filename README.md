@@ -11,7 +11,7 @@ A decentralized betting protocol that combines real-time location tracking with 
 - **📍 GPS Verification**: Blockchain-verified proof of arrival
 - **⭐ Reputation System**: Reliability scoring affects betting odds
 - **📱 Real-time Tracking**: Live location updates via WebSocket
-- **🎨 Premium UX**: Delightful animations and smooth onboarding
+- **🎨 Enhanced UX**: Delightful animations, haptic feedback, achievement celebrations, and smooth Web3 onboarding
 
 ## 🛠️ Tech Stack
 
@@ -147,7 +147,7 @@ PORT=3000
 ### Build Performance
 
 ```bash
-✓ Compiled successfully in 3.6s     # vs 10-15s with older versions
+✓ Compiled successfully in 1.6s     # Optimized build performance
 ✓ Linting and checking validity    # TypeScript 5.9 performance
 ✓ Generating static pages (6/6)    # Pre-rendered at build time
 ```

@@ -140,8 +140,8 @@ export const useLocationStore = create<LocationState>((set, get) => ({
   
   // Staking actions
   setStakeAmount: (amount) => set((state) => ({
-    sharingSession: state.sharingSession 
-      ? { ...state.sharingSession, stakeAmount: amount, isStaked: amount > 0n }
+    sharingSession: state.sharingSession
+      ? { ...state.sharingSession, stakeAmount: amount, isStaked: amount > BigInt(0) }
       : null
   })),
   

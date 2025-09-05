@@ -1,100 +1,183 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import { Button } from '@/components/ui/Button'
-import { useWallet } from '@/hooks/useWallet'
-import { useUIStore } from '@/stores/uiStore'
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/Button";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { useWallet } from "@/hooks/useWallet";
+import { useUIStore } from "@/stores/uiStore";
 
 interface WalletOnboardingProps {
-  onComplete: () => void
-  onSkip: () => void
+  onComplete: () => void;
+  onSkip: () => void;
 }
 
-export function WalletOnboarding({ onComplete, onSkip }: WalletOnboardingProps) {
-  const [step, setStep] = useState(0)
-  const [isAnimating, setIsAnimating] = useState(false)
-  const { connect, isConnected, isConnecting, switchToSomnia, chainId } = useWallet()
-  const { addToast } = useUIStore()
+export function WalletOnboarding({
+  onComplete,
+  onSkip,
+}: WalletOnboardingProps) {
+  const [step, setStep] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [lastError, setLastError] = useState<string | null>(null);
+  const { connect, isConnected, isConnecting, switchToSomnia, chainId } =
+    useWallet();
+  const { addToast } = useUIStore();
+
+  const maxRetries = 3;
 
   const steps = [
     {
       title: "Welcome to Punctuality Protocol! 🎯",
-      description: "Put your money where your mouth is. Stake tokens on your punctuality and let others bet on your success.",
+      description:
+        "Put your money where your mouth is. Stake tokens on your punctuality and let others bet on your success.",
       icon: "🏃‍♂️",
-      action: null
+      action: null,
     },
     {
       title: "Connect Your Wallet 🔗",
-      description: "Connect MetaMask to create staked commitments and participate in betting.",
+      description:
+        "Connect MetaMask to create staked commitments and participate in betting.",
       icon: "🦊",
-      action: "connect"
+      action: "connect",
     },
     {
       title: "Switch to Somnia Network ⚡",
-      description: "Somnia offers lightning-fast transactions perfect for real-time betting.",
+      description:
+        "Somnia offers lightning-fast transactions perfect for real-time betting.",
       icon: "🌐",
-      action: "network"
+      action: "network",
     },
     {
       title: "You're All Set! 🎉",
-      description: "Start creating staked commitments or bet on others' punctuality.",
+      description:
+        "Start creating staked commitments or bet on others' punctuality.",
       icon: "✅",
-      action: null
-    }
-  ]
+      action: null,
+    },
+  ];
 
   useEffect(() => {
-    if (isConnected && chainId === 50311) {
-      // Auto-advance to final step when fully connected
-      setStep(3)
+    if (isConnected && chainId === 50312) {
+      // Auto-advance to final step when fully connected to Somnia mainnet
+      setStep(3);
     } else if (isConnected) {
       // Move to network step if connected but wrong network
-      setStep(2)
+      setStep(2);
     }
-  }, [isConnected, chainId])
+  }, [isConnected, chainId]);
 
   const nextStep = () => {
-    setIsAnimating(true)
+    setIsAnimating(true);
     setTimeout(() => {
-      setStep(prev => Math.min(prev + 1, steps.length - 1))
-      setIsAnimating(false)
-    }, 300)
-  }
+      setStep((prev) => Math.min(prev + 1, steps.length - 1));
+      setIsAnimating(false);
+    }, 300);
+  };
 
   const handleConnect = async () => {
+    setLastError(null);
     try {
-      await connect()
+      await connect();
+      setRetryCount(0);
       addToast({
-        type: 'success',
-        message: 'Wallet connected successfully! 🎉'
-      })
-      nextStep()
-    } catch (error) {
-      console.error('Connection failed:', error)
+        type: "success",
+        message: "Wallet connected successfully! 🎉",
+      });
+      nextStep();
+    } catch (error: any) {
+      console.error("Connection failed:", error);
+      const errorMessage = getErrorMessage(error);
+      setLastError(errorMessage);
+
+      if (retryCount < maxRetries) {
+        addToast({
+          type: "warning",
+          message: `${errorMessage} Retrying... (${
+            retryCount + 1
+          }/${maxRetries})`,
+        });
+        setTimeout(() => {
+          setRetryCount((prev) => prev + 1);
+          handleConnect();
+        }, 2000);
+      } else {
+        addToast({
+          type: "error",
+          message: errorMessage,
+        });
+      }
     }
-  }
+  };
+
+  const getErrorMessage = (error: any): string => {
+    if (error.code === 4001) {
+      return "Connection rejected. Please approve the connection in MetaMask.";
+    }
+    if (error.code === -32002) {
+      return "Connection already pending. Check MetaMask for pending requests.";
+    }
+    if (error.message?.includes("User rejected")) {
+      return "Connection cancelled. Please try connecting again.";
+    }
+    return error.message || "Failed to connect wallet. Please try again.";
+  };
 
   const handleNetworkSwitch = async () => {
+    setLastError(null);
     try {
-      await switchToSomnia()
+      await switchToSomnia();
+      setRetryCount(0);
       addToast({
-        type: 'success',
-        message: 'Switched to Somnia Network! ⚡'
-      })
-      nextStep()
-    } catch (error) {
-      console.error('Network switch failed:', error)
-    }
-  }
+        type: "success",
+        message: "Switched to Somnia Network! ⚡",
+      });
+      nextStep();
+    } catch (error: any) {
+      console.error("Network switch failed:", error);
+      const errorMessage = getNetworkErrorMessage(error);
+      setLastError(errorMessage);
 
-  const currentStep = steps[step]
+      if (retryCount < maxRetries) {
+        addToast({
+          type: "warning",
+          message: `${errorMessage} Retrying... (${
+            retryCount + 1
+          }/${maxRetries})`,
+        });
+        setTimeout(() => {
+          setRetryCount((prev) => prev + 1);
+          handleNetworkSwitch();
+        }, 2000);
+      } else {
+        addToast({
+          type: "error",
+          message: errorMessage,
+        });
+      }
+    }
+  };
+
+  const getNetworkErrorMessage = (error: any): string => {
+    if (error.code === 4001) {
+      return "Network switch rejected. Please approve in MetaMask.";
+    }
+    if (error.code === 4902) {
+      return "Somnia Network not found. Adding network automatically...";
+    }
+    if (error.message?.includes("User rejected")) {
+      return "Network switch cancelled. Please try again.";
+    }
+    return error.message || "Failed to switch network. Please try again.";
+  };
+
+  const currentStep = steps[step];
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl">
         {/* Progress Bar */}
         <div className="h-1 bg-gray-200">
-          <div 
+          <div
             className="h-full bg-gradient-to-r from-blue-600 to-purple-600 transition-all duration-500 ease-out"
             style={{ width: `${((step + 1) / steps.length) * 100}%` }}
           />
@@ -103,7 +186,11 @@ export function WalletOnboarding({ onComplete, onSkip }: WalletOnboardingProps) 
         {/* Content */}
         <div className="p-8">
           {/* Icon */}
-          <div className={`text-center mb-6 transition-all duration-300 ${isAnimating ? 'scale-75 opacity-50' : 'scale-100 opacity-100'}`}>
+          <div
+            className={`text-center mb-6 transition-all duration-300 ${
+              isAnimating ? "scale-75 opacity-50" : "scale-100 opacity-100"
+            }`}
+          >
             <div className="text-6xl mb-4 animate-bounce-gentle">
               {currentStep.icon}
             </div>
@@ -113,28 +200,44 @@ export function WalletOnboarding({ onComplete, onSkip }: WalletOnboardingProps) 
             <p className="text-gray-600 leading-relaxed">
               {currentStep.description}
             </p>
+
+            {/* Error Display */}
+            {lastError && (
+              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg animate-fade-in">
+                <div className="flex items-center space-x-2">
+                  <span className="text-red-500">⚠️</span>
+                  <p className="text-red-700 text-sm">{lastError}</p>
+                </div>
+                {retryCount > 0 && retryCount < maxRetries && (
+                  <p className="text-red-600 text-xs mt-1">
+                    Retry {retryCount} of {maxRetries}...
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Action Buttons */}
           <div className="space-y-3">
-            {currentStep.action === 'connect' && (
+            {currentStep.action === "connect" && (
               <Button
                 onClick={handleConnect}
                 disabled={isConnecting}
                 className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-200"
               >
                 {isConnecting ? (
-                  <div className="flex items-center justify-center space-x-2">
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    <span>Connecting...</span>
-                  </div>
+                  <LoadingSpinner
+                    size="sm"
+                    color="white"
+                    message="Connecting..."
+                  />
                 ) : (
-                  'Connect MetaMask'
+                  "Connect MetaMask"
                 )}
               </Button>
             )}
 
-            {currentStep.action === 'network' && (
+            {currentStep.action === "network" && (
               <Button
                 onClick={handleNetworkSwitch}
                 className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 transform hover:scale-105 transition-all duration-200"
@@ -178,7 +281,7 @@ export function WalletOnboarding({ onComplete, onSkip }: WalletOnboardingProps) 
               <div
                 key={index}
                 className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                  index <= step ? 'bg-blue-600' : 'bg-gray-300'
+                  index <= step ? "bg-blue-600" : "bg-gray-300"
                 }`}
               />
             ))}
@@ -186,5 +289,5 @@ export function WalletOnboarding({ onComplete, onSkip }: WalletOnboardingProps) 
         </div>
       </div>
     </div>
-  )
+  );
 }

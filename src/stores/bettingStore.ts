@@ -36,7 +36,7 @@ export interface ActiveBet {
   betAmount: bigint
   bettingFor: boolean
   deadline: number
-  status: 'active' | 'fulfilled' | 'expired'
+  status: 'active' | 'fulfilled' | 'expired' | 'pending' | 'confirmed'
   startLocation: {
     lat: number
     lng: number
@@ -48,6 +48,12 @@ export interface ActiveBet {
   estimatedDistance: number
   estimatedPace: number
   createdAt: number
+  // Optimistic update properties
+  bettorAddress?: string
+  betPlacedAt?: number
+  txHash?: string
+  confirmedAt?: number
+  successful?: boolean
 }
 
 export const useBettingStore = create<BettingState>((set, get) => ({

@@ -49,6 +49,8 @@ export function useWallet(): UseWalletReturn {
     if (!isMetaMaskInstalled()) return
 
     try {
+      if (!window.ethereum) return
+
       const accounts = await window.ethereum.request({ method: 'eth_accounts' })
       const chainId = await window.ethereum.request({ method: 'eth_chainId' })
       
@@ -96,9 +98,11 @@ export function useWallet(): UseWalletReturn {
     setWalletState(prev => ({ ...prev, isConnecting: true }))
 
     try {
+      if (!window.ethereum) throw new Error('MetaMask not available')
+
       await window.ethereum.request({ method: 'eth_requestAccounts' })
       await updateWalletState()
-      
+
       addToast({
         type: 'success',
         message: 'Wallet connected successfully!',
@@ -130,7 +134,7 @@ export function useWallet(): UseWalletReturn {
 
   // Switch to Somnia Network
   const switchToSomnia = useCallback(async () => {
-    if (!isMetaMaskInstalled()) return
+    if (!isMetaMaskInstalled() || !window.ethereum) return
 
     try {
       // Try to switch to Somnia Network
@@ -169,7 +173,7 @@ export function useWallet(): UseWalletReturn {
 
   // Listen for account and chain changes
   useEffect(() => {
-    if (!isMetaMaskInstalled()) return
+    if (!isMetaMaskInstalled() || !window.ethereum) return
 
     const handleAccountsChanged = (accounts: string[]) => {
       if (accounts.length === 0) {
