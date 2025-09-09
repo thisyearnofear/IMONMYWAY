@@ -115,7 +115,7 @@ export default function Share() {
                 Set Your Destination
               </h2>
               <p className="text-sm text-gray-600">
-                Click on the map to set where you're heading
+                Click on the map to set where you are heading
               </p>
             </div>
             <MapContainer

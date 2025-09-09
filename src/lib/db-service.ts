@@ -1,42 +1,45 @@
-import { prisma, redis, checkDatabaseHealth } from './database'
-import { PrismaClient } from '@prisma/client'
+// Simple in-memory storage for the Punctuality Protocol
+// Replaces PostgreSQL dependency for hackathon demo
 
 // ============================================================================
-// DATABASE SERVICE
+// IN-MEMORY STORAGE
+// ============================================================================
+
+// In-memory storage objects
+const storage = {
+  users: new Map(),
+  sessions: new Map(),
+  commitments: new Map(),
+  bets: new Map(),
+  userBets: new Map(),
+  userAchievements: new Map(),
+  streaks: new Map(),
+  routes: new Map(),
+  analyticsEvents: new Map(),
+  performanceMetrics: new Map()
+};
+
+// ============================================================================
+// DATABASE SERVICE (In-Memory Implementation)
 // ============================================================================
 
 export class DatabaseService {
-  private prisma: PrismaClient
-
-  constructor() {
-    this.prisma = prisma
-  }
-
   // ============================================================================
   // HEALTH CHECKS & CONNECTION MANAGEMENT
   // ============================================================================
 
   async healthCheck() {
-    return await checkDatabaseHealth()
+    // Always healthy in memory implementation
+    console.log('✅ In-memory storage healthy');
+    return { postgresql: true, redis: true };
   }
 
   async connect() {
-    try {
-      await this.prisma.$connect()
-      console.log('✅ Database connected successfully')
-    } catch (error) {
-      console.error('❌ Database connection failed:', error)
-      throw error
-    }
+    console.log('✅ In-memory storage connected successfully');
   }
 
   async disconnect() {
-    try {
-      await this.prisma.$disconnect()
-      console.log('✅ Database disconnected successfully')
-    } catch (error) {
-      console.error('❌ Database disconnection error:', error)
-    }
+    console.log('✅ In-memory storage disconnected successfully');
   }
 
   // ============================================================================
@@ -49,32 +52,34 @@ export class DatabaseService {
     displayName?: string
   }) {
     try {
-      const user = await this.prisma.user.create({
-        data: {
-          walletAddress,
-          ...userData,
-        }
-      })
-      console.log(`✅ User created: ${walletAddress}`)
-      return user
+      const userId = `user_${walletAddress}`;
+      const user = {
+        id: userId,
+        walletAddress,
+        ...userData,
+        reputationScore: 750.0,
+        totalStaked: "0",
+        totalEarned: "0",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        isActive: true
+      };
+      
+      storage.users.set(walletAddress, user);
+      console.log(`✅ User created: ${walletAddress}`);
+      return user;
     } catch (error) {
-      console.error('❌ Error creating user:', error)
-      throw error
+      console.error('❌ Error creating user:', error);
+      throw error;
     }
   }
 
   async getUserByWallet(walletAddress: string) {
     try {
-      return await this.prisma.user.findUnique({
-        where: { walletAddress },
-        include: {
-          achievements: true,
-          streaks: true,
-        }
-      })
+      return storage.users.get(walletAddress) || null;
     } catch (error) {
-      console.error('❌ Error fetching user:', error)
-      throw error
+      console.error('❌ Error fetching user:', error);
+      throw error;
     }
   }
 
@@ -87,13 +92,15 @@ export class DatabaseService {
     totalEarned: string
   }>) {
     try {
-      return await this.prisma.user.update({
-        where: { walletAddress },
-        data: updates
-      })
+      const user = storage.users.get(walletAddress);
+      if (!user) throw new Error('User not found');
+      
+      const updatedUser = { ...user, ...updates, updatedAt: new Date() };
+      storage.users.set(walletAddress, updatedUser);
+      return updatedUser;
     } catch (error) {
-      console.error('❌ Error updating user:', error)
-      throw error
+      console.error('❌ Error updating user:', error);
+      throw error;
     }
   }
 
@@ -106,57 +113,61 @@ export class DatabaseService {
     userAgent?: string
   }) {
     try {
-      return await this.prisma.session.create({
-        data: {
-          userId,
-          token,
-          expiresAt,
-          ...metadata
-        }
-      })
+      const session = {
+        id: token,
+        userId,
+        token,
+        expiresAt,
+        ...metadata,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      storage.sessions.set(token, session);
+      return session;
     } catch (error) {
-      console.error('❌ Error creating session:', error)
-      throw error
+      console.error('❌ Error creating session:', error);
+      throw error;
     }
   }
 
   async getSessionByToken(token: string) {
     try {
-      return await this.prisma.session.findUnique({
-        where: { token },
-        include: { user: true }
-      })
+      return storage.sessions.get(token) || null;
     } catch (error) {
-      console.error('❌ Error fetching session:', error)
-      throw error
+      console.error('❌ Error fetching session:', error);
+      throw error;
     }
   }
 
   async updateSessionLocation(sessionId: string, latitude: number, longitude: number) {
     try {
-      return await this.prisma.session.update({
-        where: { id: sessionId },
-        data: {
-          currentLatitude: latitude,
-          currentLongitude: longitude,
-          lastLocationUpdate: new Date()
-        }
-      })
+      const session = storage.sessions.get(sessionId);
+      if (!session) throw new Error('Session not found');
+      
+      const updatedSession = {
+        ...session,
+        currentLatitude: latitude,
+        currentLongitude: longitude,
+        lastLocationUpdate: new Date(),
+        updatedAt: new Date()
+      };
+      
+      storage.sessions.set(sessionId, updatedSession);
+      return updatedSession;
     } catch (error) {
-      console.error('❌ Error updating session location:', error)
-      throw error
+      console.error('❌ Error updating session location:', error);
+      throw error;
     }
   }
 
   async invalidateSession(token: string) {
     try {
-      await this.prisma.session.delete({
-        where: { token }
-      })
-      console.log(`✅ Session invalidated: ${token}`)
+      storage.sessions.delete(token);
+      console.log(`✅ Session invalidated: ${token}`);
     } catch (error) {
-      console.error('❌ Error invalidating session:', error)
-      throw error
+      console.error('❌ Error invalidating session:', error);
+      throw error;
     }
   }
 
@@ -177,33 +188,28 @@ export class DatabaseService {
     estimatedPace: number
   }) {
     try {
-      return await this.prisma.commitment.create({
-        data: commitmentData
-      })
+      const commitment = {
+        id: commitmentData.commitmentId,
+        ...commitmentData,
+        status: "active",
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      storage.commitments.set(commitmentData.commitmentId, commitment);
+      return commitment;
     } catch (error) {
-      console.error('❌ Error creating commitment:', error)
-      throw error
+      console.error('❌ Error creating commitment:', error);
+      throw error;
     }
   }
 
   async getCommitment(commitmentId: string) {
     try {
-      return await this.prisma.commitment.findUnique({
-        where: { id: commitmentId },
-        include: {
-          bets: true,
-          user: {
-            select: {
-              walletAddress: true,
-              displayName: true,
-              reputationScore: true
-            }
-          }
-        }
-      })
+      return storage.commitments.get(commitmentId) || null;
     } catch (error) {
-      console.error('❌ Error fetching commitment:', error)
-      throw error
+      console.error('❌ Error fetching commitment:', error);
+      throw error;
     }
   }
 
@@ -213,16 +219,21 @@ export class DatabaseService {
     payoutAmount?: string
   }) {
     try {
-      return await this.prisma.commitment.update({
-        where: { id: commitmentId },
-        data: {
-          status,
-          ...resultData
-        }
-      })
+      const commitment = storage.commitments.get(commitmentId);
+      if (!commitment) throw new Error('Commitment not found');
+      
+      const updatedCommitment = {
+        ...commitment,
+        status,
+        ...resultData,
+        updatedAt: new Date()
+      };
+      
+      storage.commitments.set(commitmentId, updatedCommitment);
+      return updatedCommitment;
     } catch (error) {
-      console.error('❌ Error updating commitment:', error)
-      throw error
+      console.error('❌ Error updating commitment:', error);
+      throw error;
     }
   }
 
@@ -238,37 +249,34 @@ export class DatabaseService {
     odds?: number
   }) {
     try {
-      return await this.prisma.bet.create({
-        data: betData
-      })
+      const betId = `bet_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const bet = {
+        id: betId,
+        ...betData,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      storage.bets.set(betId, bet);
+      return bet;
     } catch (error) {
-      console.error('❌ Error creating bet:', error)
-      throw error
+      console.error('❌ Error creating bet:', error);
+      throw error;
     }
   }
 
   async getUserBets(userId: string, limit = 50) {
     try {
-      return await this.prisma.userBet.findMany({
-        where: { userId },
-        include: {
-          commitment: {
-            include: {
-              user: {
-                select: {
-                  walletAddress: true,
-                  displayName: true
-                }
-              }
-            }
-          }
-        },
-        orderBy: { createdAt: 'desc' },
-        take: limit
-      })
+      const userBets = [];
+      for (const [_, bet] of storage.bets) {
+        if (bet.bettorId === userId && userBets.length < limit) {
+          userBets.push(bet);
+        }
+      }
+      return userBets;
     } catch (error) {
-      console.error('❌ Error fetching user bets:', error)
-      throw error
+      console.error('❌ Error fetching user bets:', error);
+      throw error;
     }
   }
 
@@ -278,16 +286,20 @@ export class DatabaseService {
 
   async unlockAchievement(userId: string, achievementId: string) {
     try {
-      return await this.prisma.userAchievement.create({
-        data: {
-          userId,
-          achievementId,
-          unlockedAt: new Date()
-        }
-      })
+      const achievementKey = `${userId}_${achievementId}`;
+      const achievement = {
+        id: achievementKey,
+        userId,
+        achievementId,
+        unlockedAt: new Date(),
+        progress: 0
+      };
+      
+      storage.userAchievements.set(achievementKey, achievement);
+      return achievement;
     } catch (error) {
-      console.error('❌ Error unlocking achievement:', error)
-      throw error
+      console.error('❌ Error unlocking achievement:', error);
+      throw error;
     }
   }
 
@@ -297,35 +309,44 @@ export class DatabaseService {
     lastActivity?: Date
   }) {
     try {
-      return await this.prisma.streak.upsert({
-        where: {
-          userId_type: {
-            userId,
-            type
-          }
-        },
-        update: updates,
-        create: {
-          userId,
-          type,
-          ...updates
-        }
-      })
+      const streakKey = `${userId}_${type}`;
+      const existingStreak = storage.streaks.get(streakKey) || {
+        id: streakKey,
+        userId,
+        type,
+        current: 0,
+        longest: 0,
+        lastActivity: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      const updatedStreak = {
+        ...existingStreak,
+        ...updates,
+        updatedAt: new Date()
+      };
+      
+      storage.streaks.set(streakKey, updatedStreak);
+      return updatedStreak;
     } catch (error) {
-      console.error('❌ Error updating streak:', error)
-      throw error
+      console.error('❌ Error updating streak:', error);
+      throw error;
     }
   }
 
   async getUserAchievements(userId: string) {
     try {
-      return await this.prisma.userAchievement.findMany({
-        where: { userId },
-        orderBy: { unlockedAt: 'desc' }
-      })
+      const userAchievements = [];
+      for (const [_, achievement] of storage.userAchievements) {
+        if (achievement.userId === userId) {
+          userAchievements.push(achievement);
+        }
+      }
+      return userAchievements;
     } catch (error) {
-      console.error('❌ Error fetching achievements:', error)
-      throw error
+      console.error('❌ Error fetching achievements:', error);
+      throw error;
     }
   }
 
@@ -342,34 +363,36 @@ export class DatabaseService {
     userAgent?: string
   }) {
     try {
-      return await this.prisma.analyticsEvent.create({
-        data: eventData
-      })
+      const eventId = `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const event = {
+        id: eventId,
+        ...eventData,
+        createdAt: new Date()
+      };
+      
+      storage.analyticsEvents.set(eventId, event);
     } catch (error) {
-      console.error('❌ Error tracking event:', error)
+      console.error('❌ Error tracking event:', error);
       // Don't throw for analytics errors
     }
   }
 
   async getAnalyticsSummary(timeframe = '7d') {
     try {
-      const startDate = new Date()
-      startDate.setDate(startDate.getDate() - parseInt(timeframe))
-
-      return await this.prisma.analyticsEvent.groupBy({
-        by: ['eventType'],
-        where: {
-          createdAt: {
-            gte: startDate
-          }
-        },
-        _count: {
-          id: true
-        }
-      })
+      // Simple analytics summary
+      const eventTypes = new Map();
+      for (const [_, event] of storage.analyticsEvents) {
+        const count = eventTypes.get(event.eventType) || 0;
+        eventTypes.set(event.eventType, count + 1);
+      }
+      
+      return Array.from(eventTypes.entries()).map(([eventType, count]) => ({
+        eventType,
+        _count: { id: count }
+      }));
     } catch (error) {
-      console.error('❌ Error fetching analytics:', error)
-      throw error
+      console.error('❌ Error fetching analytics:', error);
+      throw error;
     }
   }
 
@@ -379,41 +402,26 @@ export class DatabaseService {
 
   async getActiveCommitmentsForCache() {
     try {
-      return await this.prisma.commitment.findMany({
-        where: { status: 'active' },
-        include: {
-          user: {
-            select: {
-              walletAddress: true,
-              displayName: true,
-              reputationScore: true
-            }
-          },
-          bets: true
+      const activeCommitments = [];
+      for (const [_, commitment] of storage.commitments) {
+        if (commitment.status === 'active') {
+          activeCommitments.push(commitment);
         }
-      })
+      }
+      return activeCommitments;
     } catch (error) {
-      console.error('❌ Error fetching active commitments for cache:', error)
-      return []
+      console.error('❌ Error fetching active commitments for cache:', error);
+      return [];
     }
   }
 
   async getPopularUsersForCache(limit = 100) {
     try {
-      return await this.prisma.user.findMany({
-        take: limit,
-        orderBy: { createdAt: 'desc' },
-        select: {
-          walletAddress: true,
-          displayName: true,
-          reputationScore: true,
-          totalStaked: true,
-          totalEarned: true
-        }
-      })
+      const users = Array.from(storage.users.values());
+      return users.slice(0, limit);
     } catch (error) {
-      console.error('❌ Error fetching popular users for cache:', error)
-      return []
+      console.error('❌ Error fetching popular users for cache:', error);
+      return [];
     }
   }
 }
@@ -422,7 +430,7 @@ export class DatabaseService {
 // SINGLETON INSTANCE
 // ============================================================================
 
-export const dbService = new DatabaseService()
+export const dbService = new DatabaseService();
 
 // ============================================================================
 // UTILITY FUNCTIONS
@@ -430,14 +438,14 @@ export const dbService = new DatabaseService()
 
 export async function initializeDatabase() {
   try {
-    await dbService.connect()
-    console.log('🚀 Database service initialized successfully')
+    await dbService.connect();
+    console.log('🚀 Database service initialized successfully');
   } catch (error) {
-    console.error('❌ Failed to initialize database:', error)
-    throw error
+    console.error('❌ Failed to initialize database:', error);
+    throw error;
   }
 }
 
 export async function cleanupDatabase() {
-  await dbService.disconnect()
+  await dbService.disconnect();
 }

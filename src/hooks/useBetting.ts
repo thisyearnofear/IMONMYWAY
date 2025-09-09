@@ -1,12 +1,13 @@
-import { useCallback } from 'react'
+import { useCallback, useMemo, useState, useEffect } from 'react'
 import { useWallet } from './useWallet'
 import { useLocationStore } from '@/stores/locationStore'
 import { useBettingStore } from '@/stores/bettingStore'
 import { useUIStore } from '@/stores/uiStore'
 import { useAchievements } from './useAchievements'
-import { getContract, estimateGasCost } from '@/lib/contracts'
+import { getContract, estimateGasCost, calculateDistance } from '@/lib/contracts'
 import { dbService } from '@/lib/db-service'
 import { cacheService } from '@/lib/cache-service'
+import { ethers } from 'ethers'
 
 /**
  * Hook for betting operations
@@ -31,7 +32,32 @@ export function useBetting() {
     setUserReputationScore
   } = useLocationStore()
 
-  const contract = getContract(chainId || 50312)
+  // Create ethers provider
+  const provider = useMemo(() => {
+    if (typeof window !== 'undefined' && window.ethereum) {
+      return new ethers.BrowserProvider(window.ethereum)
+    }
+    return null
+  }, [])
+
+  // Get signer - this will be a promise that we resolve when needed
+  const getSigner = useCallback(async () => {
+    if (provider && address) {
+      return await provider.getSigner()
+    }
+    return null
+  }, [provider, address])
+
+  // Get contract instance - we'll create it on demand to avoid async issues in useMemo
+  const getContractInstance = useCallback(async () => {
+    if (chainId) {
+      const signer = await getSigner()
+      if (signer) {
+        return getContract(chainId, signer)
+      }
+    }
+    return null
+  }, [chainId, getSigner])
 
   /**
    * Create a punctuality commitment with stake
@@ -55,25 +81,73 @@ export function useBetting() {
     setCreatingCommitment(true)
 
     try {
-      // Calculate distance using contract method
-      const distance = await contract.calculateDistance(
+      // Get contract instance
+      const contract = await getContractInstance()
+      if (!contract) {
+        addToast({
+          type: 'error',
+          message: 'Contract not initialized'
+        })
+        return null
+      }
+
+      // Calculate distance using our utility function
+      const distance = calculateDistance(
         startLocation.lat,
         startLocation.lng,
         targetLocation.lat,
         targetLocation.lng
       )
 
+      // Format location data for contract
+      const startLocationData = {
+        latitude: Math.floor(startLocation.lat * 1e6),
+        longitude: Math.floor(startLocation.lng * 1e6),
+        accuracy: 0,
+        timestamp: Math.floor(Date.now() / 1000)
+      }
+
+      const targetLocationData = {
+        latitude: Math.floor(targetLocation.lat * 1e6),
+        longitude: Math.floor(targetLocation.lng * 1e6),
+        accuracy: 0,
+        timestamp: Math.floor(Date.now() / 1000)
+      }
+
       // Create commitment via contract
-      const commitmentId = await contract.createCommitment(
-        startLocation,
-        targetLocation,
-        arrivalDeadline,
+      const tx = await contract.createCommitment(
+        startLocationData,
+        targetLocationData,
+        Math.floor(arrivalDeadline / 1000), // Convert to seconds
         estimatedPace,
-        stakeAmount
+        { value: ethers.parseEther(stakeAmount) }
       )
       
+      // Wait for transaction to be mined
+      const receipt = await tx.wait()
+      
+      // Extract commitment ID from event logs
+      let commitmentId = ''
+      if (receipt && receipt.logs) {
+        for (const log of receipt.logs) {
+          try {
+            const parsedLog = contract.interface.parseLog(log)
+            if (parsedLog && parsedLog.name === 'CommitmentCreated') {
+              commitmentId = parsedLog.args.commitmentId
+              break
+            }
+          } catch (e) {
+            // Ignore parsing errors
+          }
+        }
+      }
+
+      if (!commitmentId) {
+        throw new Error('Failed to extract commitment ID from transaction')
+      }
+
       // Convert stake amount to wei
-      const stakeWei = BigInt(Math.floor(parseFloat(stakeAmount) * 1e18))
+      const stakeWei = ethers.parseEther(stakeAmount)
 
       // Store commitment in database
       await dbService.createCommitment({
@@ -116,10 +190,10 @@ export function useBetting() {
 
       // Update user reputation
       const reputation = await contract.getUserReputation(address)
-      setUserReputationScore(reputation)
+      setUserReputationScore(Number(reputation))
 
       // Update cached reputation
-      await cacheService.updateUserReputation(address, reputation)
+      await cacheService.updateUserReputation(address, Number(reputation))
 
       // Unlock first commitment achievement
       unlockAchievement('first_commitment')
@@ -143,7 +217,7 @@ export function useBetting() {
     } finally {
       setCreatingCommitment(false)
     }
-  }, [isConnected, address, addToast, setCreatingCommitment, setCommitmentId, setStakeAmount, setStaked, addActiveBet])
+  }, [isConnected, address, getContractInstance, addToast, setCreatingCommitment, setCommitmentId, setStakeAmount, setStaked, addActiveBet, setUserReputationScore, unlockAchievement, updateStreak])
 
   /**
    * Place a bet on someone's commitment with optimistic updates
@@ -164,7 +238,7 @@ export function useBetting() {
     setPlacingBet(true)
 
     // Optimistic update - immediately show the bet in UI
-    const betWei = BigInt(Math.floor(parseFloat(betAmount) * 1e18))
+    const betWei = ethers.parseEther(betAmount)
     const optimisticBetUpdate = {
       betAmount: betWei,
       bettingFor,
@@ -182,13 +256,30 @@ export function useBetting() {
     })
 
     try {
+      // Get contract instance
+      const contract = await getContractInstance()
+      if (!contract) {
+        addToast({
+          type: 'error',
+          message: 'Contract not initialized'
+        })
+        return false
+      }
+
       // Place bet via contract
-      const txHash = await contract.placeBet(commitmentId, betAmount, bettingFor)
+      const tx = await contract.placeBet(
+        commitmentId as `0x${string}`,
+        bettingFor,
+        { value: ethers.parseEther(betAmount) }
+      )
+
+      // Wait for transaction to be mined
+      await tx.wait()
 
       // Update with confirmed status
       updateActiveBet(commitmentId, {
         status: 'confirmed',
-        txHash,
+        txHash: tx.hash,
         confirmedAt: Date.now()
       })
 
@@ -226,7 +317,7 @@ export function useBetting() {
     } finally {
       setPlacingBet(false)
     }
-  }, [isConnected, address, addToast, contract, setPlacingBet, updateActiveBet])
+  }, [isConnected, address, getContractInstance, addToast, setPlacingBet, updateActiveBet, unlockAchievement])
 
   /**
    * Fulfill a commitment with proof of arrival
@@ -246,22 +337,64 @@ export function useBetting() {
     setFulfillingCommitment(true)
 
     try {
+      // Get contract instance
+      const contract = await getContractInstance()
+      if (!contract) {
+        addToast({
+          type: 'error',
+          message: 'Contract not initialized'
+        })
+        return false
+      }
+
+      // Format arrival location data for contract
+      const arrivalLocationData = {
+        latitude: Math.floor(arrivalLocation.lat * 1e6),
+        longitude: Math.floor(arrivalLocation.lng * 1e6),
+        accuracy: 0,
+        timestamp: Math.floor(Date.now() / 1000)
+      }
+
       // Fulfill commitment via contract
-      const result = await contract.fulfillCommitment(commitmentId, arrivalLocation)
+      const tx = await contract.fulfillCommitment(
+        commitmentId as `0x${string}`,
+        arrivalLocationData
+      )
       
+      // Wait for transaction to be mined
+      const receipt = await tx.wait()
+      
+      // Extract success status from event logs
+      let success = false
+      let reward = ''
+      if (receipt && receipt.logs) {
+        for (const log of receipt.logs) {
+          try {
+            const parsedLog = contract.interface.parseLog(log)
+            if (parsedLog && parsedLog.name === 'CommitmentFulfilled') {
+              success = parsedLog.args.successful
+              reward = ethers.formatEther(parsedLog.args.rewardAmount)
+              break
+            }
+          } catch (e) {
+            // Ignore parsing errors
+          }
+        }
+      }
+
       // Update bet status
       updateActiveBet(commitmentId, {
         status: 'fulfilled',
-        successful: result.success
+        successful: success
       })
 
-      if (result.success) {
+      if (success) {
         // Update streak for successful completion
         updateStreak()
 
         addToast({
           type: 'success',
-          message: `Commitment fulfilled successfully! ${result.reward ? `Reward: ${result.reward} STT` : ''}`
+          message: `Commitment fulfilled successfully! ${reward ? `Reward: ${reward} STT` : ''}`
         })
       } else {
         addToast({
@@ -270,7 +403,7 @@ export function useBetting() {
         })
       }
 
-      return result.success
+      return success
     } catch (error: any) {
       console.error('Error fulfilling commitment:', error)
       addToast({
@@ -281,31 +414,73 @@ export function useBetting() {
     } finally {
       setFulfillingCommitment(false)
     }
-  }, [isConnected, address, addToast, setFulfillingCommitment])
+  }, [isConnected, address, getContractInstance, addToast, setFulfillingCommitment, updateActiveBet, updateStreak])
 
   /**
    * Get commitment details from contract
    */
   const getCommitmentDetails = useCallback(async (commitmentId: string) => {
     try {
-      return await contract.getCommitment(commitmentId)
+      // Get contract instance
+      const contract = await getContractInstance()
+      if (!contract) {
+        console.error('Contract not initialized')
+        return null
+      }
+
+      const commitment = await contract.getCommitment(commitmentId as `0x${string}`)
+      
+      // Format the commitment data
+      return {
+        user: commitment.user,
+        stakeAmount: ethers.formatEther(commitment.stakeAmount),
+        commitmentTime: commitment.commitmentTime * 1000, // Convert to milliseconds
+        arrivalDeadline: commitment.arrivalDeadline * 1000, // Convert to milliseconds
+        startLocation: {
+          latitude: commitment.startLocation.latitude / 1e6,
+          longitude: commitment.startLocation.longitude / 1e6,
+          accuracy: commitment.startLocation.accuracy,
+          timestamp: commitment.startLocation.timestamp * 1000 // Convert to milliseconds
+        },
+        targetLocation: {
+          latitude: commitment.targetLocation.latitude / 1e6,
+          longitude: commitment.targetLocation.longitude / 1e6,
+          accuracy: commitment.targetLocation.accuracy,
+          timestamp: commitment.targetLocation.timestamp * 1000 // Convert to milliseconds
+        },
+        estimatedDistance: commitment.estimatedDistance,
+        estimatedPace: commitment.estimatedPace,
+        fulfilled: commitment.fulfilled,
+        successful: commitment.successful,
+        actualArrivalTime: commitment.actualArrivalTime * 1000, // Convert to milliseconds
+        totalBetsFor: ethers.formatEther(commitment.totalBetsFor),
+        totalBetsAgainst: ethers.formatEther(commitment.totalBetsAgainst)
+      }
     } catch (error) {
       console.error('Error fetching commitment:', error)
       return null
     }
-  }, [contract])
+  }, [getContractInstance])
 
   /**
    * Get user reputation from contract
    */
   const getUserReputation = useCallback(async (userAddress: string) => {
     try {
-      return await contract.getUserReputation(userAddress)
+      // Get contract instance
+      const contract = await getContractInstance()
+      if (!contract) {
+        console.error('Contract not initialized')
+        return 7500 // Default reputation
+      }
+
+      const reputation = await contract.getUserReputation(userAddress)
+      return Number(reputation)
     } catch (error) {
       console.error('Error fetching reputation:', error)
       return 7500 // Default reputation
     }
-  }, [contract])
+  }, [getContractInstance])
 
   return {
     createCommitment,
@@ -313,7 +488,30 @@ export function useBetting() {
     fulfillCommitment,
     getCommitmentDetails,
     getUserReputation,
-    estimateGasCost: estimateGasCost,
+    estimateGasCost: async (operation: string, params: any) => {
+      try {
+        const signer = await getSigner()
+        if (signer && chainId) {
+          return await estimateGasCost(operation, params, signer, chainId)
+        }
+        // Return default estimates if signer not available
+        const baseCosts = {
+          createCommitment: 0.001,
+          placeBet: 0.0005,
+          fulfillCommitment: 0.0007
+        }
+        return baseCosts[operation as keyof typeof baseCosts] || 0.0005
+      } catch (error) {
+        console.error('Error estimating gas:', error)
+        // Return default estimates on error
+        const baseCosts = {
+          createCommitment: 0.001,
+          placeBet: 0.0005,
+          fulfillCommitment: 0.0007
+        }
+        return baseCosts[operation as keyof typeof baseCosts] || 0.0005
+      }
+    },
     isConnected,
     userAddress: address
   }

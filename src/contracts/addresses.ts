@@ -13,7 +13,7 @@ export interface ContractAddresses {
 
 // Somnia Testnet addresses (will be populated after deployment)
 export const SOMNIA_TESTNET_ADDRESSES: ContractAddresses = {
-  PunctualityCore: '0x41f2fA6E60A34c26BD2C467d21EcB0a2f9087B03', // To be filled after deployment
+  PunctualityCore: '0xE93ECD999526BBBaCd35FA808E6F590BB1017246', // Deployed contract address
   LocationVerifier: '',
   ImmediateBets: '',
   ProgressiveGoals: '',
@@ -22,7 +22,7 @@ export const SOMNIA_TESTNET_ADDRESSES: ContractAddresses = {
 
 // Somnia Mainnet addresses (for future deployment)
 export const SOMNIA_MAINNET_ADDRESSES: ContractAddresses = {
-  PunctualityCore: '0x41f2fA6E60A34c26BD2C467d21EcB0a2f9087B03',
+  PunctualityCore: '0xE93ECD999526BBBaCd35FA808E6F590BB1017246', // Deployed contract address
   LocationVerifier: '',
   ImmediateBets: '',
   ProgressiveGoals: '',
@@ -32,7 +32,7 @@ export const SOMNIA_MAINNET_ADDRESSES: ContractAddresses = {
 // Network configuration - CONSOLIDATED (DRY principle)
 export const NETWORKS = {
   SOMNIA_TESTNET: {
-    chainId: 5031, // Somnia Shannon Testnet chain ID
+    chainId: 50312, // Somnia Shannon Testnet chain ID
     name: 'Somnia Shannon Testnet',
     rpcUrl: 'https://dream-rpc.somnia.network/',
     blockExplorer: 'https://shannon-explorer.somnia.network/',
@@ -44,7 +44,7 @@ export const NETWORKS = {
     contracts: SOMNIA_TESTNET_ADDRESSES,
   },
   SOMNIA_MAINNET: {
-    chainId: 50312, // Somnia Mainnet chain ID (LIVE DEPLOYMENT)
+    chainId: 50312, // Somnia Mainnet chain ID
     name: 'Somnia Network',
     rpcUrl: 'https://dream-rpc.somnia.network/',
     blockExplorer: 'https://shannon-explorer.somnia.network/',

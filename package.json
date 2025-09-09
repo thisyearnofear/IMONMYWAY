@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "NODE_ENV=production node server.js",
     "lint": "next lint",
-    "docs": "echo 'Documentation available in /docs directory'"
+    "docs": "echo 'Documentation available in /docs directory'",
+    "compile": "npx hardhat compile",
+    "deploy": "npx hardhat run scripts/deploy.cjs"
   },
   "dependencies": {
     "@prisma/client": "^6.15.0",
@@ -15,7 +17,6 @@
     "clsx": "^2.0.0",
     "dotenv": "^17.2.2",
     "ethers": "^6.15.0",
-    "ioredis": "^5.7.0",
     "jsonwebtoken": "^9.0.2",
     "leaflet": "^1.9.4",
     "next": "^15.5.2",
@@ -23,7 +24,6 @@
     "prisma": "^6.15.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "redis": "^5.8.2",
     "socket.io": "^4.7.5",
     "socket.io-client": "^4.7.5",
     "solc": "^0.8.30",

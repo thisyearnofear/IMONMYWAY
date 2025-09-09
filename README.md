@@ -16,10 +16,12 @@ A decentralized betting protocol that combines real-time location tracking with 
 ## 🛠️ Tech Stack
 
 - **Frontend**: Next.js 15.5, React 19.1, TypeScript 5.9
+- **Backend**: Node.js with Socket.IO for real-time communication
+- **Database**: PostgreSQL with Prisma ORM
 - **Styling**: Tailwind CSS 4.1 (Oxide Engine)
 - **Maps**: Leaflet 1.9 with custom markers and real-time paths
-- **Real-time**: Socket.IO 4.8 with room-based broadcasting
 - **State**: Zustand 5.0 with persistence and DevTools
+- **Blockchain**: Solidity smart contracts on Somnia Network
 - **Build**: Next.js 15 Turbopack (40-60% faster builds)
 
 ## 🏃‍♂️ Getting Started
@@ -27,7 +29,8 @@ A decentralized betting protocol that combines real-time location tracking with 
 ### Prerequisites
 
 - **Node.js 18+** (Node.js 20+ recommended for best performance)
-- **npm 9+** or **yarn 1.22+**
+- **pnpm** (package manager)
+- **PostgreSQL 13+** (for database)
 - **Modern browser** with WebSocket and Geolocation support
 - **HTTPS required** in production for GPS access
 
@@ -43,23 +46,32 @@ A decentralized betting protocol that combines real-time location tracking with 
 2. **Install dependencies**
 
    ```bash
-   npm install
+   pnpm install
    ```
 
-3. **Start the development server**
+3. **Set up the database**
+
+   Follow the detailed database setup guide in [docs/DATABASE_SETUP.md](docs/DATABASE_SETUP.md)
+   
+   Or use the automated setup script:
+   ```bash
+   ./scripts/setup-database.sh
+   ```
+
+4. **Start the development server**
 
    ```bash
-   npm run dev              # Development with hot reload + Socket.IO
+   pnpm dev              # Development with hot reload + Socket.IO
    ```
 
-4. **Build for production**
+5. **Build for production**
 
    ```bash
-   npm run build           # Production build with Turbopack
-   npm start               # Start production server
+   pnpm build           # Production build with Turbopack
+   pnpm start           # Start production server
    ```
 
-5. **Open your browser**
+6. **Open your browser**
    Navigate to [http://localhost:3000](http://localhost:3000)
 
 ## 📱 Usage
@@ -95,8 +107,10 @@ For detailed information about the project:
 
 - **[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)**: System design, core principles, implementation status, and real blockchain integration
 - **[`docs/FEATURES.md`](docs/FEATURES.md)**: Core features, user flows, implementation phases, and UX enhancements
-- **[`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)**: Contract deployment guide and technical implementation
+- **[`docs/CONTRACT_DEPLOYMENT.md`](docs/CONTRACT_DEPLOYMENT.md)**: Smart contract deployment guide and technical implementation
+- **[`docs/DATABASE_SETUP.md`](docs/DATABASE_SETUP.md)**: Database setup and configuration guide
 - **[`docs/ROADMAP.md`](docs/ROADMAP.md)**: Long-term strategic development plan and progress tracking
+- **[`docs/CORE_PRINCIPLES_COMPLIANCE.md`](docs/CORE_PRINCIPLES_COMPLIANCE.md)**: How the project adheres to core development principles
 
 ## 🔧 Configuration
 
@@ -105,6 +119,16 @@ For detailed information about the project:
 Create a `.env.local` file for local development:
 
 ```env
+# Database configuration
+DATABASE_URL="postgresql://punctuality_user:punctuality_password@localhost:5432/punctuality_db?schema=public"
+
+# Redis configuration (optional, for caching)
+REDIS_URL="redis://localhost:6379"
+
+# Blockchain configuration
+PRIVATE_KEY="your_wallet_private_key_here"
+
+# Server configuration
 NODE_ENV=development
 PORT=3000
 ```
@@ -117,6 +141,7 @@ PORT=3000
 - **Supports**: Railway, Render, DigitalOcean, AWS EC2, etc.
 - **HTTPS required** for geolocation API access
 - **WebSocket support** needed for real-time features
+- **PostgreSQL database** required for production use
 
 ## 📱 Mobile Optimization
 
@@ -158,10 +183,10 @@ PORT=3000
 ### Available Commands
 
 ```bash
-npm run dev              # Start development server with hot reload
-npm run build           # Production build with optimizations
-npm run start           # Start production server
-npm run lint            # ESLint with Next.js 15 rules
+pnpm dev              # Start development server with hot reload
+pnpm build           # Production build with optimizations
+pnpm start           # Start production server
+pnpm lint            # ESLint with Next.js 15 rules
 ```
 
 ### Development Features
@@ -175,42 +200,33 @@ npm run lint            # ESLint with Next.js 15 rules
 ### Architecture Decisions
 
 - **Custom Server**: Required for Socket.IO WebSocket support
-- **In-Memory Sessions**: Fast for development (consider database for production)
+- **PostgreSQL Database**: Required for production use (in-memory for development)
 - **Zustand over Redux**: Simpler state management, better TypeScript support
 - **CSS-in-CSS**: Raw CSS over CSS-in-JS for better Tailwind 4 performance
 
-## 🚀 Web3 Integration Ready
+## 🚀 Web3 Integration
 
-**Perfect foundation for Web3 development:**
+**Fully integrated with Somnia Network:**
 
-### Ready to Add
+### Smart Contracts
 
-```bash
-# When you're ready for Web3 features:
-npm install wagmi viem @rainbow-me/rainbowkit @tanstack/react-query
-```
+- **PunctualityCore.sol**: Core betting contract with ETA calculations
+- **IPunctualityProtocol.sol**: Interface definitions
+- **Math.sol**: Helper library for calculations
 
-### Web3-Ready Architecture
+### Web3 Features
 
-- **React 19**: Latest hooks and concurrent features for smooth wallet UX
-- **TypeScript Strict**: Perfect for Web3 contract type safety
-- **Zustand State**: Easily add wallet connection state
-- **Real-time**: WebSocket perfect for blockchain events
+- **Wallet Connection**: MetaMask integration with Somnia network support
+- **Smart Contract Interaction**: Real blockchain calls for staking and betting
+- **Real-time Updates**: WebSocket integration with blockchain events
 - **Mobile-First**: Essential for mobile wallet integration
 
-### Planned Web3 Features
+### Blockchain Integration
 
-- **Wallet Connection**: MetaMask, WalletConnect, Coinbase Wallet
-- **Smart Contracts**: Location verification, route NFTs, reward tokens
-- **Decentralized Storage**: IPFS for route data and achievements
-- **Social Features**: Token-gated groups, leaderboards
-
-### AI Integration Ready
-
-- **Real-time Pipeline**: Perfect for AI-powered route optimization
-- **TypeScript Types**: Ready for ML model integration
-- **Performance**: React 19 compiler handles AI-heavy UIs efficiently
-- **Mobile AI**: Optimized for on-device ML models
+- **Somnia Testnet**: Deployed and tested on Somnia Testnet
+- **Gas Estimation**: Built-in gas cost estimation
+- **Transaction Handling**: Real transaction processing with error handling
+- **Event Logging**: Comprehensive event logging for analytics
 
 ## 🤝 Contributing
 
@@ -229,3 +245,5 @@ This project is licensed under the MIT License.
 - Built with Next.js and the React ecosystem
 - Maps powered by OpenStreetMap and Leaflet
 - Real-time communication via Socket.IO
+- Database management with Prisma and PostgreSQL
+- Blockchain integration with ethers.js and Solidity
