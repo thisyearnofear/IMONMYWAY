@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { SmartNotificationCenter } from '@/components/smart/SmartNotificationCenter'
 import { Navigation } from "@/components/layout/Navigation";
 
 export const metadata: Metadata = {
@@ -18,6 +19,7 @@ export default function RootLayout({
       <body className="min-h-screen bg-background text-foreground">
         <Navigation />
         {children}
+        <SmartNotificationCenter />
       </body>
     </html>
   );

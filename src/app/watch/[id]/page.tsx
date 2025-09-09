@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Navigation } from "@/components/layout/Navigation";
 import { ToastContainer } from "@/components/ui/Toast";
-import { BetCard } from "@/components/betting/BetCard";
+import { UnifiedBettingInterface } from "@/components/betting/UnifiedBettingInterface";
 import { ReputationBadge } from "@/components/reputation/ReputationBadge";
 import { useLocationStore } from "@/stores/locationStore";
 import { useUIStore } from "@/stores/uiStore";
@@ -308,10 +308,14 @@ export default function WatchPage() {
         {/* Betting Interface */}
         {activeBet && isConnected && (
           <div className="mb-6">
-            <BetCard
-              bet={activeBet}
-              canBet={activeBet.userAddress !== address}
-              showBetInterface={activeBet.status === "active"}
+            <UnifiedBettingInterface
+              mode="bet"
+              commitment={activeBet}
+              onBetPlaced={(success) => {
+                if (success) {
+                  console.log('Bet placed successfully');
+                }
+              }}
             />
           </div>
         )}

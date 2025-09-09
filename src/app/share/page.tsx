@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
-import { StakeInput } from "@/components/betting/StakeInput";
+import { SmartStakeInput } from "@/components/smart/SmartStakeInput";
 import { MapContainer } from "@/components/map/MapContainer";
 import { useWallet } from "@/hooks/useWallet";
 import { useLocationStore } from "@/stores/locationStore";
@@ -131,10 +131,20 @@ export default function Share() {
 
           {/* Betting Section */}
           <div className="space-y-6">
-            <StakeInput
+            <SmartStakeInput
               onStakeSet={handleStakeSet}
               isLoading={isCreating}
               userBalance="1.5" // Mock balance
+              context={{
+                distance: destination && currentLocation 
+                  ? Math.sqrt(
+                      Math.pow((destination[0] - currentLocation.latitude) * 111000, 2) +
+                      Math.pow((destination[1] - currentLocation.longitude) * 111000, 2)
+                    )
+                  : undefined,
+                timeAvailable: 30,
+                destination: destination ? `${destination[0].toFixed(4)}, ${destination[1].toFixed(4)}` : undefined
+              }}
             />
 
             {destination && (

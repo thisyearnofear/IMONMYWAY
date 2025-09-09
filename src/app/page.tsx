@@ -8,11 +8,16 @@ import { AchievementDisplay } from "@/components/reputation/AchievementDisplay";
 import { useWallet } from "@/hooks/useWallet";
 import { useUIStore } from "@/stores/uiStore";
 import { useAchievements } from "@/hooks/useAchievements";
+import { useAnimation } from "@/hooks/useAnimation";
+import { useNotification } from "@/hooks/useNotification";
+import { cn } from "@/lib/utils";
 
 export default function HomePage() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const { isConnected } = useWallet();
   const { addToast } = useUIStore();
+  const { getAnimationClass, triggerCelebration } = useAnimation();
+  const { success } = useNotification();
 
   // Show onboarding after 2 seconds for new users
   useEffect(() => {
@@ -26,10 +31,12 @@ export default function HomePage() {
 
   const handleOnboardingComplete = () => {
     setShowOnboarding(false);
-    addToast({
+    triggerCelebration({
       type: "success",
-      message: "Welcome to Punctuality Protocol! 🎉",
+      intensity: "intense",
+      haptic: true
     });
+    success("Welcome to Punctuality Protocol! 🎉 Ready to put your punctuality to the test?");
   };
 
   const handleOnboardingSkip = () => {
@@ -68,18 +75,26 @@ export default function HomePage() {
             <Link href="/plan">
               <Button
                 size="lg"
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-200"
+                className={cn(
+                  "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700",
+                  "transform transition-all duration-200",
+                  getAnimationClass("hover", "medium")
+                )}
               >
-                Start Planning Route
+                🗺️ Start Planning Route
               </Button>
             </Link>
             <Link href="/share">
               <Button
                 variant="outline"
                 size="lg"
-                className="border-2 border-blue-600 text-blue-600 hover:bg-blue-50 transform hover:scale-105 transition-all duration-200"
+                className={cn(
+                  "border-2 border-blue-600 text-blue-600 hover:bg-blue-50",
+                  "transform transition-all duration-200",
+                  getAnimationClass("hover", "medium")
+                )}
               >
-                Create Your First Bet
+                💰 Create Your First Bet
               </Button>
             </Link>
           </div>
