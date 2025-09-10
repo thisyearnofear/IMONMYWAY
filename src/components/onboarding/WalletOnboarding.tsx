@@ -27,9 +27,9 @@ export function WalletOnboarding({
 
   const steps = [
     {
-      title: "Welcome to Punctuality Protocol! 🎯",
+      title: "Welcome to IMONMYWAY! 🎯",
       description:
-        "Put your money where your mouth is. Stake tokens on your punctuality and let others bet on your success.",
+        "First punctuality accountability protocol on Somnia. Stake tokens on your commitments and let others bet on your success.",
       icon: "🏃‍♂️",
       action: null,
     },

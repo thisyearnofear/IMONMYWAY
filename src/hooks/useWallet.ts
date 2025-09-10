@@ -9,12 +9,18 @@ interface WalletState {
   isConnecting: boolean
   chainId: number | null
   balance: string | null
+  networkMetrics: {
+    lastTxSpeed: number | null // in seconds
+    avgBlockTime: number | null
+    isOnSomnia: boolean
+  }
 }
 
 interface UseWalletReturn extends WalletState {
   connect: () => Promise<void>
   disconnect: () => void
   switchToSomnia: () => Promise<void>
+  trackTransactionSpeed: (txHash: string) => Promise<void>
 }
 
 // Somnia Network configuration
@@ -37,6 +43,11 @@ export function useWallet(): UseWalletReturn {
     isConnecting: false,
     chainId: null,
     balance: null,
+    networkMetrics: {
+      lastTxSpeed: null,
+      avgBlockTime: null,
+      isOnSomnia: false,
+    },
   })
 
   const { addToast } = useUIStore()
@@ -62,13 +73,14 @@ export function useWallet(): UseWalletReturn {
           params: [accounts[0], 'latest'],
         })
 
-        setWalletState({
+        setWalletState(prev => ({
+          ...prev,
           address: accounts[0],
           isConnected: true,
           isConnecting: false,
           chainId: parseInt(chainId, 16),
           balance: (parseInt(balance, 16) / 1e18).toFixed(4), // Convert wei to ETH
-        })
+        }))
       } else {
         setWalletState(prev => ({
           ...prev,
@@ -105,6 +117,34 @@ export function useWallet(): UseWalletReturn {
       await window.ethereum.request({ method: 'eth_requestAccounts' })
       await updateWalletState()
 
+      // Auto-add Somnia network if not already added
+      const currentChainId = await window.ethereum.request({ method: 'eth_chainId' })
+      const isOnSomnia = parseInt(currentChainId, 16) === 50312
+      
+      if (!isOnSomnia) {
+        try {
+          await window.ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [SOMNIA_NETWORK],
+          })
+          addToast({
+            type: 'success',
+            message: 'Somnia Network added to MetaMask! 🚀',
+          })
+        } catch (addError) {
+          console.log('User declined adding Somnia network')
+        }
+      }
+
+      // Update network metrics
+      setWalletState(prev => ({
+        ...prev,
+        networkMetrics: {
+          ...prev.networkMetrics,
+          isOnSomnia: parseInt(currentChainId, 16) === 50312,
+        },
+      }))
+
       // Create or update user in database
       if (walletState.address) {
         try {
@@ -133,13 +173,14 @@ export function useWallet(): UseWalletReturn {
 
   // Disconnect wallet
   const disconnect = useCallback(() => {
-    setWalletState({
+    setWalletState(prev => ({
+      ...prev,
       address: null,
       isConnected: false,
       isConnecting: false,
       chainId: null,
       balance: null,
-    })
+    }))
     addToast({
       type: 'info',
       message: 'Wallet disconnected',
@@ -215,11 +256,41 @@ export function useWallet(): UseWalletReturn {
     }
   }, [isMetaMaskInstalled, updateWalletState, disconnect])
 
+  // Track transaction speed for Somnia showcase
+  const trackTransactionSpeed = useCallback(async (txHash: string) => {
+    if (!window.ethereum) return
+    
+    const startTime = Date.now()
+    const provider = new (await import('ethers')).BrowserProvider(window.ethereum)
+    
+    try {
+      await provider.waitForTransaction(txHash)
+      const endTime = Date.now()
+      const speed = (endTime - startTime) / 1000
+      
+      setWalletState(prev => ({
+        ...prev,
+        networkMetrics: {
+          ...prev.networkMetrics,
+          lastTxSpeed: speed,
+        },
+      }))
+      
+      addToast({
+        type: 'success',
+        message: `Transaction confirmed in ${speed.toFixed(1)}s on Somnia! ⚡`,
+      })
+    } catch (error) {
+      console.error('Transaction tracking failed:', error)
+    }
+  }, [addToast])
+
   return {
     ...walletState,
     connect,
     disconnect,
     switchToSomnia,
+    trackTransactionSpeed,
   }
 }
 

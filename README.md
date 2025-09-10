@@ -1,4 +1,4 @@
-# Punctuality Protocol
+# IMONMYWAY - Punctuality Protocol
 
 > **Put your money where your mouth is.** Stake tokens on your punctuality and let others bet on your success.
 

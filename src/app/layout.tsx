@@ -5,9 +5,18 @@ import { Navigation } from "@/components/layout/Navigation";
 import { GlobalErrorBoundary } from '@/components/core/GlobalErrorBoundary';
 
 export const metadata: Metadata = {
-  title: "Punctuality Protocol - Decentralized Betting on Punctuality",
+  title: "IMONMYWAY - Punctuality Protocol on Somnia",
   description:
-    "Put your money where your mouth is. Stake tokens on punctuality commitments and let others bet on your success with real-time GPS verification.",
+    "Put your money where your mouth is. Stake tokens on punctuality commitments and let others bet on your success with real-time GPS verification on Somnia Network.",
+  icons: {
+    icon: '/IOMYfavicon.ico',
+    apple: '/IOMYsquare.png',
+  },
+  openGraph: {
+    title: "IMONMYWAY - Punctuality Protocol",
+    description: "First punctuality accountability protocol on Somnia Network",
+    images: ['/IOMYbanner.png'],
+  },
 };
 
 export default function RootLayout({

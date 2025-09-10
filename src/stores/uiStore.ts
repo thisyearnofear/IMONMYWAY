@@ -16,9 +16,14 @@ interface UIState {
   mapCenter: [number, number] | null
   mapZoom: number
   
-  // Connection status
+  // Network status (consolidated)
   isOnline: boolean
   isConnected: boolean
+  contractAddress: string
+  networkMetrics: {
+    lastTxSpeed: number | null
+    isOnSomnia: boolean
+  }
   
   // Loading states
   isCreatingSession: boolean
@@ -35,6 +40,7 @@ interface UIState {
   
   setOnline: (online: boolean) => void
   setConnected: (connected: boolean) => void
+  updateNetworkMetrics: (metrics: Partial<UIState['networkMetrics']>) => void
   
   setCreatingSession: (loading: boolean) => void
   setLoadingSession: (loading: boolean) => void
@@ -50,6 +56,11 @@ export const useUIStore = create<UIState>((set, get) => ({
   
   isOnline: true,
   isConnected: false,
+  contractAddress: '0xE93ECD999526BBBaCd35FA808E6F590BB1017246',
+  networkMetrics: {
+    lastTxSpeed: null,
+    isOnSomnia: false,
+  },
   
   isCreatingSession: false,
   isLoadingSession: false,
@@ -85,6 +96,10 @@ export const useUIStore = create<UIState>((set, get) => ({
   setOnline: (online) => set({ isOnline: online }),
   
   setConnected: (connected) => set({ isConnected: connected }),
+  
+  updateNetworkMetrics: (metrics) => set(state => ({
+    networkMetrics: { ...state.networkMetrics, ...metrics }
+  })),
   
   setCreatingSession: (loading) => set({ isCreatingSession: loading }),
   

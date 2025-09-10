@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
 import { WalletOnboarding } from "@/components/onboarding/WalletOnboarding";
 import { AchievementDisplay } from "@/components/reputation/AchievementDisplay";
+import { NetworkStatus } from "@/components/core/NetworkStatus";
 import { useWallet } from "@/hooks/useWallet";
 import { useUIStore } from "@/stores/uiStore";
 import { useAchievements } from "@/hooks/useAchievements";
@@ -45,6 +46,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      <NetworkStatus />
       <main className="container mx-auto px-4 py-16 max-w-6xl">
         {/* Hero Section */}
         <div className="text-center mb-16">
@@ -55,7 +57,7 @@ export default function HomePage() {
 
           <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 animate-scale-in">
             <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Punctuality Protocol
+              IMONMYWAY
             </span>
           </h1>
 
@@ -63,9 +65,8 @@ export default function HomePage() {
             className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed animate-fade-in"
             style={{ animationDelay: "0.2s" }}
           >
-            Stake tokens on your punctuality commitments and let others bet on
-            your success. Real-time GPS verification ensures accountability in
-            the most fun way possible.
+            Punctuality Protocol on Somnia Network. Stake tokens on your 
+            commitments and let others bet on your success with real-time GPS verification.
           </p>
 
           <div

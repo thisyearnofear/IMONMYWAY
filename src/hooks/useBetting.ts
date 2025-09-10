@@ -14,8 +14,8 @@ import { ethers } from 'ethers'
  * Integrates with existing location tracking and wallet functionality
  */
 export function useBetting() {
-  const { address, isConnected, chainId } = useWallet()
-  const { addToast } = useUIStore()
+  const { address, isConnected, chainId, trackTransactionSpeed } = useWallet()
+  const { addToast, updateNetworkMetrics } = useUIStore()
   const { unlockAchievement, updateStreak } = useAchievements()
   const {
     setCreatingCommitment,
