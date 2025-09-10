@@ -19,13 +19,12 @@ Backend Services
 └── Location Tracking (GPS Integration)
 ```
 
-## Core Principles Implementation
+## Core Components
 
-- **ENHANCEMENT FIRST**: Built on existing location tracking
-- **DRY**: Single ETA calculation in smart contract
-- **CLEAN**: Clear UI ↔ Store ↔ Contract separation
-- **MODULAR**: Composable betting components
-- **PERFORMANT**: Hardware-accelerated animations
+- **Wallet Integration**: MetaMask + Somnia network
+- **Real-time Tracking**: GPS + WebSocket updates
+- **Betting System**: Stake management + social betting
+- **Reputation**: On-chain reliability scoring
 
 ## Data Flow
 
@@ -34,106 +33,147 @@ Backend Services
 3. Betting actions → Contract interactions
 4. Reputation updates → On-chain scoring
 
+## Smart Contract Deployment
+
+### Prerequisites
+
+- Node.js 18+, pnpm, wallet with STT tokens
+- Private key (secure storage required)
+
+### Deployment Steps
+
+1. Set up environment variables (.env.local)
+2. Install dependencies: `pnpm install`
+3. Compile contracts: `pnpm compile`
+4. Deploy to Somnia Testnet: `pnpm deploy --network somnia_testnet`
+5. Update contract addresses in `src/contracts/addresses.ts`
+
+### Mainnet Deployment
+
+- Use mainnet wallet private key
+- Run: `pnpm deploy --network somnia`
+- Update mainnet addresses
+
+## Database Setup
+
+### PostgreSQL Installation
+
+```bash
+# macOS
+brew install postgresql
+brew services start postgresql
+
+# Ubuntu
+sudo apt install postgresql postgresql-contrib
+sudo systemctl start postgresql
+```
+
+### Database Configuration
+
+1. Create user and database:
+
+```sql
+CREATE USER punctuality_user WITH PASSWORD 'punctuality_password';
+CREATE DATABASE punctuality_db OWNER punctuality_user;
+GRANT ALL PRIVILEGES ON DATABASE punctuality_db TO punctuality_user;
+```
+
+2. Update environment variables:
+
+```env
+DATABASE_URL="postgresql://punctuality_user:punctuality_password@localhost:5432/punctuality_db"
+```
+
+3. Run migrations: `npx prisma migrate dev`
+
+### Docker Alternative
+
+```bash
+docker run -d --name punctuality-postgres \
+  -e POSTGRES_USER=punctuality_user \
+  -e POSTGRES_PASSWORD=punctuality_password \
+  -e POSTGRES_DB=punctuality_db \
+  -p 5432:5432 postgres:15
+```
+
 ## Implementation Status
 
-### Phase 1 Complete: Smart Contract Foundation & Wallet Integration
+### Phase 1 Complete: Smart Contract Foundation
 
-**Smart Contracts Created:**
+- ✅ PunctualityCore.sol deployed
+- ✅ Wallet integration (MetaMask + Somnia)
+- ✅ Basic betting mechanics
+- ✅ Real-time location tracking
 
-- PunctualityCore.sol - Core betting logic with ETA calculations
-- IPunctualityProtocol.sol - Interface definitions
-- Contract addresses configuration
-
-**Enhanced Frontend Infrastructure:**
-
-- useWallet hook - MetaMask integration with Somnia Testnet support
-- Enhanced locationStore - Added Web3 state management
-- bettingStore - New store for betting operations
-- useBetting hook - Contract interaction interface
-
-**UI Components:**
-
-- Enhanced Navigation - Wallet connection with network switching
-- StakeInput component - Stake amount selection
-- BetCard component - Display and interact with active bets
-
-**Key Features:**
-
-1. Wallet Connection: MetaMask integration with automatic Somnia Testnet detection
-2. Network Management: Automatic network switching
-3. State Management: Enhanced stores with Web3 integration
-4. Betting Infrastructure: Foundation for creating and managing bets
-
-### Real Blockchain Integration
-
-**Contract Address**: 0x41f2fA6E60A34c26BD2C467d21EcB0a2f9087B03
-**Network**: Somnia Mainnet (Chain ID: 50312)
-**Status**: LIVE and Ready
-
-**Enhanced Components:**
-
-- ENHANCEMENT FIRST: Built on existing location tracking infrastructure
-- DRY: Single contract ABI and network configuration
-- CLEAN: Clear separation between contract layer, hooks, and UI
-- MODULAR: Composable contract interactions
-
-**Key Integrations:**
-
-- createCommitment() → Actual smart contract deployment
-- placeBet() → Real token transactions
-- fulfillCommitment() → Blockchain-verified outcomes
-- getUserReputation() → On-chain reputation scoring
-
-## Code Cleanup & Consolidation
-
-**AGGRESSIVE CONSOLIDATION:**
-
-- Removed duplicate contract files, unused scripts
-- Single source of truth for all contract interactions
-
-**PREVENT BLOAT:**
-
-- Streamlined file structure
-- Consolidated network configurations
-- Removed hardhat dependencies
-
-**ORGANIZED Structure:**
+### Current Architecture
 
 ```
 src/
 ├── lib/contracts.ts          # Single contract integration
 ├── contracts/addresses.ts    # Network configuration
-├── hooks/useBetting.ts       # Enhanced with real calls
+├── hooks/useBetting.ts       # Contract interactions
 └── hooks/useWallet.ts        # Somnia network integration
 ```
 
-## Key Components
+## Performance Optimizations
 
-- **Wallet Integration**: MetaMask + Somnia network
-- **Real-time Tracking**: GPS + WebSocket updates
-- **Betting System**: Stake management + social betting
-- **Reputation**: On-chain reliability scoring
+### Unified Experience Engine
 
-## Ready for Live Testing
+- Adaptive animations based on device capabilities
+- Intelligent caching with TTL
+- Performance monitoring dashboard
+- Bundle optimization and lazy loading
 
-**Real Functionality Available:**
+### Database Optimization
 
-1. Staked Commitments: Real token staking on Somnia
-2. Social Betting: Actual blockchain bets between users
-3. Reputation System: On-chain reliability scoring
-4. Automatic Payouts: Smart contract-verified outcomes
+- Query caching and batch operations
+- Connection pooling simulation
+- Performance monitoring and slow query detection
 
-**User Flow:**
+### Network Resilience
 
-1. Connect MetaMask → Somnia Network
-2. Create commitment → Real blockchain transaction
-3. Share link → Others place real bets
-4. Arrive on time → Automatic smart contract payout
+- Offline-first architecture
+- Action queue with priority handling
+- Background sync when connection restored
 
-**Integration Summary:**
+## Security Considerations
 
-- Build Status: ✅ Successful
-- Contract Integration: ✅ Real blockchain calls
-- Network Configuration: ✅ Somnia Mainnet ready
-- Code Quality: ✅ Follows all core principles
-- User Experience: ✅ Seamless Web3 integration
+- Private keys never committed to version control
+- Secure environment variable management
+- Contract verification on blockchain explorers
+- Firewall configuration for production
+- Automated backups and monitoring
+
+## Production Deployment
+
+### Infrastructure Requirements
+
+- PostgreSQL database with proper security
+- Secure private key management
+- Monitoring and alerting setup
+- CDN for global distribution
+- Load balancing for scalability
+
+### Environment Setup
+
+- Production database with connection pooling
+- Secure API endpoints
+- SSL/TLS certificates
+- Backup and recovery procedures
+- Performance monitoring tools
+
+## Troubleshooting
+
+### Common Issues
+
+- **PostgreSQL connection**: Ensure service is running
+- **Contract deployment**: Verify wallet balance and network connection
+- **Build failures**: Check Node.js version and dependencies
+- **Network issues**: Confirm Somnia RPC endpoint availability
+
+### Performance Monitoring
+
+- Use Performance Dashboard (Ctrl+Shift+P) for real-time metrics
+- Monitor Core Web Vitals
+- Track error rates and recovery success
+- Analyze network performance patterns

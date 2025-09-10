@@ -37,7 +37,7 @@ export function SmartStakeInput({
 
   const { isConnected } = useWallet();
   const { cardAnimation, getStaggeredDelay } = useComponentAnimation("SmartStakeInput");
-  const { notifyContextual, notifyError, success } = useComponentNotification("SmartStakeInput");
+  const { notifyContextual, notifyError, notifySuccess } = useComponentNotification("SmartStakeInput");
   
   const {
     preferences,
@@ -106,7 +106,7 @@ export function SmartStakeInput({
         data: { amount: stakeAmount, context }
       });
 
-      success(`Stake of ${stakeAmount} STT created successfully!`);
+      notifySuccess(`Stake of ${stakeAmount} STT created successfully!`);
       notifyContextual("stake_created", { amount: stakeAmount });
     } catch (error: any) {
       notifyError(error.message || "Failed to create stake");

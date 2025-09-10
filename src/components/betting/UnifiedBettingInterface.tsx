@@ -259,8 +259,8 @@ export function UnifiedBettingInterface({
           <span className="text-sm text-gray-600">Time Remaining:</span>
           {commitment && (
             <CountdownTimer
-              deadline={commitment.deadline}
-              onExpire={() => notifyContext({ context: "commitment", event: "expired", data: {} })}
+              targetTime={commitment.deadline}
+              onComplete={() => notifyContext({ context: "commitment", event: "expired", data: {} })}
             />
           )}
         </div>
@@ -388,7 +388,7 @@ export function UnifiedBettingInterface({
               <span>Progress to destination</span>
               <span>65% complete</span>
             </div>
-            <ProgressBar progress={65} className="h-3" />
+            <ProgressBar value={65} className="h-3" />
           </div>
 
           {/* Live Stats */}

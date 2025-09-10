@@ -54,9 +54,10 @@ A decentralized betting protocol that combines real-time location tracking with 
 
 3. **Set up the database**
 
-   Follow the detailed database setup guide in [docs/DATABASE_SETUP.md](docs/DATABASE_SETUP.md)
-   
+   Follow the detailed database setup guide in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+
    Or use the automated setup script:
+
    ```bash
    ./scripts/setup-database.sh
    ```
@@ -108,12 +109,9 @@ A decentralized betting protocol that combines real-time location tracking with 
 
 For detailed information about the project:
 
-- **[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)**: System design, core principles, implementation status, and real blockchain integration
-- **[`docs/FEATURES.md`](docs/FEATURES.md)**: Core features, user flows, implementation phases, and UX enhancements
-- **[`docs/CONTRACT_DEPLOYMENT.md`](docs/CONTRACT_DEPLOYMENT.md)**: Smart contract deployment guide and technical implementation
-- **[`docs/DATABASE_SETUP.md`](docs/DATABASE_SETUP.md)**: Database setup and configuration guide
-- **[`docs/ROADMAP.md`](docs/ROADMAP.md)**: Long-term strategic development plan and progress tracking
-- **[`docs/CORE_PRINCIPLES_COMPLIANCE.md`](docs/CORE_PRINCIPLES_COMPLIANCE.md)**: How the project adheres to core development principles
+- **[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)**: System design, smart contracts, database setup, deployment, and technical implementation
+- **[`docs/COMPLIANCE.md`](docs/COMPLIANCE.md)**: Core principles compliance, consolidation achievements, functionality preservation, and user experience improvements
+- **[`docs/FEATURES.md`](docs/FEATURES.md)**: Core features, user flows, enhancements, roadmap, and development status
 
 ## 🔧 Configuration
 
@@ -124,9 +122,6 @@ Create a `.env.local` file for local development:
 ```env
 # Database configuration
 DATABASE_URL="postgresql://punctuality_user:punctuality_password@localhost:5432/punctuality_db?schema=public"
-
-# Redis configuration (optional, for caching)
-REDIS_URL="redis://localhost:6379"
 
 # Blockchain configuration
 PRIVATE_KEY="your_wallet_private_key_here"

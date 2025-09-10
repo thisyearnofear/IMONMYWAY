@@ -40,8 +40,8 @@ export function useLoadingState(config: LoadingConfig = {}): [LoadingState, Load
 
   const { addToast } = useUIStore()
   const startTimeRef = useRef<number>(0)
-  const timeoutRef = useRef<NodeJS.Timeout>()
-  const minDurationRef = useRef<NodeJS.Timeout>()
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const minDurationRef = useRef<NodeJS.Timeout | null>(null)
 
   const start = useCallback((message?: string) => {
     startTimeRef.current = Date.now()
@@ -99,6 +99,7 @@ export function useLoadingState(config: LoadingConfig = {}): [LoadingState, Load
       // Clear timeout
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
+        timeoutRef.current = null
       }
     }
 
@@ -126,9 +127,11 @@ export function useLoadingState(config: LoadingConfig = {}): [LoadingState, Load
     // Clear timeouts
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current)
+      timeoutRef.current = null
     }
     if (minDurationRef.current) {
       clearTimeout(minDurationRef.current)
+      minDurationRef.current = null
     }
   }, [addToast])
 
@@ -143,9 +146,11 @@ export function useLoadingState(config: LoadingConfig = {}): [LoadingState, Load
     // Clear timeouts
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current)
+      timeoutRef.current = null
     }
     if (minDurationRef.current) {
       clearTimeout(minDurationRef.current)
+      minDurationRef.current = null
     }
   }, [])
 
@@ -154,9 +159,11 @@ export function useLoadingState(config: LoadingConfig = {}): [LoadingState, Load
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
+        timeoutRef.current = null
       }
       if (minDurationRef.current) {
         clearTimeout(minDurationRef.current)
+        minDurationRef.current = null
       }
     }
   }, [])

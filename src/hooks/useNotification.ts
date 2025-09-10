@@ -199,7 +199,8 @@ export function useNotification() {
       }
     }
 
-    const messageConfig = contextualMessages[context]?.[event]
+    const contextMessages = contextualMessages[context] as any
+    const messageConfig = contextMessages?.[event]
     if (messageConfig) {
       notify(messageConfig)
     } else {

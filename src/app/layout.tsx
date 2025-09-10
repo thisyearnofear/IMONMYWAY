@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { SmartNotificationCenter } from '@/components/smart/SmartNotificationCenter'
 import { Navigation } from "@/components/layout/Navigation";
+import { GlobalErrorBoundary } from '@/components/core/GlobalErrorBoundary';
 
 export const metadata: Metadata = {
   title: "Punctuality Protocol - Decentralized Betting on Punctuality",
@@ -17,9 +18,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen bg-background text-foreground">
-        <Navigation />
-        {children}
-        <SmartNotificationCenter />
+        <GlobalErrorBoundary enableRecovery={true} showErrorDetails={process.env.NODE_ENV === 'development'}>
+          <Navigation />
+          {children}
+          <SmartNotificationCenter />
+        </GlobalErrorBoundary>
       </body>
     </html>
   );
