@@ -5,7 +5,7 @@ import { useAnimation } from "@/hooks/useAnimation";
 import { useLoadingState } from "@/hooks/useLoadingState";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "outline" | "ghost" | "danger" | "success";
+  variant?: "primary" | "secondary" | "outline" | "ghost" | "danger" | "success" | "pixel";
   size?: "sm" | "md" | "lg";
   
   // Enhanced loading states
@@ -127,7 +127,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       "inline-flex items-center justify-center rounded-xl font-medium transition-all duration-200",
       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
       "disabled:pointer-events-none disabled:opacity-50",
-      "relative overflow-hidden",
+      "relative overflow-hidden touch-target",
       !disableAnimations && getAnimationClass("hover", animationIntensity),
       !disableAnimations && getAnimationClass("press", animationIntensity)
     );
@@ -135,22 +135,22 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     const variants = {
       primary: cn(
         "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md",
-        "hover:from-blue-700 hover:to-blue-800 hover:shadow-lg",
+        "hover:from-blue-700 hover:to-blue-800 hover:shadow-lg hover:glow-primary",
         "focus-visible:ring-blue-500",
         showSuccess && "from-green-600 to-green-700 hover:from-green-700 hover:to-green-800"
       ),
       secondary: cn(
-        "bg-white text-gray-900 border border-gray-200 shadow-sm",
-        "hover:bg-gray-50 hover:shadow-md",
+        "glass text-white border border-white/20 shadow-sm",
+        "hover:bg-white/10 hover:shadow-md",
         "focus-visible:ring-gray-500"
       ),
       outline: cn(
         "border-2 border-blue-600 text-blue-600 bg-transparent",
-        "hover:bg-blue-50",
+        "hover:bg-blue-50 hover:text-blue-700",
         "focus-visible:ring-blue-500"
       ),
       ghost: cn(
-        "text-gray-700 hover:bg-gray-100 hover:text-gray-900",
+        "text-gray-300 hover:bg-white/10 hover:text-white",
         "focus-visible:ring-gray-500"
       ),
       danger: cn(
@@ -160,8 +160,12 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       ),
       success: cn(
         "bg-gradient-to-r from-green-600 to-green-700 text-white shadow-md",
-        "hover:from-green-700 hover:to-green-800 hover:shadow-lg",
+        "hover:from-green-700 hover:to-green-800 hover:shadow-lg hover:glow-success",
         "focus-visible:ring-green-500"
+      ),
+      pixel: cn(
+        "btn-pixel",
+        showSuccess && "bg-green-600 border-green-500 text-white"
       ),
     };
 
@@ -175,7 +179,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       if (showSuccess && successText) {
         return (
           <div className="flex items-center space-x-2">
-            <span className="text-green-500">✓</span>
+            <span className="text-green-400">✓</span>
             <span>{successText}</span>
           </div>
         );
@@ -186,7 +190,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           <div className="flex items-center space-x-2">
             <LoadingSpinner
               size="sm"
-              color={variant === "primary" || variant === "danger" || variant === "success" ? "white" : "blue"}
+              color={variant === "primary" || variant === "danger" || variant === "success" || variant === "pixel" ? "white" : "blue"}
             />
             {(loadingText || loadingMessage) && <span>{loadingText || loadingMessage}</span>}
           </div>
@@ -195,11 +199,11 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
       return (
         <div className="flex items-center space-x-2">
-          {icon && iconPosition === "left" && <span>{icon}</span>}
+          {icon && iconPosition === "left" && <span className="pixel-perfect">{icon}</span>}
           <span>{children}</span>
-          {icon && iconPosition === "right" && <span>{icon}</span>}
+          {icon && iconPosition === "right" && <span className="pixel-perfect">{icon}</span>}
           {badge && (
-            <span className="ml-2 px-2 py-0.5 text-xs bg-white/20 rounded-full">
+            <span className="ml-2 px-2 py-0.5 text-xs bg-white/20 rounded-full font-mono">
               {badge}
             </span>
           )}
@@ -221,7 +225,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         onClick={handleClick}
         {...props}
       >
-        {/* Ripple effect for enhanced feedback */}
+        {/* Enhanced ripple effect */}
         {!disableAnimations && (
           <div className="absolute inset-0 overflow-hidden rounded-xl">
             <div className="absolute inset-0 bg-white/10 transform scale-0 group-active:scale-100 transition-transform duration-200 rounded-xl" />
