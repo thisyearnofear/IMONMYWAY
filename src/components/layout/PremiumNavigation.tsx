@@ -25,8 +25,8 @@ export function PremiumNavigation() {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
     };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   // Sync wallet state with location store
@@ -43,11 +43,13 @@ export function PremiumNavigation() {
   };
 
   return (
-    <header className={cn(
-      "fixed top-0 left-0 right-0 z-50 transition-all duration-500",
-      "glass-nav backdrop-blur-xl",
-      isScrolled ? "py-3" : "py-4"
-    )}>
+    <header
+      className={cn(
+        "fixed top-0 left-0 right-0 z-50 transition-all duration-500",
+        "glass-nav backdrop-blur-xl",
+        isScrolled ? "py-3" : "py-4"
+      )}
+    >
       <div className="container mx-auto px-6 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3 group">
@@ -70,23 +72,48 @@ export function PremiumNavigation() {
         </Link>
 
         {/* Navigation Links */}
-        <nav className="hidden md:flex items-center gap-2">
+        <nav
+          className="hidden md:flex items-center gap-2"
+          role="navigation"
+          aria-label="Main navigation"
+        >
           <Link href="/plan">
-            <Button variant="ghost" size="sm" className="text-white/80 hover:text-white">
-              <span className="mr-2">🗺️</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-white/80 hover:text-white focus:text-white"
+              aria-label="Plan your route"
+            >
+              <span className="mr-2" aria-hidden="true">
+                🗺️
+              </span>
               Plan Route
             </Button>
           </Link>
           <Link href="/share">
-            <Button variant="ghost" size="sm" className="text-white/80 hover:text-white">
-              <span className="mr-2">💰</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-white/80 hover:text-white focus:text-white"
+              aria-label="Start a punctuality challenge"
+            >
+              <span className="mr-2" aria-hidden="true">
+                💰
+              </span>
               Start Challenge
             </Button>
           </Link>
           <Link href="/watch">
-            <Button variant="ghost" size="sm" className="text-white/80 hover:text-white">
-              <span className="mr-2">👀</span>
-              Watch Friends
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-white/80 hover:text-white focus:text-white"
+              aria-label="Watch live challenges"
+            >
+              <span className="mr-2" aria-hidden="true">
+                👀
+              </span>
+              Watch Live
             </Button>
           </Link>
         </nav>
@@ -97,46 +124,67 @@ export function PremiumNavigation() {
             <Button
               variant="primary"
               onClick={connect}
-              className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white border-0 shadow-lg"
+              className="btn-primary border-0"
+              aria-label="Connect your cryptocurrency wallet"
             >
-              <span className="mr-2">🔗</span>
+              <span className="mr-2" aria-hidden="true">
+                🔗
+              </span>
               Connect Wallet
             </Button>
           ) : (
             <div className="flex items-center gap-3">
-              {/* Network Status */}
+              {/* Network Status with better accessibility */}
               {!isOnSomnia && (
                 <Button
                   variant="secondary"
                   onClick={switchToSomnia}
-                  className="text-xs"
+                  className="btn-secondary text-xs"
+                  aria-label="Switch to Somnia blockchain network"
                 >
                   Switch to Somnia
                 </Button>
               )}
-              
-              {/* Wallet Info */}
-              <div className="glass-enhanced px-4 py-2 rounded-xl flex items-center gap-3">
+
+              {/* Wallet Info with better structure */}
+              <div className="card-enhanced px-4 py-2 flex items-center gap-3">
                 <div className="flex items-center gap-2">
-                  <div className={cn(
-                    "w-2 h-2 rounded-full animate-pulse",
-                    isOnSomnia ? "bg-green-400" : "bg-orange-400"
-                  )} />
+                  <div
+                    className={cn(
+                      "w-2 h-2 rounded-full",
+                      isOnSomnia
+                        ? "bg-green-400 animate-pulse"
+                        : "bg-orange-400"
+                    )}
+                    aria-hidden="true"
+                  />
                   <span className="text-xs font-mono text-white/90">
                     {isOnSomnia ? "SOMNIA" : "WRONG_NET"}
                   </span>
                 </div>
-                <div className="w-px h-4 bg-white/20" />
+                <div className="w-px h-4 bg-white/20" aria-hidden="true" />
                 <span className="text-sm font-mono text-white/90">
                   {formatAddress(address!)}
                 </span>
                 <button
                   onClick={disconnect}
-                  className="text-white/60 hover:text-red-400 transition-colors p-1 hover:bg-red-500/10 rounded"
-                  title="Disconnect"
+                  className="text-white/60 hover:text-red-400 transition-colors p-1 hover:bg-red-500/10 rounded focus:outline-none focus:ring-2 focus:ring-red-400"
+                  title="Disconnect wallet"
+                  aria-label="Disconnect wallet"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
                   </svg>
                 </button>
               </div>
@@ -145,9 +193,25 @@ export function PremiumNavigation() {
 
           {/* Mobile Menu Button */}
           <div className="md:hidden">
-            <Button variant="ghost" className="p-2">
-              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            <Button
+              variant="ghost"
+              className="p-2"
+              aria-label="Open mobile menu"
+              aria-expanded="false"
+            >
+              <svg
+                className="w-5 h-5 text-white"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
               </svg>
             </Button>
           </div>
@@ -156,10 +220,12 @@ export function PremiumNavigation() {
 
       {/* Network Status Bar */}
       {isConnected && (
-        <div className={cn(
-          "border-t border-white/10 px-6 py-2 transition-all duration-300",
-          isScrolled ? "opacity-0 h-0 py-0" : "opacity-100"
-        )}>
+        <div
+          className={cn(
+            "border-t border-white/10 px-6 py-2 transition-all duration-300",
+            isScrolled ? "opacity-0 h-0 py-0" : "opacity-100"
+          )}
+        >
           <div className="container mx-auto flex items-center justify-between text-xs">
             <div className="flex items-center gap-4 text-white/60">
               <span className="flex items-center gap-1">

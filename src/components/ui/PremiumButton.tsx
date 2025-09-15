@@ -3,7 +3,14 @@ import { cn } from "@/lib/utils";
 import { LoadingSpinner } from "./LoadingSpinner";
 
 interface PremiumButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "glass" | "outline" | "ghost" | "danger" | "success";
+  variant?:
+    | "primary"
+    | "secondary"
+    | "glass"
+    | "outline"
+    | "ghost"
+    | "danger"
+    | "success";
   size?: "sm" | "md" | "lg" | "xl";
   isLoading?: boolean;
   loadingText?: string;
@@ -13,39 +20,47 @@ interface PremiumButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   pulse?: boolean;
   gradient?: boolean;
   glass?: boolean;
+  "aria-label"?: string;
+  "aria-describedby"?: string;
 }
 
 // Single source of truth for all buttons - replaces Button, EnhancedButton, MobileOptimizedButton
 export const Button = forwardRef<HTMLButtonElement, PremiumButtonProps>(
-  ({ 
-    children, 
-    className, 
-    variant = "primary",
-    size = "md",
-    isLoading = false,
-    loadingText,
-    icon,
-    iconPosition = "left",
-    glow = false,
-    pulse = false,
-    gradient = false,
-    glass = false,
-    disabled,
-    ...props 
-  }, ref) => {
+  (
+    {
+      children,
+      className,
+      variant = "primary",
+      size = "md",
+      isLoading = false,
+      loadingText,
+      icon,
+      iconPosition = "left",
+      glow = false,
+      pulse = false,
+      gradient = false,
+      glass = false,
+      disabled,
+      ...props
+    },
+    ref
+  ) => {
     const baseClasses = cn(
       "relative inline-flex items-center justify-center",
       "font-bold tracking-wide transition-all duration-300",
-      "focus:outline-none focus:ring-2 focus:ring-offset-2",
+      "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2",
+      "focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2",
       "transform-gpu will-change-transform",
-      "overflow-hidden group"
+      "overflow-hidden group",
+      // Better focus visibility
+      "focus:z-10 relative"
     );
 
     const sizeClasses = {
       sm: "px-4 py-2 text-sm rounded-lg gap-2",
-      md: "px-6 py-3 text-base rounded-xl gap-3", 
+      md: "px-6 py-3 text-base rounded-xl gap-3",
       lg: "px-8 py-4 text-lg rounded-xl gap-3",
-      xl: "px-10 py-5 text-xl rounded-2xl gap-4"
+      xl: "px-10 py-5 text-xl rounded-2xl gap-4",
     };
 
     const variantClasses = {
@@ -57,7 +72,7 @@ export const Button = forwardRef<HTMLButtonElement, PremiumButtonProps>(
       ),
       secondary: cn(
         "bg-gradient-to-r from-gray-600 to-gray-700",
-        "hover:from-gray-700 hover:to-gray-800", 
+        "hover:from-gray-700 hover:to-gray-800",
         "text-white shadow-lg hover:shadow-xl",
         "focus:ring-gray-500"
       ),
@@ -87,18 +102,32 @@ export const Button = forwardRef<HTMLButtonElement, PremiumButtonProps>(
         "hover:from-green-700 hover:to-emerald-700",
         "text-white shadow-lg hover:shadow-xl",
         "focus:ring-green-500"
-      )
+      ),
     };
 
-    const glowClasses = glow ? {
-      primary: "shadow-blue-500/25 hover:shadow-blue-500/40",
-      secondary: "shadow-gray-500/25 hover:shadow-gray-500/40",
-      glass: "shadow-white/10 hover:shadow-white/20",
-      outline: "shadow-white/10 hover:shadow-white/20", 
-      ghost: "shadow-white/5 hover:shadow-white/10",
-      danger: "shadow-red-500/25 hover:shadow-red-500/40",
-      success: "shadow-green-500/25 hover:shadow-green-500/40"
-    }[variant] : "";
+    const glowClasses = glow
+      ? {
+          primary: "shadow-blue-500/25 hover:shadow-blue-500/40",
+          secondary: "shadow-gray-500/25 hover:shadow-gray-500/40",
+          glass: "shadow-white/10 hover:shadow-white/20",
+          outline: "shadow-white/10 hover:shadow-white/20",
+          ghost: "shadow-white/5 hover:shadow-white/10",
+          danger: "shadow-red-500/25 hover:shadow-red-500/40",
+          success: "shadow-green-500/25 hover:shadow-green-500/40",
+        }[variant]
+      : "";
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+      // Handle keyboard activation
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        if (!isDisabled && props.onClick) {
+          props.onClick(e as any);
+        }
+      }
+      // Call original onKeyDown if provided
+      props.onKeyDown?.(e);
+    };
 
     const isDisabled = disabled || isLoading;
 
@@ -119,6 +148,10 @@ export const Button = forwardRef<HTMLButtonElement, PremiumButtonProps>(
           className
         )}
         disabled={isDisabled}
+        onKeyDown={handleKeyDown}
+        aria-disabled={isDisabled}
+        aria-busy={isLoading}
+        tabIndex={isDisabled ? -1 : 0}
         {...props}
       >
         {/* Enhanced Shimmer & Sparkle Effect */}
@@ -159,33 +192,34 @@ export const Button = forwardRef<HTMLButtonElement, PremiumButtonProps>(
   }
 );
 
-Button.displayName = 'Button';
+Button.displayName = "Button";
 
 // Export both names for compatibility during transition
 export const PremiumButton = Button;
 
 // Floating Action Button Variant
-interface FloatingButtonProps extends Omit<PremiumButtonProps, 'variant' | 'size'> {
+interface FloatingButtonProps
+  extends Omit<PremiumButtonProps, "variant" | "size"> {
   size?: "md" | "lg";
   position?: "bottom-right" | "bottom-left" | "top-right" | "top-left";
 }
 
-export function FloatingButton({ 
+export function FloatingButton({
   position = "bottom-right",
   size = "lg",
   className,
-  ...props 
+  ...props
 }: FloatingButtonProps) {
   const positionClasses = {
     "bottom-right": "fixed bottom-6 right-6",
-    "bottom-left": "fixed bottom-6 left-6", 
+    "bottom-left": "fixed bottom-6 left-6",
     "top-right": "fixed top-6 right-6",
-    "top-left": "fixed top-6 left-6"
+    "top-left": "fixed top-6 left-6",
   };
 
   const sizeClasses = {
     md: "w-12 h-12 rounded-full",
-    lg: "w-16 h-16 rounded-2xl"
+    lg: "w-16 h-16 rounded-2xl",
   };
 
   return (
@@ -211,25 +245,27 @@ interface ButtonGroupProps {
   spacing?: "none" | "sm" | "md";
 }
 
-export function ButtonGroup({ 
-  children, 
+export function ButtonGroup({
+  children,
   className,
   orientation = "horizontal",
-  spacing = "sm" 
+  spacing = "sm",
 }: ButtonGroupProps) {
   const spacingClasses = {
     none: "gap-0",
     sm: "gap-2",
-    md: "gap-4"
+    md: "gap-4",
   };
 
   return (
-    <div className={cn(
-      "flex",
-      orientation === "horizontal" ? "flex-row" : "flex-col",
-      spacingClasses[spacing],
-      className
-    )}>
+    <div
+      className={cn(
+        "flex",
+        orientation === "horizontal" ? "flex-row" : "flex-col",
+        spacingClasses[spacing],
+        className
+      )}
+    >
       {children}
     </div>
   );

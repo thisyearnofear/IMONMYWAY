@@ -7,19 +7,27 @@ interface DelightfulButtonProps extends React.ComponentProps<typeof Button> {
   hoverEmoji?: string;
   successEmoji?: string;
   onDelightfulClick?: () => void;
+  "aria-label"?: string;
 }
 
-export const DelightfulButton = forwardRef<HTMLButtonElement, DelightfulButtonProps>(
-  ({ 
-    children, 
-    className, 
-    emoji,
-    hoverEmoji,
-    successEmoji = "🎉",
-    onDelightfulClick,
-    onClick,
-    ...props 
-  }, ref) => {
+export const DelightfulButton = forwardRef<
+  HTMLButtonElement,
+  DelightfulButtonProps
+>(
+  (
+    {
+      children,
+      className,
+      emoji,
+      hoverEmoji,
+      successEmoji = "🎉",
+      onDelightfulClick,
+      onClick,
+      "aria-label": ariaLabel,
+      ...props
+    },
+    ref
+  ) => {
     const [isClicked, setIsClicked] = useState(false);
     const [currentEmoji, setCurrentEmoji] = useState(emoji);
 
@@ -27,13 +35,13 @@ export const DelightfulButton = forwardRef<HTMLButtonElement, DelightfulButtonPr
       // Trigger success animation
       setIsClicked(true);
       setCurrentEmoji(successEmoji);
-      
+
       // Call the delightful callback
       onDelightfulClick?.();
-      
+
       // Call original onClick
       onClick?.(e);
-      
+
       // Reset after animation
       setTimeout(() => {
         setIsClicked(false);
@@ -55,24 +63,35 @@ export const DelightfulButton = forwardRef<HTMLButtonElement, DelightfulButtonPr
         onClick={handleClick}
         onMouseEnter={() => hoverEmoji && setCurrentEmoji(hoverEmoji)}
         onMouseLeave={() => !isClicked && setCurrentEmoji(emoji)}
+        aria-label={
+          ariaLabel || (typeof children === "string" ? children : "Button")
+        }
         {...props}
       >
         {/* Floating hearts on click */}
         {isClicked && (
           <>
-            <div className="absolute -top-2 left-1/4 text-red-400 animate-ping opacity-75">💖</div>
-            <div className="absolute -top-3 right-1/4 text-yellow-400 animate-ping opacity-75 animation-delay-100">⭐</div>
-            <div className="absolute -top-2 left-3/4 text-green-400 animate-ping opacity-75 animation-delay-200">✨</div>
+            <div className="absolute -top-2 left-1/4 text-red-400 animate-ping opacity-75">
+              💖
+            </div>
+            <div className="absolute -top-3 right-1/4 text-yellow-400 animate-ping opacity-75 animation-delay-100">
+              ⭐
+            </div>
+            <div className="absolute -top-2 left-3/4 text-green-400 animate-ping opacity-75 animation-delay-200">
+              ✨
+            </div>
           </>
         )}
-        
+
         {/* Button content with emoji */}
         <span className="flex items-center gap-2">
           {currentEmoji && (
-            <span className={cn(
-              "transition-transform duration-200",
-              isClicked && "scale-125 rotate-12"
-            )}>
+            <span
+              className={cn(
+                "transition-transform duration-200",
+                isClicked && "scale-125 rotate-12"
+              )}
+            >
               {currentEmoji}
             </span>
           )}
@@ -81,14 +100,16 @@ export const DelightfulButton = forwardRef<HTMLButtonElement, DelightfulButtonPr
 
         {/* Ripple effect */}
         <div className="absolute inset-0 overflow-hidden rounded-inherit">
-          <div className={cn(
-            "absolute inset-0 bg-white/20 rounded-full scale-0 transition-transform duration-500",
-            isClicked && "scale-150 opacity-0"
-          )} />
+          <div
+            className={cn(
+              "absolute inset-0 bg-white/20 rounded-full scale-0 transition-transform duration-500",
+              isClicked && "scale-150 opacity-0"
+            )}
+          />
         </div>
       </Button>
     );
   }
 );
 
-DelightfulButton.displayName = 'DelightfulButton';
+DelightfulButton.displayName = "DelightfulButton";

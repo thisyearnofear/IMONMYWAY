@@ -7,6 +7,7 @@
 @import '../styles/animations.css';
 @import '../styles/premium-glass.css';
 @import '../styles/premium-animations.css';
+@import '../styles/enhanced-aesthetics.css';
 
 :root {
   --background: #0a0a1a;
@@ -35,7 +36,22 @@ body {
   min-height: 100vh;
 }
 
+/* Shimmer animation for skeletons */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
 @layer components {
+  /* Core utility classes */
   .glass {
     background: var(--surface);
     backdrop-filter: blur(20px);
@@ -50,101 +66,13 @@ body {
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
   }
 
-  .terminal {
-    background: rgba(0, 0, 0, 0.8);
-    border: 2px solid var(--border);
-    font-family: var(--font-mono);
-    font-size: 0.875rem;
-    color: var(--success);
-    padding: 1rem;
-    border-radius: 8px;
-  }
-
-  .terminal-line {
-    margin-bottom: 0.25rem;
-    opacity: 0.9;
-  }
-
-  .terminal-line::before {
-    content: '> ';
-    color: var(--primary);
-    font-weight: 600;
-  }
-
-  .btn-pixel {
-    background: var(--surface);
-    border: 2px solid var(--border);
-    color: var(--text-primary);
-    font-family: var(--font-mono);
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    transition: all 0.2s ease;
-  }
-
-  .btn-pixel:hover {
-    background: var(--primary);
-    border-color: var(--primary);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(20, 110, 245, 0.3);
-  }
-
-  .data-panel {
-    background: var(--surface);
-    border: 2px solid var(--border);
-    backdrop-filter: blur(20px);
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  .data-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 0.25rem 0;
-    border-bottom: 1px solid rgba(79, 156, 255, 0.1);
-  }
-
-  .data-label {
-    color: var(--text-secondary);
-  }
-
-  .data-value {
-    color: var(--text-primary);
-    font-weight: 600;
-  }
-
+  /* Specialized utility classes */
   .grid-overlay {
     background-image: 
       linear-gradient(to right, rgba(79, 156, 255, 0.1) 1px, transparent 1px),
       linear-gradient(to bottom, rgba(79, 156, 255, 0.1) 1px, transparent 1px);
     background-size: 20px 20px;
     pointer-events: none;
-  }
-
-  .status-online { color: var(--success); }
-  .status-offline { color: var(--error); }
-  .status-pending { color: var(--warning); }
-
-  .progress-bar {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid var(--border);
-    overflow: hidden;
-  }
-
-  .progress-fill {
-    background: linear-gradient(90deg, var(--primary), var(--success));
-    height: 100%;
-    transition: width 0.3s ease;
-  }
-
-  .glow-primary {
-    box-shadow: 0 0 20px rgba(20, 110, 245, 0.3);
-  }
-
-  .glow-success {
-    box-shadow: 0 0 20px rgba(10, 228, 72, 0.3);
   }
 
   .pixel-perfect {
@@ -160,6 +88,26 @@ body {
 
   .safe-area-top {
     padding-top: env(safe-area-inset-top);
+  }
+
+  /* Enhanced focus styles for accessibility */
+  .focus-visible {
+    outline: 2px solid #146ef5;
+    outline-offset: 2px;
+  }
+
+  /* Custom focus ring */
+  .focus-ring {
+    box-shadow: 0 0 0 2px rgba(20, 110, 245, 0.5);
+  }
+
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    .glass-enhanced,
+    .glass-button {
+      border-width: 2px;
+      border-color: currentColor;
+    }
   }
 }
 
