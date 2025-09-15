@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/PremiumButton";
 import { Input } from "@/components/ui/Input";
-import { Card } from "@/components/ui/Card";
+import { Card } from "@/components/ui/PremiumCard";
 import { ReputationBadge } from "@/components/reputation/ReputationBadge";
 import { CountdownTimer } from "@/components/ui/CountdownTimer";
 import { ProgressBar } from "@/components/ui/ProgressBar";
@@ -217,12 +217,8 @@ export function UnifiedBettingInterface({
 
       <Button
         variant="primary"
-        size="lg"
         className="w-full"
-        asyncOperation={handleCreateStake}
-        loadingText="Creating Commitment..."
-        successText="Commitment Created!"
-        animationIntensity="intense"
+        onClick={handleCreateStake}
         disabled={!destination || parseFloat(stakeAmount) <= 0}
       >
         Stake {stakeAmount} STT
@@ -352,13 +348,9 @@ export function UnifiedBettingInterface({
       </div>
 
       <Button
-        variant={bettingFor ? "success" : "danger"}
-        size="lg"
+        variant={bettingFor ? "primary" : "secondary"}
         className="w-full"
-        asyncOperation={handlePlaceBet}
-        loadingText="Placing Bet..."
-        successText="Bet Placed!"
-        animationIntensity="intense"
+        onClick={handlePlaceBet}
         disabled={parseFloat(betAmount) <= 0}
       >
         Bet {betAmount} STT {bettingFor ? "FOR" : "AGAINST"} Success

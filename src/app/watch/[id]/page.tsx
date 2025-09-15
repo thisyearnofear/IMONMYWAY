@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { Navigation } from "@/components/layout/Navigation";
+import { PremiumNavigation } from "@/components/layout/PremiumNavigation";
 import { ToastContainer } from "@/components/ui/Toast";
 import { UnifiedBettingInterface } from "@/components/betting/UnifiedBettingInterface";
 import { ReputationBadge } from "@/components/reputation/ReputationBadge";
@@ -178,7 +178,7 @@ export default function WatchPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Navigation />
+        <PremiumNavigation />
         <main className="container mx-auto px-4 py-8 max-w-4xl">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
@@ -192,7 +192,7 @@ export default function WatchPage() {
   if (!watchedSession) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Navigation />
+        <PremiumNavigation />
         <main className="container mx-auto px-4 py-8 max-w-4xl">
           <div className="text-center">
             <h1 className="text-2xl font-bold text-gray-900 mb-4">
@@ -213,7 +213,7 @@ export default function WatchPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navigation />
+      <PremiumNavigation />
 
       <main className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="text-center mb-6">

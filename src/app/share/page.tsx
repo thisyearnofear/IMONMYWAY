@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/PremiumButton";
 import { SmartStakeInput } from "@/components/smart/SmartStakeInput";
 import { MapContainer } from "@/components/map/MapContainer";
 import { useWallet } from "@/hooks/useWallet";

@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { Navigation } from '@/components/layout/Navigation'
+import { PremiumNavigation } from "@/components/layout/PremiumNavigation";
 import { ToastContainer } from '@/components/ui/Toast'
-import { Button } from '@/components/ui/Button'
+import { Button } from "@/components/ui/PremiumButton";
 import { Input } from '@/components/ui/Input'
 import { SpeedPicker } from '@/components/ui/SpeedPicker'
 import { MobilePlanControls } from '@/components/mobile/MobilePlanControls'
@@ -171,7 +171,7 @@ export default function PlanPage() {
   // Desktop layout
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navigation />
+      <PremiumNavigation />
       
       <main className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="text-center mb-6">

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/PremiumButton'
 import { cn } from '@/lib/utils'
 
 export function ModeSwitch() {

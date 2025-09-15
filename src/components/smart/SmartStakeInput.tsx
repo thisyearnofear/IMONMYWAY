@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/PremiumButton";
 import { Input } from "@/components/ui/Input";
-import { Card } from "@/components/ui/Card";
+import { Card } from "@/components/ui/PremiumCard";
 import { useSmartDefaults } from "@/hooks/useSmartDefaults";
 import { useComponentAnimation } from "@/hooks/useAnimation";
 import { useComponentNotification } from "@/hooks/useNotification";
@@ -310,14 +310,10 @@ export function SmartStakeInput({
 
       {/* Enhanced Stake Button */}
       <Button
-        asyncOperation={handleSubmit}
+        onClick={handleSubmit}
         disabled={!!error || !stakeAmount || isLoading}
         className="w-full"
-        loadingText="Creating Commitment..."
-        successText="Commitment Created!"
-        animationIntensity="intense"
         variant="primary"
-        size="lg"
       >
         Stake {stakeAmount} STT
       </Button>

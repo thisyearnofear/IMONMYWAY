@@ -1,11 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '@/components/ui/Button'
+import { Button } from "@/components/ui/PremiumButton";
 import { Input } from '@/components/ui/Input'
 import { SpeedPicker } from '@/components/ui/SpeedPicker'
 import { BottomSheet } from '@/components/ui/BottomSheet'
-import { FloatingButton } from '@/components/ui/FloatingButton'
+import { FloatingButton } from "@/components/ui/PremiumButton";
 import { useLocationStore } from '@/stores/locationStore'
 import { formatTime, formatDistance } from '@/lib/utils'
 
@@ -71,8 +71,7 @@ export function MobilePlanControls({
       {/* Main Action Button */}
       <FloatingButton
         onClick={() => setShowRouteForm(true)}
-        variant="primary"
-        position="bottom-center"
+        position="bottom-right"
         size="lg"
       >
         <span className="text-xl">🗺️</span>
@@ -82,7 +81,6 @@ export function MobilePlanControls({
       {planData && (
         <FloatingButton
           onClick={() => setShowResults(true)}
-          variant="success"
           position="bottom-right"
           size="md"
         >

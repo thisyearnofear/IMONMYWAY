@@ -5,6 +5,8 @@
 @tailwind utilities;
 
 @import '../styles/animations.css';
+@import '../styles/premium-glass.css';
+@import '../styles/premium-animations.css';
 
 :root {
   --background: #0a0a1a;

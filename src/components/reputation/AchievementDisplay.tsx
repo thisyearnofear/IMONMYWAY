@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useAchievements } from "@/hooks/useAchievements";
-import { Button } from "@/components/ui/Button";
+import { Button } from '@/components/ui/PremiumButton'
 import { SuccessAnimation } from "@/components/ui/SuccessAnimation";
 
 export function AchievementDisplay() {

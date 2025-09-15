@@ -1,6 +1,6 @@
 'use client'
 
-import { Button } from './Button'
+import { Button } from './PremiumButton'
 import { Input } from './Input'
 import { SPEED_PRESETS, findPresetByPace } from '@/lib/speed'
 import { useLocationStore } from '@/stores/locationStore'
@@ -50,10 +50,8 @@ export function SpeedPicker({ className, showCustom = true }: SpeedPickerProps) 
         {SPEED_PRESETS.map((preset) => (
           <Button
             key={preset.id}
-            variant="secondary"
-            size="sm"
+            variant={currentPreset?.id === preset.id ? "primary" : "secondary"}
             icon={preset.icon}
-            selected={currentPreset?.id === preset.id}
             onClick={() => handlePresetSelect(preset.pace)}
             className="text-left justify-start h-auto py-3"
           >

@@ -1,10 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/PremiumButton'
 import { SpeedPicker } from '@/components/ui/SpeedPicker'
 import { BottomSheet } from '@/components/ui/BottomSheet'
-import { FloatingButton } from '@/components/ui/FloatingButton'
+import { FloatingButton } from '@/components/ui/PremiumButton'
 import { StatusIndicator } from '@/components/ui/StatusIndicator'
 import { useLocationStore } from '@/stores/locationStore'
 import { useUIStore } from '@/stores/uiStore'
@@ -100,8 +100,7 @@ export function MobileShareControls({
       {!isSharing ? (
         <FloatingButton
           onClick={onCreateSession}
-          variant="primary"
-          position="bottom-center"
+          position="bottom-right"
           size="lg"
           className={isCreatingSession ? 'animate-pulse' : ''}
         >
@@ -114,8 +113,7 @@ export function MobileShareControls({
       ) : (
         <FloatingButton
           onClick={() => setShowShareOptions(true)}
-          variant="success"
-          position="bottom-center"
+          position="bottom-right"
           size="lg"
         >
           <span className="text-xl">📤</span>

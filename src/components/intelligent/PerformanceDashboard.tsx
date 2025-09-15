@@ -12,7 +12,7 @@ import { usePerformanceMonitor } from '@/hooks/usePerformanceMonitor'
 import { useNetworkResilience } from '@/lib/engines/network-resilience-engine'
 import { useOptimizedDatabase } from '@/lib/database/optimized-db-service'
 import { useComponentExperience } from '@/lib/engines/unified-experience-engine'
-import { EnhancedButton } from '@/components/core/EnhancedButton'
+import { Button } from '@/components/ui/PremiumButton'
 import { UnifiedLoader } from '@/components/core/UnifiedLoader'
 import { cn } from '@/lib/utils'
 
@@ -298,14 +298,13 @@ export function PerformanceDashboard() {
             </div>
           </div>
           {rec.action && (
-            <EnhancedButton
-              size="sm"
-              variant="outline"
+            <Button
+              variant="secondary"
               onClick={rec.action}
               className="ml-4"
             >
               Fix
-            </EnhancedButton>
+            </Button>
           )}
         </div>
       </div>
@@ -319,14 +318,13 @@ export function PerformanceDashboard() {
   if (!isVisible) {
     return (
       <div className="fixed bottom-4 right-4 z-50">
-        <EnhancedButton
+        <Button
           onClick={() => setIsVisible(true)}
-          variant="outline"
-          size="sm"
+          variant="secondary"
           className="bg-white shadow-lg"
         >
           📊 Performance
-        </EnhancedButton>
+        </Button>
       </div>
     )
   }
@@ -342,13 +340,12 @@ export function PerformanceDashboard() {
           </div>
           <div className="flex items-center space-x-2">
             <span className="text-xs text-gray-500">Ctrl+Shift+P</span>
-            <EnhancedButton
+            <Button
               onClick={() => setIsVisible(false)}
               variant="ghost"
-              size="sm"
             >
               ✕
-            </EnhancedButton>
+            </Button>
           </div>
         </div>
 
@@ -416,15 +413,15 @@ export function PerformanceDashboard() {
                   <div className="bg-gray-50 rounded-lg p-4">
                     <h3 className="font-medium mb-2">Quick Actions</h3>
                     <div className="flex flex-wrap gap-2">
-                      <EnhancedButton size="sm" onClick={collectMetrics}>
+                      <Button onClick={collectMetrics}>
                         🔄 Refresh Metrics
-                      </EnhancedButton>
-                      <EnhancedButton size="sm" variant="outline" onClick={() => localStorage.clear()}>
+                      </Button>
+                      <Button variant="secondary" onClick={() => localStorage.clear()}>
                         🗑️ Clear Cache
-                      </EnhancedButton>
-                      <EnhancedButton size="sm" variant="outline" onClick={() => window.location.reload()}>
+                      </Button>
+                      <Button variant="secondary" onClick={() => window.location.reload()}>
                         ↻ Reload App
-                      </EnhancedButton>
+                      </Button>
                     </div>
                   </div>
                 </div>

@@ -9,7 +9,7 @@
 
 import { Component, ReactNode, ErrorInfo, useState } from 'react'
 import { GlobalErrorHandler } from '@/lib/engines/error-handling-engine'
-import { EnhancedButton } from './EnhancedButton'
+import { Button } from '@/components/ui/PremiumButton';
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -221,34 +221,30 @@ function ErrorFallbackUI({
 
         {/* Action Buttons */}
         <div className="space-y-3 mb-6">
-          <EnhancedButton
+          <Button
             onClick={onRetry}
             variant="primary"
-            size="lg"
             className="w-full"
-            hapticFeedback={true}
           >
             Try Again
-          </EnhancedButton>
+          </Button>
           
           <div className="grid grid-cols-2 gap-3">
-            <EnhancedButton
+            <Button
               onClick={handleRefresh}
-              variant="outline"
-              size="md"
+              variant="secondary"
               className="w-full"
             >
               Refresh Page
-            </EnhancedButton>
+            </Button>
             
-            <EnhancedButton
+            <Button
               onClick={handleGoHome}
               variant="ghost"
-              size="md"
               className="w-full"
             >
               Go Home
-            </EnhancedButton>
+            </Button>
           </div>
         </div>
 

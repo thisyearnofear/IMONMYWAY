@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/Button";
+import { Button } from '@/components/ui/PremiumButton'
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { useWallet } from "@/hooks/useWallet";
 import { useUIStore } from "@/stores/uiStore";

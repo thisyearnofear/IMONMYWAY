@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { SmartNotificationCenter } from '@/components/smart/SmartNotificationCenter'
-import { Navigation } from "@/components/layout/Navigation";
+import { PremiumNavigation } from "@/components/layout/PremiumNavigation";
 import { GlobalErrorBoundary } from '@/components/core/GlobalErrorBoundary';
 
 export const metadata: Metadata = {
@@ -28,7 +28,7 @@ export default function RootLayout({
     <html lang="en">
       <body className="min-h-screen bg-background text-foreground">
         <GlobalErrorBoundary enableRecovery={true} showErrorDetails={process.env.NODE_ENV === 'development'}>
-          <Navigation />
+          <PremiumNavigation />
           {children}
           <SmartNotificationCenter />
         </GlobalErrorBoundary>
