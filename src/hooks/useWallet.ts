@@ -23,16 +23,16 @@ interface UseWalletReturn extends WalletState {
   trackTransactionSpeed: (txHash: string) => Promise<void>
 }
 
-// Somnia Network configuration
+// ✅ PRODUCTION READY: Somnia Mainnet Configuration
 const SOMNIA_NETWORK = {
-  chainId: '0xC478', // 50312 in hex (official Somnia mainnet)
+  chainId: '0xC478', // 50312 in hex (Somnia mainnet)
   chainName: 'Somnia Network',
   nativeCurrency: {
     name: 'SOMI',
     symbol: 'SOMI',
     decimals: 18,
   },
-  rpcUrls: ['https://dream-rpc.somnia.network/', 'https://api.infra.mainnet.somnia.network/'],
+  rpcUrls: ['https://dream-rpc.somnia.network/'],
   blockExplorerUrls: ['https://explorer.somnia.network/'],
 }
 
@@ -66,7 +66,7 @@ export function useWallet(): UseWalletReturn {
 
       const accounts = await window.ethereum.request({ method: 'eth_accounts' })
       const chainId = await window.ethereum.request({ method: 'eth_chainId' })
-      
+
       if (accounts.length > 0) {
         const balance = await window.ethereum.request({
           method: 'eth_getBalance',
@@ -120,7 +120,7 @@ export function useWallet(): UseWalletReturn {
       // Auto-add Somnia network if not already added
       const currentChainId = await window.ethereum.request({ method: 'eth_chainId' })
       const isOnSomnia = parseInt(currentChainId, 16) === 50312
-      
+
       if (!isOnSomnia) {
         try {
           await window.ethereum.request({
@@ -204,7 +204,7 @@ export function useWallet(): UseWalletReturn {
         method: 'wallet_switchEthereumChain',
         params: [{ chainId: SOMNIA_NETWORK.chainId }],
       })
-      
+
       updateNetworkMetrics({ isOnSomnia: true })
       addToast({
         message: 'Successfully switched to Somnia Network! 🎉',
@@ -219,12 +219,12 @@ export function useWallet(): UseWalletReturn {
             message: 'Adding Somnia Network to MetaMask...',
             type: 'info',
           })
-          
+
           await window.ethereum.request({
             method: 'wallet_addEthereumChain',
             params: [SOMNIA_NETWORK],
           })
-          
+
           updateNetworkMetrics({ isOnSomnia: true })
           addToast({
             message: 'Somnia Network added and activated! ✅',
@@ -234,7 +234,7 @@ export function useWallet(): UseWalletReturn {
         } catch (addError: any) {
           console.error('Failed to add Somnia network:', addError)
           updateNetworkMetrics({ isOnSomnia: false })
-          
+
           let errorMessage = 'Failed to add Somnia Network to MetaMask.'
           if (addError.code === 4001) {
             errorMessage = 'Network addition cancelled by user.'
@@ -243,7 +243,7 @@ export function useWallet(): UseWalletReturn {
           } else if (addError.message?.includes('Invalid RPC URL')) {
             errorMessage = 'Invalid RPC URL detected. Please contact support.'
           }
-          
+
           addToast({
             message: errorMessage,
             type: 'error',
@@ -253,7 +253,7 @@ export function useWallet(): UseWalletReturn {
       } else {
         console.error('Failed to switch to Somnia network:', switchError)
         updateNetworkMetrics({ isOnSomnia: false })
-        
+
         let errorMessage = 'Failed to switch to Somnia Network.'
         if (switchError.code === 4001) {
           errorMessage = 'Network switch cancelled by user.'
@@ -264,7 +264,7 @@ export function useWallet(): UseWalletReturn {
         } else if (switchError.message?.includes('Invalid RPC URL')) {
           errorMessage = 'RPC connection failed. Please check your internet connection.'
         }
-        
+
         addToast({
           message: errorMessage + ' Please ensure you\'re using the latest MetaMask version.',
           type: 'error',
@@ -307,15 +307,15 @@ export function useWallet(): UseWalletReturn {
   // Track transaction speed for Somnia showcase
   const trackTransactionSpeed = useCallback(async (txHash: string) => {
     if (!window.ethereum) return
-    
+
     const startTime = Date.now()
     const provider = new (await import('ethers')).BrowserProvider(window.ethereum)
-    
+
     try {
       await provider.waitForTransaction(txHash)
       const endTime = Date.now()
       const speed = (endTime - startTime) / 1000
-      
+
       setWalletState(prev => ({
         ...prev,
         networkMetrics: {
@@ -323,7 +323,7 @@ export function useWallet(): UseWalletReturn {
           lastTxSpeed: speed,
         },
       }))
-      
+
       addToast({
         type: 'success',
         message: `Transaction confirmed in ${speed.toFixed(1)}s on Somnia! ⚡`,

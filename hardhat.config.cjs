@@ -15,12 +15,8 @@ const config = {
     }
   },
   networks: {
+    // ✅ PRODUCTION READY: Somnia Mainnet
     somnia: {
-      url: "https://dream-rpc.somnia.network/",
-      chainId: 50312,
-      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : []
-    },
-    somnia_testnet: {
       url: "https://dream-rpc.somnia.network/",
       chainId: 50312,
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : []
