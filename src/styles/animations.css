@@ -3,30 +3,59 @@
 
 /* Performance-optimized unique animations */
 @keyframes bounce-gentle {
-  0%, 20%, 53%, 80%, 100% {
+
+  0%,
+  20%,
+  53%,
+  80%,
+  100% {
     transform: translate3d(0, 0, 0);
   }
-  40%, 43% {
+
+  40%,
+  43% {
     transform: translate3d(0, -8px, 0);
   }
+
   70% {
     transform: translate3d(0, -4px, 0);
   }
+
   90% {
     transform: translate3d(0, -2px, 0);
   }
 }
 
 @keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
-  20%, 40%, 60%, 80% { transform: translateX(2px); }
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: translateX(-2px);
+  }
+
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: translateX(2px);
+  }
 }
 
 @keyframes glow {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow: 0 0 5px rgba(59, 130, 246, 0.5);
   }
+
   50% {
     box-shadow: 0 0 20px rgba(59, 130, 246, 0.8), 0 0 30px rgba(59, 130, 246, 0.6);
   }
@@ -37,6 +66,7 @@
     transform: translateY(0) rotate(0deg);
     opacity: 1;
   }
+
   100% {
     transform: translateY(-100vh) rotate(720deg);
     opacity: 0;
@@ -44,12 +74,19 @@
 }
 
 @keyframes typing {
-  from { width: 0; }
-  to { width: 100%; }
+  from {
+    width: 0;
+  }
+
+  to {
+    width: 100%;
+  }
 }
 
 @keyframes blink {
-  50% { border-color: transparent; }
+  50% {
+    border-color: transparent;
+  }
 }
 
 @keyframes checkmark {
@@ -101,17 +138,130 @@
   transition: transform 0.1s ease-out;
 }
 
+/* Enhanced micro-interactions for delight */
+.pulse-gentle {
+  animation: pulse-gentle 2s ease-in-out infinite;
+}
+
+@keyframes pulse-gentle {
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.02);
+  }
+}
+
+.bounce-subtle {
+  animation: bounce-subtle 0.6s ease-out;
+}
+
+@keyframes bounce-subtle {
+  0% {
+    transform: translateY(0);
+  }
+
+  20% {
+    transform: translateY(-3px);
+  }
+
+  40% {
+    transform: translateY(-1px);
+  }
+
+  60% {
+    transform: translateY(-2px);
+  }
+
+  80% {
+    transform: translateY(-1px);
+  }
+
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.shimmer {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.heartbeat {
+  animation: heartbeat 1.5s ease-in-out infinite;
+}
+
+@keyframes heartbeat {
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  25% {
+    transform: scale(1.05);
+  }
+
+  50% {
+    transform: scale(1.1);
+  }
+
+  75% {
+    transform: scale(1.05);
+  }
+}
+
 .success-checkmark {
   stroke-dasharray: 16;
   stroke-dashoffset: 16;
   animation: checkmark 0.6s ease-in-out 0.2s forwards;
 }
 
+/* New utility classes for enhanced delight */
+.animate-pulse-gentle {
+  animation: pulse-gentle 2s ease-in-out infinite;
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+.animate-bounce-subtle {
+  animation: bounce-subtle 0.6s ease-out;
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+.animate-shimmer {
+  animation: shimmer 2s ease-in-out infinite;
+  will-change: background-position;
+}
+
+.animate-heartbeat {
+  animation: heartbeat 1.5s ease-in-out infinite;
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
 /* Performance optimizations */
 @media (max-width: 768px) {
   .animate-bounce-gentle {
-    animation-duration: 3s; /* Battery conservation */
+    animation-duration: 3s;
+    /* Battery conservation */
   }
+
   .animate-glow {
     animation-duration: 3s;
   }
@@ -119,13 +269,14 @@
 
 /* Accessibility: Respect user preferences */
 @media (prefers-reduced-motion: reduce) {
+
   .animate-bounce-gentle,
   .animate-shake,
   .animate-glow,
   .animate-confetti {
     animation: none;
   }
-  
+
   .hover-lift:hover {
     transform: none;
   }

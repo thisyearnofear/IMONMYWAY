@@ -8,6 +8,7 @@ interface DelightfulButtonProps extends React.ComponentProps<typeof Button> {
   successEmoji?: string;
   onDelightfulClick?: () => void;
   "aria-label"?: string;
+  context?: 'first_time' | 'returning' | 'achievement' | 'streak' | 'social';
 }
 
 export const DelightfulButton = forwardRef<
@@ -24,6 +25,7 @@ export const DelightfulButton = forwardRef<
       onDelightfulClick,
       onClick,
       "aria-label": ariaLabel,
+      context,
       ...props
     },
     ref
@@ -31,10 +33,26 @@ export const DelightfulButton = forwardRef<
     const [isClicked, setIsClicked] = useState(false);
     const [currentEmoji, setCurrentEmoji] = useState(emoji);
 
+    // Contextual response system - enhances existing celebration
+    const getContextualResponses = (ctx?: string) => {
+      const responses = {
+        first_time: ["🎉", "🌟", "✨", "🚀"],
+        returning: ["👋", "💫", "🎊", "🏠"],
+        achievement: ["🏆", "🎯", "💎", "⭐"],
+        streak: ["🔥", "⚡", "💥", "🌟"],
+        social: ["👥", "💫", "🎈", "🤝"]
+      };
+      return responses[ctx as keyof typeof responses] || ["🎉", "✨", "💫"];
+    };
+
     const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
       // Trigger success animation
       setIsClicked(true);
-      setCurrentEmoji(successEmoji);
+
+      // Use contextual responses for more delight
+      const contextualEmojis = getContextualResponses(context);
+      const randomEmoji = contextualEmojis[Math.floor(Math.random() * contextualEmojis.length)];
+      setCurrentEmoji(randomEmoji);
 
       // Call the delightful callback
       onDelightfulClick?.();

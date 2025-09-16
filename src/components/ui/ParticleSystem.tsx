@@ -177,3 +177,49 @@ export function RouteCompletedCelebration({
     />
   );
 }
+
+// Enhanced surprise achievement celebrations
+export function SurpriseAchievementCelebration({
+  trigger,
+  achievementType,
+  onComplete,
+}: {
+  trigger: boolean;
+  achievementType: 'midnight' | 'speed' | 'perfect_week' | 'social';
+  onComplete?: () => void;
+}) {
+  const surpriseConfigs = {
+    midnight: {
+      emojis: ["🦉", "🌙", "⭐", "✨", "🌃"],
+      colors: ["#6366f1", "#8b5cf6", "#06b6d4"],
+      particleCount: 15
+    },
+    speed: {
+      emojis: ["⚡", "💨", "🏃‍♂️", "🔥", "💫"],
+      colors: ["#f59e0b", "#d97706", "#ea580c"],
+      particleCount: 18
+    },
+    perfect_week: {
+      emojis: ["👑", "⭐", "🏆", "💎", "🎊"],
+      colors: ["#fbbf24", "#f59e0b", "#d97706"],
+      particleCount: 25
+    },
+    social: {
+      emojis: ["🤝", "👥", "💫", "🎈", "🎉"],
+      colors: ["#10b981", "#059669", "#047857"],
+      particleCount: 20
+    }
+  };
+
+  const config = surpriseConfigs[achievementType];
+
+  return (
+    <ParticleSystem
+      trigger={trigger}
+      particleCount={config.particleCount}
+      emojis={config.emojis}
+      colors={config.colors}
+      onComplete={onComplete}
+    />
+  );
+}

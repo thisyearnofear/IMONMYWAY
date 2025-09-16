@@ -17,7 +17,7 @@ interface CelebrationConfig {
 
 export function useAnimation() {
   const { metrics } = usePerformanceMonitor()
-  
+
   // Check for reduced motion preference
   const prefersReducedMotion = useMemo(() => {
     if (typeof window === 'undefined') return false
@@ -42,7 +42,7 @@ export function useAnimation() {
 
   // Smart animation classes based on context
   const getAnimationClass = useCallback((
-    type: 'enter' | 'exit' | 'hover' | 'press' | 'success' | 'error',
+    type: 'enter' | 'exit' | 'hover' | 'press' | 'success' | 'error' | 'delight' | 'heartbeat' | 'shimmer',
     intensity: 'subtle' | 'medium' | 'intense' = 'medium'
   ) => {
     const shouldReduce = prefersReducedMotion || metrics.isLowPerformance
@@ -77,6 +77,21 @@ export function useAnimation() {
         subtle: shouldReduce ? 'animate-pulse' : 'animate-shake',
         medium: shouldReduce ? 'animate-pulse' : 'animate-shake animate-error-glow',
         intense: shouldReduce ? 'animate-pulse' : 'animate-shake animate-error-glow animate-error-bounce'
+      },
+      delight: {
+        subtle: shouldReduce ? 'animate-pulse-gentle' : 'animate-bounce-subtle',
+        medium: shouldReduce ? 'animate-pulse-gentle' : 'animate-shimmer',
+        intense: shouldReduce ? 'animate-pulse-gentle' : 'animate-heartbeat'
+      },
+      heartbeat: {
+        subtle: 'animate-pulse-gentle',
+        medium: 'animate-heartbeat',
+        intense: 'animate-heartbeat animate-glow'
+      },
+      shimmer: {
+        subtle: 'animate-shimmer',
+        medium: 'animate-shimmer',
+        intense: 'animate-shimmer animate-glow'
       }
     }
 
@@ -86,7 +101,7 @@ export function useAnimation() {
   // Celebration system for major user achievements
   const triggerCelebration = useCallback(async (config: CelebrationConfig) => {
     const { type, intensity, haptic = true, sound = false } = config
-    
+
     // Skip intense celebrations on low-performance devices
     if (metrics.isLowPerformance && intensity === 'intense') {
       return triggerCelebration({ ...config, intensity: 'medium' })
@@ -108,7 +123,7 @@ export function useAnimation() {
       fixed inset-0 pointer-events-none z-[9999] 
       ${getAnimationClass('success', intensity)}
     `
-    
+
     // Add celebration content based on type
     const celebrationContent = {
       success: '🎉',
@@ -178,14 +193,14 @@ export function useComponentAnimation(componentName: string) {
 
   return {
     enterAnimation,
-    hoverAnimation, 
+    hoverAnimation,
     pressAnimation,
     getStaggeredDelay,
     triggerCelebration,
     // Component-specific animation combinations
     cardAnimation: `${enterAnimation} ${hoverAnimation}`,
     buttonAnimation: `${hoverAnimation} ${pressAnimation}`,
-    listItemAnimation: (index: number) => 
+    listItemAnimation: (index: number) =>
       `${enterAnimation} ${hoverAnimation}`,
     successAnimation: () => getAnimationClass('success', 'medium')
   }

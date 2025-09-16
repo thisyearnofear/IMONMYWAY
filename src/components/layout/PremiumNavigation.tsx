@@ -82,7 +82,7 @@ export function PremiumNavigation() {
               variant="ghost"
               size="sm"
               className="text-white/80 hover:text-white focus:text-white interactive-underline"
-              aria-label="Plan your route"
+              aria-label="Plan your route on an interactive map"
             >
               <span className="mr-2" aria-hidden="true">
                 🗺️
@@ -95,12 +95,12 @@ export function PremiumNavigation() {
               variant="ghost"
               size="sm"
               className="text-white/80 hover:text-white focus:text-white interactive-underline"
-              aria-label="Start a punctuality challenge"
+              aria-label="Create a GPS-tracked punctuality challenge"
             >
               <span className="mr-2" aria-hidden="true">
-                💰
+                🎯
               </span>
-              Start Challenge
+              Create Challenge
             </Button>
           </Link>
           <Link href="/watch">
@@ -108,12 +108,12 @@ export function PremiumNavigation() {
               variant="ghost"
               size="sm"
               className="text-white/80 hover:text-white focus:text-white interactive-underline"
-              aria-label="Watch live challenges"
+              aria-label="Watch live GPS tracking of challenges"
             >
               <span className="mr-2" aria-hidden="true">
-                👀
+                📍
               </span>
-              Watch Live
+              Live Tracking
             </Button>
           </Link>
         </nav>

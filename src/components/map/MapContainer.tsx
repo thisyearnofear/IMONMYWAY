@@ -31,7 +31,7 @@ export function MapContainer({
       try {
         // Dynamically import Leaflet
         const L = await import('leaflet')
-        
+
         // Fix for default markers in Next.js
         delete (L.Icon.Default.prototype as any)._getIconUrl
         L.Icon.Default.mergeOptions({

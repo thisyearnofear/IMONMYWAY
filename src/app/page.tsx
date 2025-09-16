@@ -107,23 +107,23 @@ export default function HomePage() {
           </div>
 
           {/* Enhanced Hero Title with GSAP animations */}
-          <div className="text-center mb-12">
-            <div className="mb-6 overflow-hidden">
-              <h1 className="heading-primary tracking-tight leading-none animate-hero-text">
-                <span className="inline-block bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-                  IMONMYWAY
-                </span>
-              </h1>
-            </div>
-            <div className="overflow-hidden">
-              <p className="text-body max-w-2xl mx-auto leading-relaxed mb-8 animate-subtitle">
-                Turn punctuality into profit.
-                <br />
-                <span className="text-lg text-white/70">
-                  Stake money, arrive on time, get paid 2.5x back.
-                </span>
-              </p>
-            </div>
+         <div className="text-center mb-12">
+           <div className="mb-6 overflow-hidden">
+             <h1 className="heading-primary tracking-tight leading-none animate-hero-text">
+               <span className="inline-block bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                 IMONMYWAY
+               </span>
+             </h1>
+           </div>
+           <div className="overflow-hidden">
+             <p className="text-body max-w-2xl mx-auto leading-relaxed mb-8 animate-subtitle">
+               GPS-verified punctuality challenges on the blockchain.
+               <br />
+               <span className="text-lg text-white/70">
+                 Plan routes, stake crypto, prove your punctuality, earn rewards.
+               </span>
+             </p>
+           </div>
 
             {/* Primary Call-to-Action */}
             <div className="mb-8">
@@ -131,18 +131,19 @@ export default function HomePage() {
                 <DelightfulButton
                   variant="primary"
                   size="xl"
-                  emoji="🚀"
-                  hoverEmoji="💫"
+                  emoji="🗺️"
+                  hoverEmoji="🎯"
                   successEmoji="✨"
                   glow
                   className="btn-primary min-w-[220px] h-16 text-lg font-bold shadow-2xl"
-                  aria-label="Start planning your punctuality challenge"
+                  aria-label="Plan your route on an interactive map"
+                  context="first_time"
                   onDelightfulClick={() => {
-                    console.log("Let's go! 🚀");
+                    console.log("Planning route on map! 🗺️");
                     setShowCelebration(true);
                   }}
                 >
-                  Start Your Journey
+                  Plan Your Route
                 </DelightfulButton>
               </Link>
             </div>
@@ -155,20 +156,22 @@ export default function HomePage() {
                   size="md"
                   emoji="💰"
                   className="btn-secondary w-full h-12 text-sm"
-                  aria-label="Place a bet on someone's punctuality"
+                  aria-label="Create a staked punctuality challenge"
+                  context="achievement"
                 >
-                  Place Bet
+                  Create Challenge
                 </DelightfulButton>
               </Link>
               <Link href="/watch" className="flex-1">
                 <DelightfulButton
                   variant="glass"
                   size="md"
-                  emoji="👀"
+                  emoji="📍"
                   className="btn-secondary w-full h-12 text-sm"
-                  aria-label="Watch ongoing challenges"
+                  aria-label="Watch live GPS tracking"
+                  context="social"
                 >
-                  Watch Live
+                  Track Live
                 </DelightfulButton>
               </Link>
             </div>
@@ -182,30 +185,30 @@ export default function HomePage() {
             <div className="grid grid-cols-3 gap-6 mb-12">
               <div className="card-enhanced text-center animate-fade-in">
                 <div className="status-indicator status-success mb-3 mx-auto w-fit">
-                  <span>🎯</span>
-                  <span>99% Accurate</span>
+                  <span>🗺️</span>
+                  <span>Interactive Maps</span>
                 </div>
-                <p className="text-xs text-white/60">GPS-verified arrivals</p>
+                <p className="text-xs text-white/60">Plan routes visually on real maps</p>
               </div>
               <div
                 className="card-enhanced text-center animate-fade-in"
                 style={{ animationDelay: "100ms" }}
               >
                 <div className="status-indicator bg-blue-500/10 text-blue-400 border-blue-500/30 mb-3 mx-auto w-fit">
-                  <span>💸</span>
-                  <span>2.5x Returns</span>
+                  <span>📍</span>
+                  <span>GPS Tracking</span>
                 </div>
-                <p className="text-xs text-white/60">Verified payouts</p>
+                <p className="text-xs text-white/60">Real-time location verification</p>
               </div>
               <div
                 className="card-enhanced text-center animate-fade-in"
                 style={{ animationDelay: "200ms" }}
               >
                 <div className="status-indicator bg-purple-500/10 text-purple-400 border-purple-500/30 mb-3 mx-auto w-fit">
-                  <span>⚡</span>
-                  <span>Instant</span>
+                  <span>💰</span>
+                  <span>2.5x Rewards</span>
                 </div>
-                <p className="text-xs text-white/60">Smart contracts</p>
+                <p className="text-xs text-white/60">Win big on punctuality</p>
               </div>
             </div>
           </div>

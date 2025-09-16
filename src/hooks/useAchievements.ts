@@ -67,6 +67,37 @@ export function useAchievements() {
       unlocked: false,
       progress: 0,
       maxProgress: 5
+    },
+    // Surprise achievements - unlocked automatically based on behavior
+    {
+      id: 'midnight_runner',
+      title: 'Night Owl Runner',
+      description: 'Created a commitment between midnight and 4 AM',
+      icon: '🦉',
+      unlocked: false
+    },
+    {
+      id: 'speed_demon',
+      title: 'Speed Demon',
+      description: 'Set a target pace under 5 minutes per mile',
+      icon: '⚡',
+      unlocked: false
+    },
+    {
+      id: 'perfect_week',
+      title: 'Perfect Week',
+      description: 'Completed all commitments for 7 consecutive days',
+      icon: '👑',
+      unlocked: false
+    },
+    {
+      id: 'social_connector',
+      title: 'Social Connector',
+      description: 'Had 10 different people interact with your commitments',
+      icon: '🤝',
+      unlocked: false,
+      progress: 0,
+      maxProgress: 10
     }
   ])
 
@@ -178,6 +209,36 @@ export function useAchievements() {
     return achievements.filter(a => !a.unlocked && a.progress !== undefined)
   }, [achievements])
 
+  // Surprise achievement checkers - enhance existing system
+  const checkSurpriseAchievements = useCallback((context: {
+    hour?: number;
+    pace?: number;
+    perfectDays?: number;
+    socialInteractions?: number;
+  }) => {
+    const { hour, pace, perfectDays, socialInteractions } = context;
+
+    // Night Owl Runner - commitment between midnight and 4 AM
+    if (hour !== undefined && hour >= 0 && hour <= 4 && !achievements.find(a => a.id === 'midnight_runner')?.unlocked) {
+      unlockAchievement('midnight_runner');
+    }
+
+    // Speed Demon - pace under 5 min/mile
+    if (pace !== undefined && pace < 5 && !achievements.find(a => a.id === 'speed_demon')?.unlocked) {
+      unlockAchievement('speed_demon');
+    }
+
+    // Perfect Week - 7 consecutive perfect days
+    if (perfectDays !== undefined && perfectDays >= 7 && !achievements.find(a => a.id === 'perfect_week')?.unlocked) {
+      unlockAchievement('perfect_week');
+    }
+
+    // Social Connector - 10 different people interacted
+    if (socialInteractions !== undefined) {
+      updateProgress('social_connector', Math.min(socialInteractions, 10));
+    }
+  }, [achievements, unlockAchievement, updateProgress]);
+
   return {
     achievements,
     streak,
@@ -188,6 +249,7 @@ export function useAchievements() {
     celebrateAchievement,
     dismissCelebration,
     getUnlockedAchievements,
-    getProgressAchievements
+    getProgressAchievements,
+    checkSurpriseAchievements
   }
 }

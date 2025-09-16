@@ -199,32 +199,93 @@ export default function PlanPage() {
       <main className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="text-center mb-6">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Plan Your Run
+            🗺️ Plan Your Route
           </h1>
           <p className="text-gray-600">
-            Enter start and end locations to calculate distance and estimated
-            time
+            Drop pins on the map or enter addresses to plan your punctuality challenge
           </p>
+        </div>
+
+        {/* Map First - Full Width */}
+        <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
+          <div className="p-4 border-b border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">
+              📍 Interactive Route Planning
+            </h2>
+            <p className="text-sm text-gray-600">
+              Click on the map to set your start and end points, or use the form below
+            </p>
+          </div>
+          {!planData ? (
+            <div className="relative">
+              <MapSkeleton className="h-96" />
+              <div className="absolute inset-0 flex items-center justify-center bg-black/5">
+                <div className="text-center">
+                  <div className="text-4xl mb-2">🗺️</div>
+                  <p className="text-gray-600 font-medium">Plan your route on the map</p>
+                  <p className="text-sm text-gray-500">Enter addresses below or click directly on the map</p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <MapContainer
+              className="h-96"
+              center={planData ? planData.startCoords : [40.7128, -74.006]}
+              onMapReady={(map) => {
+                if (planData && typeof window !== "undefined") {
+                  import("leaflet").then((L) => {
+                    // Add markers for start and end
+                    const startMarker = L.marker(planData.startCoords).addTo(
+                      map
+                    );
+                    const endMarker = L.marker(planData.endCoords, {
+                      icon: L.icon({
+                        iconUrl:
+                          "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png",
+                        shadowUrl:
+                          "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+                        iconSize: [25, 41],
+                        iconAnchor: [12, 41],
+                        popupAnchor: [1, -34],
+                        shadowSize: [41, 41],
+                      }),
+                    }).addTo(map);
+
+                    // Add line between points
+                    L.polyline([planData.startCoords, planData.endCoords], {
+                      color: "blue",
+                      weight: 3,
+                      opacity: 0.7,
+                    }).addTo(map);
+
+                    // Fit map to show both points
+                    const group = L.featureGroup([startMarker, endMarker]);
+                    map.fitBounds(group.getBounds().pad(0.1));
+                  });
+                }
+              }}
+            />
+          )}
         </div>
 
         <div className="grid lg:grid-cols-2 gap-6">
           {/* Planning Form */}
           <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">
-              Route Details
+              📝 Route Details
             </h2>
 
             <div className="space-y-6">
               <div className="space-y-4">
                 <Input
-                  label="Start Address"
+                  label="Start Location"
                   value={startAddress}
                   onChange={(e) => setStartAddress(e.target.value)}
                   placeholder="e.g., Central Park, NYC"
                 />
 
                 <Input
-                  label="End Address"
+                  label="Destination"
                   value={endAddress}
                   onChange={(e) => setEndAddress(e.target.value)}
                   placeholder="e.g., Times Square, NYC"
@@ -239,7 +300,7 @@ export default function PlanPage() {
                 isLoading={isPlanning}
                 disabled={isPlanning}
               >
-                {isPlanning ? "Planning Route..." : "Plan Route"}
+                {isPlanning ? "Planning Route..." : "📍 Plan Route"}
               </Button>
             </div>
 
@@ -247,7 +308,7 @@ export default function PlanPage() {
             {planData && (
               <div className="mt-6 p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl border border-blue-100">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-semibold text-blue-900">Route Summary</h3>
+                  <h3 className="font-semibold text-blue-900">✅ Route Planned!</h3>
                   <div
                     className={`px-2 py-1 rounded-full text-xs font-medium ${
                       planData.confidence >= 80
@@ -290,55 +351,43 @@ export default function PlanPage() {
                   onClick={shareRoute}
                   className="w-full"
                 >
-                  Share Route
+                  📤 Share Route
                 </Button>
               </div>
             )}
           </div>
 
-          {/* Map with loading state */}
-          <div className="bg-white rounded-lg shadow-md overflow-hidden">
-            {!planData ? (
-              <MapSkeleton className="h-96" />
-            ) : (
-              <MapContainer
-                className="h-96"
-                center={planData ? planData.startCoords : [40.7128, -74.006]}
-                onMapReady={(map) => {
-                  if (planData && typeof window !== "undefined") {
-                    import("leaflet").then((L) => {
-                      // Add markers for start and end
-                      const startMarker = L.marker(planData.startCoords).addTo(
-                        map
-                      );
-                      const endMarker = L.marker(planData.endCoords, {
-                        icon: L.icon({
-                          iconUrl:
-                            "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png",
-                          shadowUrl:
-                            "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
-                          iconSize: [25, 41],
-                          iconAnchor: [12, 41],
-                          popupAnchor: [1, -34],
-                          shadowSize: [41, 41],
-                        }),
-                      }).addTo(map);
-
-                      // Add line between points
-                      L.polyline([planData.startCoords, planData.endCoords], {
-                        color: "blue",
-                        weight: 3,
-                        opacity: 0.7,
-                      }).addTo(map);
-
-                      // Fit map to show both points
-                      const group = L.featureGroup([startMarker, endMarker]);
-                      map.fitBounds(group.getBounds().pad(0.1));
-                    });
-                  }
-                }}
-              />
-            )}
+          {/* Tips and Help */}
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+              💡 Planning Tips
+            </h2>
+            <div className="space-y-4 text-sm text-gray-600">
+              <div className="flex items-start gap-3">
+                <span className="text-blue-500 mt-1">🎯</span>
+                <div>
+                  <strong>Be Specific:</strong> Use landmarks or full addresses for accurate planning
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="text-green-500 mt-1">⚡</span>
+                <div>
+                  <strong>Realistic Pace:</strong> Consider terrain and weather conditions
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="text-purple-500 mt-1">🛡️</span>
+                <div>
+                  <strong>Safety First:</strong> Share your route with friends for safety
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="text-orange-500 mt-1">🎁</span>
+                <div>
+                  <strong>Earn Rewards:</strong> Complete challenges to earn 2.5x your stake
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 

@@ -218,9 +218,9 @@ export default function WatchPage() {
       <main className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="text-center mb-6">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Live Location Tracking
+            📍 Live GPS Tracking
           </h1>
-          <p className="text-gray-600">Watching real-time location updates</p>
+          <p className="text-gray-600">Watch real-time location updates on the map</p>
         </div>
 
         {/* Status Bar */}
@@ -240,19 +240,18 @@ export default function WatchPage() {
                   }`}
                 ></div>
                 <span className="font-medium">
-                  {watchedSession.active ? "Live" : "Offline"}
+                  {watchedSession.active ? "🟢 Live Tracking" : "⚪ Offline"}
                 </span>
               </div>
 
               <div className="text-gray-600">
-                <span className="font-medium">Pace:</span> {watchedSession.pace}{" "}
-                min/mile
+                <span className="font-medium">🏃‍♂️ Pace:</span> {watchedSession.pace} min/mile
               </div>
 
               {watchedSession.isStaked && (
                 <div className="flex items-center space-x-2">
                   <span className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-3 py-1 rounded-full text-sm font-medium">
-                    Staked
+                    💰 Staked Challenge
                   </span>
                   <ReputationBadge score={userReputation} size="sm" />
                 </div>
@@ -264,7 +263,7 @@ export default function WatchPage() {
                 <div className="text-2xl font-bold text-blue-600">
                   {formatTime(watchedSession.eta)}
                 </div>
-                <div className="text-sm text-gray-600">ETA</div>
+                <div className="text-sm text-gray-600">⏰ Estimated Arrival</div>
               </div>
             )}
           </div>
@@ -272,9 +271,12 @@ export default function WatchPage() {
           {watchedSession.stakeAmount && (
             <div className="mt-3 pt-3 border-t border-gray-200">
               <div className="text-sm text-gray-600">
-                <span className="font-medium">Stake:</span>
+                <span className="font-medium">💵 Prize Pool:</span>
                 <span className="ml-2 text-green-600 font-medium">
                   {(Number(watchedSession.stakeAmount) / 1e18).toFixed(3)} STT
+                </span>
+                <span className="ml-2 text-purple-600 text-xs">
+                  (2.5x payout if successful!)
                 </span>
               </div>
             </div>
@@ -340,25 +342,25 @@ export default function WatchPage() {
         <div className="grid md:grid-cols-2 gap-6">
           <div className="bg-white rounded-lg shadow-md p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Location Info
+              📍 Current Location
             </h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Latitude:</span>
-                <span className="font-mono">
-                  {watchedSession.latitude.toFixed(6)}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Longitude:</span>
-                <span className="font-mono">
-                  {watchedSession.longitude.toFixed(6)}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Last Updated:</span>
-                <span>
+            <div className="space-y-3 text-sm">
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <span className="text-gray-600 font-medium">Last Seen:</span>
+                <span className="font-semibold text-gray-900">
                   {new Date(watchedSession.lastUpdated).toLocaleTimeString()}
+                </span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <span className="text-gray-600 font-medium">GPS Accuracy:</span>
+                <span className="font-semibold text-green-600">
+                  High Precision
+                </span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <span className="text-gray-600 font-medium">Update Frequency:</span>
+                <span className="font-semibold text-blue-600">
+                  Real-time
                 </span>
               </div>
             </div>
@@ -366,35 +368,37 @@ export default function WatchPage() {
 
           <div className="bg-white rounded-lg shadow-md p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Route Progress
+              🏁 Challenge Progress
             </h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Path Points:</span>
-                <span>{watchedSession.path.length}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Status:</span>
+            <div className="space-y-3 text-sm">
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <span className="text-gray-600 font-medium">Status:</span>
                 <span
-                  className={
+                  className={`font-semibold ${
                     watchedSession.active ? "text-green-600" : "text-gray-500"
-                  }
+                  }`}
                 >
-                  {watchedSession.active ? "Active" : "Inactive"}
+                  {watchedSession.active ? "🚀 Active Journey" : "⏸️ Paused"}
                 </span>
               </div>
               {watchedSession.destination && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Destination Set:</span>
-                  <span className="text-green-600">Yes</span>
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <span className="text-gray-600 font-medium">Destination:</span>
+                  <span className="font-semibold text-purple-600">🎯 Set</span>
                 </div>
               )}
               {watchedSession.isStaked && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Commitment Type:</span>
-                  <span className="text-purple-600 font-medium">Staked</span>
+                <div className="flex items-center justify-between p-3 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
+                  <span className="text-gray-600 font-medium">Reward Type:</span>
+                  <span className="font-semibold text-purple-600">💎 Staked Challenge</span>
                 </div>
               )}
+              <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                <span className="text-gray-600 font-medium">Track Length:</span>
+                <span className="font-semibold text-blue-600">
+                  {watchedSession.path.length} GPS points
+                </span>
+              </div>
             </div>
           </div>
         </div>
