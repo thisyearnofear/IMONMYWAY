@@ -38,18 +38,27 @@ export function NetworkStatus() {
     if (!containerRef.current) return;
 
     const container = containerRef.current;
-    const statusCards = container.querySelectorAll('[data-status-card]');
-    
+    const statusCards = container.querySelectorAll("[data-status-card]");
+
     // Entrance animation
-    gsap.fromTo(container, 
+    gsap.fromTo(
+      container,
       { opacity: 0, scale: 0.8, y: -20 },
       { opacity: 1, scale: 1, y: 0, duration: 0.6, ease: "back.out(1.7)" }
     );
 
     // Stagger animation for status cards
-    gsap.fromTo(statusCards,
+    gsap.fromTo(
+      statusCards,
       { opacity: 0, y: 20 },
-      { opacity: 1, y: 0, duration: 0.4, stagger: 0.1, ease: "power2.out", delay: 0.2 }
+      {
+        opacity: 1,
+        y: 0,
+        duration: 0.4,
+        stagger: 0.1,
+        ease: "power2.out",
+        delay: 0.2,
+      }
     );
 
     // Interactive hover effects
@@ -57,13 +66,13 @@ export function NetworkStatus() {
       const rect = container.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
-      
+
       // Subtle follow effect for glow
       gsap.to(container, {
-        '--mouse-x': `${x}px`,
-        '--mouse-y': `${y}px`,
+        "--mouse-x": `${x}px`,
+        "--mouse-y": `${y}px`,
         duration: 0.3,
-        ease: "power2.out"
+        ease: "power2.out",
       });
     };
 
@@ -74,40 +83,49 @@ export function NetworkStatus() {
         newParticles.push({
           id: Math.random().toString(),
           x: Math.random() * 100,
-          y: Math.random() * 100
+          y: Math.random() * 100,
         });
       }
       setParticles(newParticles);
-      
+
       // Clear particles after animation
       setTimeout(() => setParticles([]), 2000);
-      
+
       // Pulse effect
       gsap.to(container, {
         scale: 1.05,
         duration: 0.1,
         yoyo: true,
         repeat: 1,
-        ease: "power2.inOut"
+        ease: "power2.inOut",
       });
     };
 
-    container.addEventListener('mousemove', handleMouseMove);
-    container.addEventListener('click', handleClick);
+    container.addEventListener("mousemove", handleMouseMove);
+    container.addEventListener("click", handleClick);
 
     return () => {
-      container.removeEventListener('mousemove', handleMouseMove);
-      container.removeEventListener('click', handleClick);
+      container.removeEventListener("mousemove", handleMouseMove);
+      container.removeEventListener("click", handleClick);
     };
   }, []);
 
   // Status change animations
   useEffect(() => {
-    const statusElements = containerRef.current?.querySelectorAll('[data-status-value]');
+    const statusElements = containerRef.current?.querySelectorAll(
+      "[data-status-value]"
+    );
     statusElements?.forEach((element, index) => {
-      gsap.fromTo(element,
+      gsap.fromTo(
+        element,
         { scale: 0.8, opacity: 0.5 },
-        { scale: 1, opacity: 1, duration: 0.3, delay: index * 0.05, ease: "back.out(1.4)" }
+        {
+          scale: 1,
+          opacity: 1,
+          duration: 0.3,
+          delay: index * 0.05,
+          ease: "back.out(1.4)",
+        }
       );
     });
   }, [systemStatus, isConnected, isOnSomnia]);
@@ -155,7 +173,7 @@ export function NetworkStatus() {
   };
 
   return (
-    <div 
+    <div
       ref={containerRef}
       className={cn(
         "fixed top-4 right-4 z-50 backdrop-blur-xl rounded-2xl p-6 shadow-2xl border border-white/20 text-xs font-mono max-w-sm transition-all duration-500 cursor-pointer",
@@ -165,18 +183,18 @@ export function NetworkStatus() {
       )}
       style={{
         background: `radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(59, 130, 246, 0.1) 0%, transparent 50%),
-                     linear-gradient(145deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)`
+                     linear-gradient(145deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)`,
       }}
     >
       {/* Floating Particles */}
-      {particles.map(particle => (
+      {particles.map((particle) => (
         <div
           key={particle.id}
           className="absolute pointer-events-none text-lg animate-ping"
           style={{
             left: `${particle.x}%`,
             top: `${particle.y}%`,
-            animation: 'float 2s ease-out forwards'
+            animation: "float 2s ease-out forwards",
           }}
         >
           ✨
@@ -190,7 +208,9 @@ export function NetworkStatus() {
             <div
               className={cn(
                 "w-4 h-4 rounded-full transition-all duration-300",
-                isOnSomnia ? "bg-green-400 animate-pulse" : "bg-yellow-400 animate-bounce"
+                isOnSomnia
+                  ? "bg-green-400 animate-pulse"
+                  : "bg-yellow-400 animate-bounce"
               )}
             />
             {isOnSomnia && (
@@ -199,10 +219,10 @@ export function NetworkStatus() {
           </div>
           <div>
             <div className="font-semibold text-white text-sm">
-              {isOnSomnia ? '🌐 Somnia Network' : '⚠️ Switch to Somnia'}
+              {isOnSomnia ? "🌐 Somnia Network" : "⚠️ Switch to Somnia"}
             </div>
             <div className="text-white/60 text-xs">
-              {isOnSomnia ? 'Connected' : 'Wrong Network'}
+              {isOnSomnia ? "Connected" : "Wrong Network"}
             </div>
           </div>
         </div>
@@ -210,7 +230,7 @@ export function NetworkStatus() {
           onClick={() => setIsMinimized(!isMinimized)}
           className="text-white/60 hover:text-white/80 transition-colors p-1 rounded"
         >
-          {isMinimized ? '▲' : '▼'}
+          {isMinimized ? "▲" : "▼"}
         </button>
       </div>
 
@@ -218,7 +238,10 @@ export function NetworkStatus() {
         <>
           {/* Wallet Address with improved styling */}
           {address && (
-            <div className="mb-4 p-3 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10" data-status-card>
+            <div
+              className="mb-4 p-3 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10"
+              data-status-card
+            >
               <div className="text-white/60 text-xs mb-1">Wallet Address</div>
               <div className="font-medium text-white/90 break-all text-xs">
                 {address.slice(0, 8)}...{address.slice(-6)}
@@ -228,27 +251,61 @@ export function NetworkStatus() {
 
           {/* Enhanced System Status Grid */}
           <div className="grid grid-cols-2 gap-3 mb-4">
-            <div className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/10 hover:bg-white/10 transition-all duration-300" data-status-card>
+            <div
+              className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/10 hover:bg-white/10 transition-all duration-300"
+              data-status-card
+            >
               <div className="text-white/60 text-xs mb-1">Protocol</div>
-              <div className={cn("font-bold text-sm", getStatusColor(systemStatus.protocol))} data-status-value>
+              <div
+                className={cn(
+                  "font-bold text-sm",
+                  getStatusColor(systemStatus.protocol)
+                )}
+                data-status-value
+              >
                 ⚡ {systemStatus.protocol}
               </div>
             </div>
-            <div className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/10 hover:bg-white/10 transition-all duration-300" data-status-card>
+            <div
+              className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/10 hover:bg-white/10 transition-all duration-300"
+              data-status-card
+            >
               <div className="text-white/60 text-xs mb-1">GPS</div>
-              <div className={cn("font-bold text-sm", getStatusColor(systemStatus.gps))} data-status-value>
+              <div
+                className={cn(
+                  "font-bold text-sm",
+                  getStatusColor(systemStatus.gps)
+                )}
+                data-status-value
+              >
                 📍 {systemStatus.gps}
               </div>
             </div>
-            <div className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/10 hover:bg-white/10 transition-all duration-300" data-status-card>
+            <div
+              className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/10 hover:bg-white/10 transition-all duration-300"
+              data-status-card
+            >
               <div className="text-white/60 text-xs mb-1">Contracts</div>
-              <div className={cn("font-bold text-sm", getStatusColor(systemStatus.contracts))} data-status-value>
+              <div
+                className={cn(
+                  "font-bold text-sm",
+                  getStatusColor(systemStatus.contracts)
+                )}
+                data-status-value
+              >
                 📜 {systemStatus.contracts}
               </div>
             </div>
-            <div className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/10 hover:bg-white/10 transition-all duration-300" data-status-card>
+            <div
+              className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/10 hover:bg-white/10 transition-all duration-300"
+              data-status-card
+            >
               <div className="text-white/60 text-xs mb-1">Block</div>
-              <div className="font-bold text-blue-400 text-sm" data-status-value data-block-number>
+              <div
+                className="font-bold text-blue-400 text-sm"
+                data-status-value
+                data-block-number
+              >
                 🧱 {systemStatus.blockNumber}
               </div>
             </div>
@@ -257,7 +314,10 @@ export function NetworkStatus() {
           {/* Enhanced Performance Metrics */}
           <div className="space-y-3 mb-4">
             {lastTxSpeed && (
-              <div className="flex items-center justify-between p-3 bg-green-500/10 backdrop-blur-sm rounded-xl border border-green-500/20" data-status-card>
+              <div
+                className="flex items-center justify-between p-3 bg-green-500/10 backdrop-blur-sm rounded-xl border border-green-500/20"
+                data-status-card
+              >
                 <span className="text-green-400 font-medium">TX Speed</span>
                 <span className="font-bold text-green-300">
                   {lastTxSpeed.toFixed(1)}s ⚡
@@ -265,7 +325,10 @@ export function NetworkStatus() {
               </div>
             )}
 
-            <div className="flex items-center justify-between p-3 bg-blue-500/10 backdrop-blur-sm rounded-xl border border-blue-500/20" data-status-card>
+            <div
+              className="flex items-center justify-between p-3 bg-blue-500/10 backdrop-blur-sm rounded-xl border border-blue-500/20"
+              data-status-card
+            >
               <span className="text-blue-400 font-medium">Contract</span>
               <span className="font-bold text-blue-300 truncate ml-2">
                 {contractAddress.slice(0, 6)}...{contractAddress.slice(-4)}
@@ -275,75 +338,22 @@ export function NetworkStatus() {
 
           {/* Interactive Status Icons */}
           <div className="flex justify-center gap-4 pt-4 border-t border-white/10">
-            <div className="text-2xl hover:scale-125 transition-transform cursor-pointer" title="Rewards Active">
+            <div
+              className="text-2xl hover:scale-125 transition-transform cursor-pointer"
+              title="Rewards Active"
+            >
               💰
             </div>
-            <div className="text-2xl hover:scale-125 transition-transform cursor-pointer" title="Enhanced Features">
+            <div
+              className="text-2xl hover:scale-125 transition-transform cursor-pointer"
+              title="Enhanced Features"
+            >
               ✨
             </div>
-            <div className="text-2xl hover:scale-125 transition-transform cursor-pointer" title="Target Tracking">
-              🎯
-            </div>
-          </div>
-
-          {/* Interaction Hint */}
-          <div className="text-center mt-3 text-white/40 text-xs">
-            Click for effects • Hover to interact
-          </div>
-        </>
-      )}
-
-      {/* CSS for float animation */}
-      <style jsx>{`
-        @keyframes float {
-          0% {
-            opacity: 1;
-            transform: translateY(0) scale(0.5);
-          }
-          50% {
-            opacity: 0.8;
-            transform: translateY(-50px) scale(1);
-          }
-          100% {
-            opacity: 0;
-            transform: translateY(-100px) scale(0.5);
-          }
-        }
-      `}</style>
-    </div>
-  );
-}
-            </div>
-          </div>
-
-          {/* Enhanced Performance Metrics */}
-          <div className="space-y-3 mb-4">
-            {lastTxSpeed && (
-              <div className="flex items-center justify-between p-3 bg-green-500/10 backdrop-blur-sm rounded-xl border border-green-500/20" data-status-card>
-                <span className="text-green-400 font-medium">TX Speed</span>
-                <span className="font-bold text-green-300">
-                  {lastTxSpeed.toFixed(1)}s ⚡
-                </span>
-              </div>
-            )}
-
-            <div className="flex items-center justify-between p-3 bg-blue-500/10 backdrop-blur-sm rounded-xl border border-blue-500/20" data-status-card>
-              <span className="text-blue-400 font-medium">Contract</span>
-              <span className="font-bold text-blue-300 truncate ml-2">
-                {contractAddress.slice(0, 6)}...{contractAddress.slice(-4)}
-              </span>
-            </div>
-          </div>
-
-          {/* Interactive Status Icons */}
-          <div className="flex justify-center gap-4 pt-4 border-t border-white/10">
-            <div className="text-2xl hover:scale-125 transition-transform cursor-pointer" title="Rewards Active">
-              💰
-            </div>
-            <div className="text-2xl hover:scale-125 transition-transform cursor-pointer" title="Enhanced Features">
-              ✨
-            </div>
-            <div className="text-2xl hover:scale-125 transition-transform cursor-pointer" title="Target Tracking">
+            <div
+              className="text-2xl hover:scale-125 transition-transform cursor-pointer"
+              title="Target Tracking"
+            >
               🎯
             </div>
           </div>
