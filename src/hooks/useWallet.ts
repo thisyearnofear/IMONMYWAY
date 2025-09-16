@@ -19,21 +19,21 @@ interface WalletState {
 interface UseWalletReturn extends WalletState {
   connect: () => Promise<void>
   disconnect: () => void
-  switchToSomnia: () => Promise<void>
+  switchToSomnia: () => Promise<boolean>
   trackTransactionSpeed: (txHash: string) => Promise<void>
 }
 
 // Somnia Network configuration
 const SOMNIA_NETWORK = {
-  chainId: '0xC478', // 50312 in hex
+  chainId: '0xC478', // 50312 in hex (official Somnia mainnet)
   chainName: 'Somnia Network',
   nativeCurrency: {
     name: 'SOMI',
     symbol: 'SOMI',
     decimals: 18,
   },
-  rpcUrls: ['https://dream-rpc.somnia.network/'],
-  blockExplorerUrls: ['https://shannon-explorer.somnia.network/'],
+  rpcUrls: ['https://dream-rpc.somnia.network/', 'https://api.infra.mainnet.somnia.network/'],
+  blockExplorerUrls: ['https://explorer.somnia.network/'],
 }
 
 export function useWallet(): UseWalletReturn {
@@ -50,7 +50,7 @@ export function useWallet(): UseWalletReturn {
     },
   })
 
-  const { addToast } = useUIStore()
+  const { addToast, updateNetworkMetrics } = useUIStore()
 
   // Check if MetaMask is installed
   const isMetaMaskInstalled = useCallback(() => {
@@ -185,46 +185,94 @@ export function useWallet(): UseWalletReturn {
       type: 'info',
       message: 'Wallet disconnected',
     })
-  }, [addToast])
+  }, [addToast, updateNetworkMetrics])
 
   // Switch to Somnia Network
   const switchToSomnia = useCallback(async () => {
-    if (!isMetaMaskInstalled() || !window.ethereum) return
+    if (!window.ethereum) {
+      updateNetworkMetrics({ isOnSomnia: false })
+      addToast({
+        message: 'MetaMask not detected. Please install MetaMask to continue.',
+        type: 'error',
+      })
+      return false
+    }
 
     try {
-      // Try to switch to Somnia Network
+      // Try to switch to Somnia network
       await window.ethereum.request({
         method: 'wallet_switchEthereumChain',
         params: [{ chainId: SOMNIA_NETWORK.chainId }],
       })
+      
+      updateNetworkMetrics({ isOnSomnia: true })
+      addToast({
+        message: 'Successfully switched to Somnia Network! 🎉',
+        type: 'success',
+      })
+      return true
     } catch (switchError: any) {
-      // If the chain doesn't exist, add it
+      // If network doesn't exist, add it
       if (switchError.code === 4902) {
         try {
+          addToast({
+            message: 'Adding Somnia Network to MetaMask...',
+            type: 'info',
+          })
+          
           await window.ethereum.request({
             method: 'wallet_addEthereumChain',
             params: [SOMNIA_NETWORK],
           })
+          
+          updateNetworkMetrics({ isOnSomnia: true })
           addToast({
+            message: 'Somnia Network added and activated! ✅',
             type: 'success',
-            message: 'Somnia Network added successfully!',
           })
+          return true
         } catch (addError: any) {
-          console.error('Error adding Somnia Network:', addError)
+          console.error('Failed to add Somnia network:', addError)
+          updateNetworkMetrics({ isOnSomnia: false })
+          
+          let errorMessage = 'Failed to add Somnia Network to MetaMask.'
+          if (addError.code === 4001) {
+            errorMessage = 'Network addition cancelled by user.'
+          } else if (addError.code === -32002) {
+            errorMessage = 'MetaMask is already processing a request. Please check MetaMask.'
+          } else if (addError.message?.includes('Invalid RPC URL')) {
+            errorMessage = 'Invalid RPC URL detected. Please contact support.'
+          }
+          
           addToast({
+            message: errorMessage,
             type: 'error',
-            message: 'Failed to add Somnia Network',
           })
+          return false
         }
       } else {
-        console.error('Error switching to Somnia Network:', switchError)
+        console.error('Failed to switch to Somnia network:', switchError)
+        updateNetworkMetrics({ isOnSomnia: false })
+        
+        let errorMessage = 'Failed to switch to Somnia Network.'
+        if (switchError.code === 4001) {
+          errorMessage = 'Network switch cancelled by user.'
+        } else if (switchError.code === -32002) {
+          errorMessage = 'MetaMask is busy. Please check MetaMask and try again.'
+        } else if (switchError.message?.includes('Unrecognized chain ID')) {
+          errorMessage = 'Network configuration error. The chain ID may be incorrect.'
+        } else if (switchError.message?.includes('Invalid RPC URL')) {
+          errorMessage = 'RPC connection failed. Please check your internet connection.'
+        }
+        
         addToast({
+          message: errorMessage + ' Please ensure you\'re using the latest MetaMask version.',
           type: 'error',
-          message: 'Failed to switch to Somnia Network',
         })
+        return false
       }
     }
-  }, [isMetaMaskInstalled, addToast])
+  }, [addToast])
 
   // Listen for account and chain changes
   useEffect(() => {

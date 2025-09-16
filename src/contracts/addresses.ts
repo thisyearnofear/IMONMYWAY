@@ -47,7 +47,7 @@ export const NETWORKS = {
     chainId: 50312, // Somnia Mainnet chain ID
     name: 'Somnia Network',
     rpcUrl: 'https://dream-rpc.somnia.network/',
-    blockExplorer: 'https://shannon-explorer.somnia.network/',
+    blockExplorer: 'https://explorer.somnia.network/',
     nativeCurrency: {
       name: 'SOMI',
       symbol: 'SOMI',

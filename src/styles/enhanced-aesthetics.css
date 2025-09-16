@@ -178,6 +178,78 @@
   }
 }
 
+/* GSAP-inspired animations and effects */
+@keyframes hero-text {
+  0% {
+    opacity: 0;
+    transform: translateY(50px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes subtitle {
+  0% {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes draw-line {
+  0% {
+    stroke-dasharray: 1000;
+    stroke-dashoffset: 1000;
+  }
+  100% {
+    stroke-dasharray: 1000;
+    stroke-dashoffset: 0;
+  }
+}
+
+.animate-hero-text {
+  animation: hero-text 1.2s ease-out 0.3s both;
+}
+
+.animate-subtitle {
+  animation: subtitle 0.8s ease-out 0.8s both;
+}
+
+.animate-draw-line {
+  animation: draw-line 1.5s ease-in-out;
+}
+
+/* Interactive hover effects inspired by GSAP demos */
+.interactive-underline {
+  position: relative;
+  display: inline-block;
+  transition: all 0.3s ease;
+}
+
+.interactive-underline::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #22c55e, #3b82f6, #8b5cf6);
+  transition: width 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.interactive-underline:hover::after {
+  width: 100%;
+}
+
+.interactive-underline:hover {
+  transform: translateY(-2px);
+}
+
 /* Consolidated keyframes - single source of truth */
 @keyframes fadeIn {
   to { opacity: 1; }

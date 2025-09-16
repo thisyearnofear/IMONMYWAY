@@ -14,6 +14,10 @@ import { ConsumerTestimonial } from "@/components/ui/ConsumerTestimonial";
 import { WalletOnboarding } from "@/components/onboarding/WalletOnboarding";
 import { AchievementDisplay } from "@/components/reputation/AchievementDisplay";
 import { NetworkStatus } from "@/components/core/NetworkStatus";
+import {
+  ParticleSystem,
+  SuccessCelebration,
+} from "@/components/ui/ParticleSystem";
 import { useWallet } from "@/hooks/useWallet";
 import { useUIStore } from "@/stores/uiStore";
 import { useAnimation } from "@/hooks/useAnimation";
@@ -23,6 +27,7 @@ import { cn } from "@/lib/utils";
 export default function HomePage() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [showCelebration, setShowCelebration] = useState(false);
   const { isConnected } = useWallet();
   const { addToast } = useUIStore();
   const { getAnimationClass, triggerCelebration } = useAnimation();
@@ -45,6 +50,7 @@ export default function HomePage() {
 
   const handleOnboardingComplete = () => {
     setShowOnboarding(false);
+    setShowCelebration(true); // Trigger particle celebration
     triggerCelebration({
       type: "success",
       intensity: "intense",
@@ -103,20 +109,24 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Clean Title */}
+          {/* Enhanced Hero Title with GSAP animations */}
           <div className="text-center mb-12">
-            <h1 className="heading-primary mb-6 tracking-tight leading-none">
-              <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-                IMONMYWAY
-              </span>
-            </h1>
-            <p className="text-body max-w-2xl mx-auto leading-relaxed mb-8">
-              Turn punctuality into profit.
-              <br />
-              <span className="text-lg text-white/70">
-                Stake money, arrive on time, get paid 2.5x back.
-              </span>
-            </p>
+            <div className="mb-6 overflow-hidden">
+              <h1 className="heading-primary tracking-tight leading-none animate-hero-text">
+                <span className="inline-block bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                  IMONMYWAY
+                </span>
+              </h1>
+            </div>
+            <div className="overflow-hidden">
+              <p className="text-body max-w-2xl mx-auto leading-relaxed mb-8 animate-subtitle">
+                Turn punctuality into profit.
+                <br />
+                <span className="text-lg text-white/70">
+                  Stake money, arrive on time, get paid 2.5x back.
+                </span>
+              </p>
+            </div>
 
             {/* Primary Call-to-Action */}
             <div className="mb-8">
@@ -130,7 +140,10 @@ export default function HomePage() {
                   glow
                   className="btn-primary min-w-[220px] h-16 text-lg font-bold shadow-2xl"
                   aria-label="Start planning your punctuality challenge"
-                  onDelightfulClick={() => console.log("Let's go! 🚀")}
+                  onDelightfulClick={() => {
+                    console.log("Let's go! 🚀");
+                    setShowCelebration(true);
+                  }}
                 >
                   Start Your Journey
                 </DelightfulButton>
@@ -209,6 +222,12 @@ export default function HomePage() {
           onSkip={handleOnboardingSkip}
         />
       )}
+
+      {/* GSAP-inspired Celebration Particles */}
+      <SuccessCelebration
+        trigger={showCelebration}
+        onComplete={() => setShowCelebration(false)}
+      />
     </div>
   );
 }

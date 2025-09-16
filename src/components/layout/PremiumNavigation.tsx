@@ -81,7 +81,7 @@ export function PremiumNavigation() {
             <Button
               variant="ghost"
               size="sm"
-              className="text-white/80 hover:text-white focus:text-white"
+              className="text-white/80 hover:text-white focus:text-white interactive-underline"
               aria-label="Plan your route"
             >
               <span className="mr-2" aria-hidden="true">
@@ -94,7 +94,7 @@ export function PremiumNavigation() {
             <Button
               variant="ghost"
               size="sm"
-              className="text-white/80 hover:text-white focus:text-white"
+              className="text-white/80 hover:text-white focus:text-white interactive-underline"
               aria-label="Start a punctuality challenge"
             >
               <span className="mr-2" aria-hidden="true">
@@ -107,7 +107,7 @@ export function PremiumNavigation() {
             <Button
               variant="ghost"
               size="sm"
-              className="text-white/80 hover:text-white focus:text-white"
+              className="text-white/80 hover:text-white focus:text-white interactive-underline"
               aria-label="Watch live challenges"
             >
               <span className="mr-2" aria-hidden="true">
@@ -218,31 +218,33 @@ export function PremiumNavigation() {
         </div>
       </div>
 
-      {/* Network Status Bar */}
+      {/* Enhanced Network Status Bar - Simplified */}
       {isConnected && (
         <div
           className={cn(
-            "border-t border-white/10 px-6 py-2 transition-all duration-300",
-            isScrolled ? "opacity-0 h-0 py-0" : "opacity-100"
+            "border-t border-white/10 px-6 py-3 transition-all duration-500 ease-out",
+            isScrolled ? "opacity-0 h-0 py-0 overflow-hidden" : "opacity-100"
           )}
         >
-          <div className="container mx-auto flex items-center justify-between text-xs">
-            <div className="flex items-center gap-4 text-white/60">
-              <span className="flex items-center gap-1">
-                <span className="w-1 h-1 bg-green-400 rounded-full animate-pulse" />
-                PROTOCOL_ACTIVE
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="w-1 h-1 bg-blue-400 rounded-full" />
-                GPS_ENABLED
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="w-1 h-1 bg-purple-400 rounded-full" />
-                CONTRACTS_DEPLOYED
-              </span>
+          <div className="container mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-6 text-white/70">
+              <div className="flex items-center gap-2 group hover:text-green-400 transition-colors">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse group-hover:scale-125 transition-transform" />
+                <span className="text-xs font-medium">PROTOCOL ACTIVE</span>
+              </div>
+              <div className="flex items-center gap-2 group hover:text-blue-400 transition-colors">
+                <div className="w-2 h-2 bg-blue-400 rounded-full group-hover:scale-125 transition-transform" />
+                <span className="text-xs font-medium">GPS READY</span>
+              </div>
+              {isOnSomnia && (
+                <div className="flex items-center gap-2 group hover:text-purple-400 transition-colors">
+                  <div className="w-2 h-2 bg-purple-400 rounded-full group-hover:scale-125 transition-transform" />
+                  <span className="text-xs font-medium">SMART CONTRACTS</span>
+                </div>
+              )}
             </div>
-            <div className="text-white/40 font-mono">
-              BLOCK: {chainId || "---"}
+            <div className="text-white/50 font-mono text-xs">
+              Block {chainId || "---"}
             </div>
           </div>
         </div>
