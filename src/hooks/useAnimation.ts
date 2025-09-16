@@ -1,5 +1,4 @@
 import { useCallback, useMemo } from 'react'
-import { usePerformanceMonitor } from './usePerformanceMonitor'
 
 interface AnimationConfig {
   duration: number
@@ -16,17 +15,21 @@ interface CelebrationConfig {
 }
 
 export function useAnimation() {
-  const { metrics } = usePerformanceMonitor()
-
   // Check for reduced motion preference
   const prefersReducedMotion = useMemo(() => {
     if (typeof window === 'undefined') return false
     return window.matchMedia('(prefers-reduced-motion: reduce)').matches
   }, [])
 
+  // Simple performance check - assume modern devices can handle animations
+  const isLowPerformance = useMemo(() => {
+    if (typeof navigator === 'undefined') return false
+    return navigator.hardwareConcurrency <= 1
+  }, [])
+
   // Adaptive animation configuration based on performance
   const getOptimizedConfig = useCallback((config: AnimationConfig): AnimationConfig => {
-    const shouldReduce = prefersReducedMotion || metrics.isLowPerformance || config.reduce
+    const shouldReduce = prefersReducedMotion || isLowPerformance || config.reduce
 
     if (shouldReduce) {
       return {
@@ -38,14 +41,14 @@ export function useAnimation() {
     }
 
     return config
-  }, [prefersReducedMotion, metrics.isLowPerformance])
+  }, [prefersReducedMotion, isLowPerformance])
 
   // Smart animation classes based on context
   const getAnimationClass = useCallback((
     type: 'enter' | 'exit' | 'hover' | 'press' | 'success' | 'error' | 'delight' | 'heartbeat' | 'shimmer',
     intensity: 'subtle' | 'medium' | 'intense' = 'medium'
   ) => {
-    const shouldReduce = prefersReducedMotion || metrics.isLowPerformance
+    const shouldReduce = prefersReducedMotion || isLowPerformance
 
     const animations = {
       enter: {
@@ -96,14 +99,14 @@ export function useAnimation() {
     }
 
     return animations[type][intensity]
-  }, [prefersReducedMotion, metrics.isLowPerformance])
+  }, [prefersReducedMotion, isLowPerformance])
 
   // Celebration system for major user achievements
   const triggerCelebration = useCallback(async (config: CelebrationConfig) => {
     const { type, intensity, haptic = true, sound = false } = config
 
     // Skip intense celebrations on low-performance devices
-    if (metrics.isLowPerformance && intensity === 'intense') {
+    if (isLowPerformance && intensity === 'intense') {
       return triggerCelebration({ ...config, intensity: 'medium' })
     }
 
@@ -152,24 +155,24 @@ export function useAnimation() {
       // TODO: Implement audio feedback with user preference
       console.log(`🔊 Playing ${type} sound`)
     }
-  }, [metrics.isLowPerformance, prefersReducedMotion, getAnimationClass])
+  }, [isLowPerformance, prefersReducedMotion, getAnimationClass])
 
   // Staggered animations for lists
   const getStaggeredDelay = useCallback((index: number, baseDelay: number = 100) => {
-    if (prefersReducedMotion || metrics.isLowPerformance) return 0
+    if (prefersReducedMotion || isLowPerformance) return 0
     return index * Math.min(baseDelay, 50) // Cap delay on low-performance
-  }, [prefersReducedMotion, metrics.isLowPerformance])
+  }, [prefersReducedMotion, isLowPerformance])
 
   // Context-aware loading animations
   const getLoadingAnimation = useCallback((context: 'button' | 'page' | 'component' | 'data') => {
     const animations = {
-      button: metrics.isLowPerformance ? 'animate-pulse' : 'animate-spin',
-      page: metrics.isLowPerformance ? 'animate-pulse' : 'animate-skeleton-wave',
-      component: metrics.isLowPerformance ? 'animate-pulse' : 'animate-fade-in',
-      data: metrics.isLowPerformance ? 'animate-pulse' : 'animate-skeleton-shimmer'
+      button: isLowPerformance ? 'animate-pulse' : 'animate-spin',
+      page: isLowPerformance ? 'animate-pulse' : 'animate-skeleton-wave',
+      component: isLowPerformance ? 'animate-pulse' : 'animate-fade-in',
+      data: isLowPerformance ? 'animate-pulse' : 'animate-skeleton-shimmer'
     }
     return animations[context]
-  }, [metrics.isLowPerformance])
+  }, [isLowPerformance])
 
   return {
     getOptimizedConfig,
@@ -178,8 +181,8 @@ export function useAnimation() {
     getStaggeredDelay,
     getLoadingAnimation,
     isReducedMotion: prefersReducedMotion,
-    isLowPerformance: metrics.isLowPerformance,
-    fps: metrics.fps
+    isLowPerformance,
+    fps: 60 // Default FPS since we don't have monitoring
   }
 }
 

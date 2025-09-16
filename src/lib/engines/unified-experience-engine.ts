@@ -7,7 +7,6 @@
 
 import { useCallback, useMemo, useState, useRef, useEffect } from 'react'
 import { useUIStore } from '@/stores/uiStore'
-import { usePerformanceMonitor } from '@/hooks/usePerformanceMonitor'
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -139,7 +138,7 @@ export class UnifiedExperienceEngine {
 
   async triggerCelebration(config: CelebrationConfig): Promise<void> {
     const { type, intensity, haptic = true, sound = false } = config
-    
+
     // Skip intense celebrations on low-performance devices
     if (this.performanceMetrics.isLowPerformance && intensity === 'intense') {
       return this.triggerCelebration({ ...config, intensity: 'medium' })
@@ -161,7 +160,7 @@ export class UnifiedExperienceEngine {
       fixed inset-0 pointer-events-none z-[9999] 
       ${this.getAnimationClass('success', intensity)}
     `
-    
+
     const celebrationContent = {
       success: '🎉',
       achievement: '🏆',
@@ -413,13 +412,13 @@ export class UnifiedExperienceEngine {
   }
 
   achievement(message: string, options?: Partial<NotificationConfig>): void {
-    this.notify({ 
-      message, 
-      type: 'achievement', 
-      celebration: true, 
-      haptic: true, 
+    this.notify({
+      message,
+      type: 'achievement',
+      celebration: true,
+      haptic: true,
       persistent: true,
-      ...options 
+      ...options
     })
   }
 }
@@ -462,14 +461,14 @@ export class UnifiedLoadingManager {
     const actions = {
       start: (message?: string) => {
         this.startTimes.set(id, Date.now())
-        
+
         const newState: LoadingState = {
           isLoading: true,
           progress: 0,
           error: null,
           isOptimistic: optimistic
         }
-        
+
         this.activeStates.set(id, newState)
 
         // Set timeout for maximum loading time
@@ -503,7 +502,7 @@ export class UnifiedLoadingManager {
             error: null,
             isOptimistic: false
           }
-          
+
           this.activeStates.set(id, newState)
 
           // Clear timeout
@@ -529,13 +528,13 @@ export class UnifiedLoadingManager {
           error: message,
           isOptimistic: false
         }
-        
+
         this.activeStates.set(id, newState)
 
         // Clear timeouts
         const timeoutId = this.timeouts.get(`${id}_timeout`)
         const minDurationId = this.timeouts.get(`${id}_minDuration`)
-        
+
         if (timeoutId) {
           clearTimeout(timeoutId)
           this.timeouts.delete(`${id}_timeout`)
@@ -548,11 +547,11 @@ export class UnifiedLoadingManager {
 
       reset: () => {
         this.activeStates.set(id, initialState)
-        
+
         // Clear timeouts
         const timeoutId = this.timeouts.get(`${id}_timeout`)
         const minDurationId = this.timeouts.get(`${id}_minDuration`)
-        
+
         if (timeoutId) {
           clearTimeout(timeoutId)
           this.timeouts.delete(`${id}_timeout`)
@@ -577,11 +576,11 @@ export class UnifiedLoadingManager {
   cleanup(id: string): void {
     this.activeStates.delete(id)
     this.startTimes.delete(id)
-    
+
     // Clear any associated timeouts
     const timeoutId = this.timeouts.get(`${id}_timeout`)
     const minDurationId = this.timeouts.get(`${id}_minDuration`)
-    
+
     if (timeoutId) {
       clearTimeout(timeoutId)
       this.timeouts.delete(`${id}_timeout`)
@@ -599,14 +598,14 @@ export class UnifiedLoadingManager {
 
 export function useUnifiedExperience() {
   const { addToast } = useUIStore()
-  const { metrics } = usePerformanceMonitor()
-  
+  const metrics = { isLowPerformance: false, fps: 60 } // Simple mock
+
   const prefersReducedMotion = useMemo(() => {
     if (typeof window === 'undefined') return false
     return window.matchMedia('(prefers-reduced-motion: reduce)').matches
   }, [])
 
-  const engine = useMemo(() => 
+  const engine = useMemo(() =>
     new UnifiedExperienceEngine(metrics, prefersReducedMotion, addToast),
     [metrics, prefersReducedMotion, addToast]
   )
@@ -619,7 +618,7 @@ export function useUnifiedExperience() {
     triggerCelebration: engine.triggerCelebration.bind(engine),
     getStaggeredDelay: engine.getStaggeredDelay.bind(engine),
     getLoadingAnimation: engine.getLoadingAnimation.bind(engine),
-    
+
     // Notification system
     notify: engine.notify.bind(engine),
     notifyContext: engine.notifyContext.bind(engine),
@@ -628,12 +627,12 @@ export function useUnifiedExperience() {
     warning: engine.warning.bind(engine),
     info: engine.info.bind(engine),
     achievement: engine.achievement.bind(engine),
-    
+
     // Loading system
     createLoadingState: loadingManager.createLoadingState.bind(loadingManager),
     getLoadingState: loadingManager.getState.bind(loadingManager),
     cleanupLoadingState: loadingManager.cleanup.bind(loadingManager),
-    
+
     // Performance info
     isReducedMotion: prefersReducedMotion,
     isLowPerformance: metrics.isLowPerformance,
@@ -683,7 +682,7 @@ export function useComponentExperience(componentName: string) {
     // Pre-configured animations for common component patterns
     cardAnimation: `${enterAnimation} ${hoverAnimation}`,
     buttonAnimation: `${hoverAnimation} ${pressAnimation}`,
-    listItemAnimation: (index: number) => 
+    listItemAnimation: (index: number) =>
       `${enterAnimation} ${hoverAnimation}`,
     successAnimation: () => unified.getAnimationClass('success', 'medium')
   }

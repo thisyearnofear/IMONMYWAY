@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useUIStore } from "@/stores/uiStore";
 import { useAnimation } from "@/hooks/useAnimation";
-import { useSmartDefaults } from "@/hooks/useSmartDefaults";
 import { useWallet } from "@/hooks/useWallet";
 import { cn } from "@/lib/utils";
 
@@ -29,8 +28,15 @@ export function SmartNotificationCenter() {
   
   const { toasts } = useUIStore();
   const { getAnimationClass, triggerCelebration } = useAnimation();
-  const { preferences, recordUserAction } = useSmartDefaults();
   const { isConnected, address } = useWallet();
+
+  // Simple defaults instead of smart preferences
+  const preferences = {
+    successRate: 0.75,
+    riskTolerance: 'moderate' as 'conservative' | 'moderate' | 'aggressive'
+  };
+
+  const recordUserAction = (_action?: any) => {}; // No-op for now, accepts optional argument
 
   // Generate contextual notifications based on user behavior
   useEffect(() => {
@@ -259,7 +265,7 @@ export function SmartNotificationCenter() {
 
 // Hook for triggering smart notifications from components
 export function useSmartNotifications() {
-  const { preferences } = useSmartDefaults();
+  const preferences = { successRate: 0.75 }; // Simple default
   const { triggerCelebration } = useAnimation();
 
   const triggerContextualNotification = (

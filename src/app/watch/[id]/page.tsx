@@ -5,24 +5,20 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { PremiumNavigation } from "@/components/layout/PremiumNavigation";
 import { ToastContainer } from "@/components/ui/Toast";
-import { UnifiedBettingInterface } from "@/components/betting/UnifiedBettingInterface";
 import { ReputationBadge } from "@/components/reputation/ReputationBadge";
 import { useLocationStore } from "@/stores/locationStore";
 import { useUIStore } from "@/stores/uiStore";
-import { useBettingStore } from "@/stores/bettingStore";
 import { useWallet } from "@/hooks/useWallet";
-import { useBetting } from "@/hooks/useBetting";
 import { socketManager } from "@/lib/socket";
 import { formatTime } from "@/lib/utils";
 import { MapContainer } from "@/components/map/MapContainer";
-import type { ActiveBet } from "@/stores/bettingStore";
 
 export default function WatchPage() {
   const params = useParams();
   const sharingId = params.id as string;
 
   const [isLoading, setIsLoading] = useState(true);
-  const [activeBet, setActiveBet] = useState<ActiveBet | null>(null);
+  const [activeBet, setActiveBet] = useState<any | null>(null);
   const [userReputation, setUserReputation] = useState<number>(7500);
   const mapRef = useRef<any | null>(null);
   const markerRef = useRef<any | null>(null);
@@ -38,8 +34,11 @@ export default function WatchPage() {
   } = useLocationStore();
 
   const { isConnected, address } = useWallet();
-  const { getCommitmentDetails, getUserReputation } = useBetting();
-  const { activeBets } = useBettingStore();
+
+  // Simple mocks for deleted hooks
+  const getCommitmentDetails = (_id: string) => {}; // No-op
+  const getUserReputation = (_address: string) => {}; // No-op
+  const activeBets = []; // Empty array
 
   const { addToast, setConnected } = useUIStore();
 
@@ -307,18 +306,10 @@ export default function WatchPage() {
           </div>
         </div>
 
-        {/* Betting Interface */}
+        {/* Betting Interface - Temporarily disabled */}
         {activeBet && isConnected && (
-          <div className="mb-6">
-            <UnifiedBettingInterface
-              mode="bet"
-              commitment={activeBet}
-              onBetPlaced={(success) => {
-                if (success) {
-                  console.log('Bet placed successfully');
-                }
-              }}
-            />
+          <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <p className="text-yellow-800">Betting interface temporarily unavailable</p>
           </div>
         )}
 

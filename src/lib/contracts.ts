@@ -14,7 +14,7 @@ const CONTRACT_ABI = [
   "function calculateETA(uint256 distance, uint256 pace) pure returns (uint256)",
   "function getCommitment(bytes32 commitmentId) view returns (tuple(address,uint256,uint256,uint256,tuple(int256,int256,uint256,uint256),tuple(int256,int256,uint256,uint256),uint256,uint256,bool,bool,uint256,uint256,uint256))",
   "function getUserReputation(address user) view returns (uint256)",
-  
+
   // Events
   "event CommitmentCreated(bytes32 indexed commitmentId, address indexed user, uint256 stakeAmount, uint256 arrivalDeadline, tuple(int256,int256,uint256,uint256) startLocation, tuple(int256,int256,uint256,uint256) targetLocation)",
   "event CommitmentFulfilled(bytes32 indexed commitmentId, address indexed user, bool successful, uint256 actualArrivalTime, uint256 rewardAmount)",
@@ -24,13 +24,12 @@ const CONTRACT_ABI = [
 // Get contract instance
 export function getContract(chainId: number, signer: ethers.Signer) {
   // Get contract addresses for the network
-  const networkName = chainId === 50312 ? 'SOMNIA_MAINNET' : 'SOMNIA_TESTNET';
-  const addresses = getContractAddresses(networkName);
-  const networkConfig = getNetworkConfig(networkName);
-  
+  const addresses = getContractAddresses();
+  const networkConfig = getNetworkConfig();
+
   // Create contract instance
   const contract = new ethers.Contract(addresses.PunctualityCore, CONTRACT_ABI, signer);
-  
+
   return contract;
 }
 
@@ -40,10 +39,10 @@ export function calculateDistance(lat1: number, lng1: number, lat2: number, lng2
   const R = 6371; // Earth's radius in km
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLng = (lng2 - lng1) * Math.PI / 180;
-  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-            Math.sin(dLng/2) * Math.sin(dLng/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return Math.round(R * c * 1000); // Return meters
 }
 
@@ -51,7 +50,7 @@ export function calculateDistance(lat1: number, lng1: number, lat2: number, lng2
 export async function estimateGasCost(operation: string, params: any, signer: ethers.Signer, chainId: number) {
   try {
     const contract = getContract(chainId, signer);
-    
+
     // Estimate gas based on operation
     let gasEstimate;
     switch (operation) {
@@ -80,11 +79,11 @@ export async function estimateGasCost(operation: string, params: any, signer: et
       default:
         gasEstimate = BigInt(100000); // Default gas estimate
     }
-    
+
     // Get current gas price
     const gasPrice = await signer.provider?.getFeeData();
     const gasCost = gasEstimate * (gasPrice?.gasPrice || BigInt(1000000000));
-    
+
     return Number(ethers.formatEther(gasCost));
   } catch (error) {
     console.error('Error estimating gas:', error);
@@ -94,7 +93,7 @@ export async function estimateGasCost(operation: string, params: any, signer: et
       placeBet: 0.0005,
       fulfillCommitment: 0.0007
     };
-    
+
     return baseCosts[operation as keyof typeof baseCosts] || 0.0005;
   }
 }

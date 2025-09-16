@@ -7,7 +7,6 @@ import { SmartStakeInput } from "@/components/smart/SmartStakeInput";
 import { MapContainer } from "@/components/map/MapContainer";
 import { useWallet } from "@/hooks/useWallet";
 import { useLocationStore } from "@/stores/locationStore";
-import { useBetting } from "@/hooks/useBetting";
 import { useUIStore } from "@/stores/uiStore";
 
 export default function Share() {
@@ -18,8 +17,14 @@ export default function Share() {
   const router = useRouter();
   const { isConnected } = useWallet();
   const { currentLocation } = useLocationStore();
-  const { createCommitment } = useBetting();
   const { addToast } = useUIStore();
+
+  // Simple mock for createCommitment - replace with actual implementation
+  const createCommitment = async (_start: any, _end: any, _deadline: number, _pace: number, _amount: string) => {
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    return `commitment_${Date.now()}`; // Mock commitment ID
+  };
 
   const handleStakeSet = async (amount: string) => {
     if (!isConnected) {

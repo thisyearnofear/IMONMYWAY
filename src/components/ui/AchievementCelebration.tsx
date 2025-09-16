@@ -1,7 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Achievement } from "@/hooks/useAchievements";
+interface Achievement {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  unlocked: boolean;
+  progress?: number;
+  maxProgress?: number;
+}
 
 interface AchievementCelebrationProps {
   achievement: Achievement;

@@ -1,8 +1,7 @@
 'use client'
 
-import { useState, useEffect, ReactNode } from 'react'
+import { useState, useEffect, ReactNode, useRef } from 'react'
 import { cn } from '@/lib/utils'
-import { useSwipeGesture } from '@/hooks/useSwipeGesture'
 
 interface BottomSheetProps {
   isOpen: boolean
@@ -15,10 +14,7 @@ interface BottomSheetProps {
 export function BottomSheet({ isOpen, onClose, children, title, className }: BottomSheetProps) {
   const [isVisible, setIsVisible] = useState(false)
 
-  const swipeRef = useSwipeGesture({
-    onSwipeDown: onClose,
-    threshold: 100
-  })
+  const swipeRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (isOpen) {

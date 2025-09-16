@@ -1,19 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { useAchievements } from "@/hooks/useAchievements";
 import { Button } from '@/components/ui/PremiumButton'
 import { SuccessAnimation } from "@/components/ui/SuccessAnimation";
 
 export function AchievementDisplay() {
-  const {
-    achievements,
-    streak,
-    showCelebration,
-    dismissCelebration,
-    getUnlockedAchievements,
-    getProgressAchievements,
-  } = useAchievements();
+  // Mock achievements data
+  const achievements = [
+    { id: 'first_commitment', title: 'First Steps', description: 'Create your first commitment', icon: '🎯', unlocked: true },
+    { id: 'punctual', title: 'Punctual', description: 'Arrive on time 5 times', icon: '⏰', unlocked: false, progress: 2, maxProgress: 5 },
+    { id: 'streak', title: 'Consistent', description: 'Maintain a 7-day streak', icon: '🔥', unlocked: false, progress: 3, maxProgress: 7 }
+  ];
+
+  const streak = { current: 3, longest: 5 };
+  const showCelebration = null as any;
+  const dismissCelebration = () => {};
+
+  const getUnlockedAchievements = () => achievements.filter(a => a.unlocked);
+  const getProgressAchievements = () => achievements.filter(a => !a.unlocked && a.progress !== undefined);
 
   const [showAll, setShowAll] = useState(false);
 
