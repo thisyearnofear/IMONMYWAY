@@ -3,7 +3,8 @@
 import { useUIStore } from "@/stores/uiStore";
 import { useWallet } from "@/hooks/useWallet";
 import { useState, useEffect, useRef } from "react";
-import { gsap } from "gsap";
+// Import gsap with require for better build compatibility
+const gsap = require('gsap').gsap;
 import { cn } from "@/lib/utils";
 
 // GSAP-enhanced NetworkStatus inspired by interactive demos
@@ -26,6 +27,7 @@ export function NetworkStatus() {
     blockNumber: 42161,
   });
   const [isMinimized, setIsMinimized] = useState(false);
+  const [isVisible, setIsVisible] = useState(false); // New state for visibility
   const [particles, setParticles] = useState<
     Array<{ id: string; x: number; y: number }>
   >([]);
@@ -35,7 +37,7 @@ export function NetworkStatus() {
 
   // GSAP-enhanced animations and interactions
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!isVisible || !containerRef.current) return;
 
     const container = containerRef.current;
     const statusCards = container.querySelectorAll("[data-status-card]");
@@ -69,11 +71,11 @@ export function NetworkStatus() {
 
       // Subtle follow effect for glow
       gsap.to(container, {
-        "--mouse-x": `${x}px`,
-        "--mouse-y": `${y}px`,
+        '--mouse-x': `${x}px`,
+        '--mouse-y': `${y}px`,
         duration: 0.3,
         ease: "power2.out",
-      });
+      } as any);
     };
 
     const handleClick = () => {
@@ -108,10 +110,11 @@ export function NetworkStatus() {
       container.removeEventListener("mousemove", handleMouseMove);
       container.removeEventListener("click", handleClick);
     };
-  }, []);
+  }, [isVisible]);
 
   // Status change animations
   useEffect(() => {
+    if (!isVisible) return;
     const statusElements = containerRef.current?.querySelectorAll(
       "[data-status-value]"
     );
@@ -128,7 +131,7 @@ export function NetworkStatus() {
         }
       );
     });
-  }, [systemStatus, isConnected, isOnSomnia]);
+  }, [systemStatus, isConnected, isOnSomnia, isVisible]);
 
   // Simulate real-time block updates with animation
   useEffect(() => {
@@ -173,215 +176,238 @@ export function NetworkStatus() {
   };
 
   return (
-    <div
-      ref={containerRef}
-      className={cn(
-        "fixed top-4 right-4 z-50 backdrop-blur-xl rounded-2xl p-6 shadow-2xl border border-white/20 text-xs font-mono max-w-sm transition-all duration-500 cursor-pointer",
-        "bg-gradient-to-br from-black/20 via-black/10 to-black/5",
-        "hover:scale-105 hover:shadow-3xl",
-        isMinimized && "scale-90 opacity-75"
-      )}
-      style={{
-        background: `radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(59, 130, 246, 0.1) 0%, transparent 50%),
-                     linear-gradient(145deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)`,
-      }}
-    >
-      {/* Floating Particles */}
-      {particles.map((particle) => (
+    <div className="fixed top-4 right-4 z-50">
+      <button
+        onClick={() => setIsVisible(!isVisible)}
+        className={cn(
+          "p-2 rounded-full transition-all duration-300 shadow-lg",
+          "bg-black/20 backdrop-blur-md border border-white/20",
+          "hover:bg-black/40 hover:scale-110",
+          !isVisible && "animate-pulse"
+        )}
+      >
+        <div className="w-6 h-6 flex items-center justify-center">
+          <div
+            className={cn(
+              "w-3 h-3 rounded-full transition-all duration-300",
+              isOnSomnia ? "bg-green-400" : "bg-yellow-400"
+            )}
+          />
+        </div>
+      </button>
+
+      {isVisible && (
         <div
-          key={particle.id}
-          className="absolute pointer-events-none text-lg animate-ping"
+          ref={containerRef}
+          className={cn(
+            "absolute top-0 right-0 mt-14 w-80 backdrop-blur-xl rounded-2xl p-6 shadow-2xl border border-white/20 text-xs font-mono max-w-sm transition-all duration-500 cursor-pointer",
+            "bg-gradient-to-br from-black/20 via-black/10 to-black/5",
+            "hover:shadow-3xl",
+            isMinimized && "scale-90 opacity-75"
+          )}
           style={{
-            left: `${particle.x}%`,
-            top: `${particle.y}%`,
-            animation: "float 2s ease-out forwards",
+            background: `radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                         linear-gradient(145deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)`,
           }}
         >
-          ✨
-        </div>
-      ))}
-
-      {/* Header with enhanced design */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className="relative">
+          {/* Floating Particles */}
+          {particles.map((particle) => (
             <div
-              className={cn(
-                "w-4 h-4 rounded-full transition-all duration-300",
-                isOnSomnia
-                  ? "bg-green-400 animate-pulse"
-                  : "bg-yellow-400 animate-bounce"
-              )}
-            />
-            {isOnSomnia && (
-              <div className="absolute inset-0 w-4 h-4 rounded-full bg-green-400 animate-ping opacity-50" />
-            )}
-          </div>
-          <div>
-            <div className="font-semibold text-white text-sm">
-              {isOnSomnia ? "🌐 Somnia Network" : "⚠️ Switch to Somnia"}
-            </div>
-            <div className="text-white/60 text-xs">
-              {isOnSomnia ? "Connected" : "Wrong Network"}
-            </div>
-          </div>
-        </div>
-        <button
-          onClick={() => setIsMinimized(!isMinimized)}
-          className="text-white/60 hover:text-white/80 transition-colors p-1 rounded"
-        >
-          {isMinimized ? "▲" : "▼"}
-        </button>
-      </div>
-
-      {!isMinimized && (
-        <>
-          {/* Wallet Address with improved styling */}
-          {address && (
-            <div
-              className="mb-4 p-3 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10"
-              data-status-card
-            >
-              <div className="text-white/60 text-xs mb-1">Wallet Address</div>
-              <div className="font-medium text-white/90 break-all text-xs">
-                {address.slice(0, 8)}...{address.slice(-6)}
-              </div>
-            </div>
-          )}
-
-          {/* Enhanced System Status Grid */}
-          <div className="grid grid-cols-2 gap-3 mb-4">
-            <div
-              className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/10 hover:bg-white/10 transition-all duration-300"
-              data-status-card
-            >
-              <div className="text-white/60 text-xs mb-1">Protocol</div>
-              <div
-                className={cn(
-                  "font-bold text-sm",
-                  getStatusColor(systemStatus.protocol)
-                )}
-                data-status-value
-              >
-                ⚡ {systemStatus.protocol}
-              </div>
-            </div>
-            <div
-              className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/10 hover:bg-white/10 transition-all duration-300"
-              data-status-card
-            >
-              <div className="text-white/60 text-xs mb-1">GPS</div>
-              <div
-                className={cn(
-                  "font-bold text-sm",
-                  getStatusColor(systemStatus.gps)
-                )}
-                data-status-value
-              >
-                📍 {systemStatus.gps}
-              </div>
-            </div>
-            <div
-              className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/10 hover:bg-white/10 transition-all duration-300"
-              data-status-card
-            >
-              <div className="text-white/60 text-xs mb-1">Contracts</div>
-              <div
-                className={cn(
-                  "font-bold text-sm",
-                  getStatusColor(systemStatus.contracts)
-                )}
-                data-status-value
-              >
-                📜 {systemStatus.contracts}
-              </div>
-            </div>
-            <div
-              className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/10 hover:bg-white/10 transition-all duration-300"
-              data-status-card
-            >
-              <div className="text-white/60 text-xs mb-1">Block</div>
-              <div
-                className="font-bold text-blue-400 text-sm"
-                data-status-value
-                data-block-number
-              >
-                🧱 {systemStatus.blockNumber}
-              </div>
-            </div>
-          </div>
-
-          {/* Enhanced Performance Metrics */}
-          <div className="space-y-3 mb-4">
-            {lastTxSpeed && (
-              <div
-                className="flex items-center justify-between p-3 bg-green-500/10 backdrop-blur-sm rounded-xl border border-green-500/20"
-                data-status-card
-              >
-                <span className="text-green-400 font-medium">TX Speed</span>
-                <span className="font-bold text-green-300">
-                  {lastTxSpeed.toFixed(1)}s ⚡
-                </span>
-              </div>
-            )}
-
-            <div
-              className="flex items-center justify-between p-3 bg-blue-500/10 backdrop-blur-sm rounded-xl border border-blue-500/20"
-              data-status-card
-            >
-              <span className="text-blue-400 font-medium">Contract</span>
-              <span className="font-bold text-blue-300 truncate ml-2">
-                {contractAddress.slice(0, 6)}...{contractAddress.slice(-4)}
-              </span>
-            </div>
-          </div>
-
-          {/* Interactive Status Icons */}
-          <div className="flex justify-center gap-4 pt-4 border-t border-white/10">
-            <div
-              className="text-2xl hover:scale-125 transition-transform cursor-pointer"
-              title="Rewards Active"
-            >
-              💰
-            </div>
-            <div
-              className="text-2xl hover:scale-125 transition-transform cursor-pointer"
-              title="Enhanced Features"
+              key={particle.id}
+              className="absolute pointer-events-none text-lg animate-ping"
+              style={{
+                left: `${particle.x}%`,
+                top: `${particle.y}%`,
+                animation: "float 2s ease-out forwards",
+              }}
             >
               ✨
             </div>
-            <div
-              className="text-2xl hover:scale-125 transition-transform cursor-pointer"
-              title="Target Tracking"
-            >
-              🎯
+          ))}
+
+          {/* Header with enhanced design */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <div
+                  className={cn(
+                    "w-4 h-4 rounded-full transition-all duration-300",
+                    isOnSomnia
+                      ? "bg-green-400 animate-pulse"
+                      : "bg-yellow-400 animate-bounce"
+                  )}
+                />
+                {isOnSomnia && (
+                  <div className="absolute inset-0 w-4 h-4 rounded-full bg-green-400 animate-ping opacity-50" />
+                )}
+              </div>
+              <div>
+                <div className="font-semibold text-white text-sm">
+                  {isOnSomnia ? "🌐 Somnia Network" : "⚠️ Switch to Somnia"}
+                </div>
+                <div className="text-white/60 text-xs">
+                  {isOnSomnia ? "Connected" : "Wrong Network"}
+                </div>
+              </div>
             </div>
+            <button
+              onClick={() => setIsMinimized(!isMinimized)}
+              className="text-white/60 hover:text-white/80 transition-colors p-1 rounded"
+            >
+              {isMinimized ? "▲" : "▼"}
+            </button>
           </div>
 
-          {/* Interaction Hint */}
-          <div className="text-center mt-3 text-white/40 text-xs">
-            Click for effects • Hover to interact
-          </div>
-        </>
+          {!isMinimized && (
+            <>
+              {/* Wallet Address with improved styling */}
+              {address && (
+                <div
+                  className="mb-4 p-3 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10"
+                  data-status-card
+                >
+                  <div className="text-white/60 text-xs mb-1">Wallet Address</div>
+                  <div className="font-medium text-white/90 break-all text-xs">
+                    {address.slice(0, 8)}...{address.slice(-6)}
+                  </div>
+                </div>
+              )}
+
+              {/* Enhanced System Status Grid */}
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <div
+                  className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/10 hover:bg-white/10 transition-all duration-300"
+                  data-status-card
+                >
+                  <div className="text-white/60 text-xs mb-1">Protocol</div>
+                  <div
+                    className={cn(
+                      "font-bold text-sm",
+                      getStatusColor(systemStatus.protocol)
+                    )}
+                    data-status-value
+                  >
+                    ⚡ {systemStatus.protocol}
+                  </div>
+                </div>
+                <div
+                  className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/10 hover:bg-white/10 transition-all duration-300"
+                  data-status-card
+                >
+                  <div className="text-white/60 text-xs mb-1">GPS</div>
+                  <div
+                    className={cn(
+                      "font-bold text-sm",
+                      getStatusColor(systemStatus.gps)
+                    )}
+                    data-status-value
+                  >
+                    📍 {systemStatus.gps}
+                  </div>
+                </div>
+                <div
+                  className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/10 hover:bg-white/10 transition-all duration-300"
+                  data-status-card
+                >
+                  <div className="text-white/60 text-xs mb-1">Contracts</div>
+                  <div
+                    className={cn(
+                      "font-bold text-sm",
+                      getStatusColor(systemStatus.contracts)
+                    )}
+                    data-status-value
+                  >
+                    📜 {systemStatus.contracts}
+                  </div>
+                </div>
+                <div
+                  className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/10 hover:bg-white/10 transition-all duration-300"
+                  data-status-card
+                >
+                  <div className="text-white/60 text-xs mb-1">Block</div>
+                  <div
+                    className="font-bold text-blue-400 text-sm"
+                    data-status-value
+                    data-block-number
+                  >
+                    🧱 {systemStatus.blockNumber}
+                  </div>
+                </div>
+              </div>
+
+              {/* Enhanced Performance Metrics */}
+              <div className="space-y-3 mb-4">
+                {lastTxSpeed && (
+                  <div
+                    className="flex items-center justify-between p-3 bg-green-500/10 backdrop-blur-sm rounded-xl border border-green-500/20"
+                    data-status-card
+                  >
+                    <span className="text-green-400 font-medium">TX Speed</span>
+                    <span className="font-bold text-green-300">
+                      {lastTxSpeed.toFixed(1)}s ⚡
+                    </span>
+                  </div>
+                )}
+
+                <div
+                  className="flex items-center justify-between p-3 bg-blue-500/10 backdrop-blur-sm rounded-xl border border-blue-500/20"
+                  data-status-card
+                >
+                  <span className="text-blue-400 font-medium">Contract</span>
+                  <span className="font-bold text-blue-300 truncate ml-2">
+                    {contractAddress.slice(0, 6)}...{contractAddress.slice(-4)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Interactive Status Icons */}
+              <div className="flex justify-center gap-4 pt-4 border-t border-white/10">
+                <div
+                  className="text-2xl hover:scale-125 transition-transform cursor-pointer"
+                  title="Rewards Active"
+                >
+                  💰
+                </div>
+                <div
+                  className="text-2xl hover:scale-125 transition-transform cursor-pointer"
+                  title="Enhanced Features"
+                >
+                  ✨
+                </div>
+                <div
+                  className="text-2xl hover:scale-125 transition-transform cursor-pointer"
+                  title="Target Tracking"
+                >
+                  🎯
+                </div>
+              </div>
+
+              {/* Interaction Hint */}
+              <div className="text-center mt-3 text-white/40 text-xs">
+                Click for effects • Hover to interact
+              </div>
+            </>
+          )}
+
+          {/* CSS for float animation */}
+          <style jsx>{`
+            @keyframes float {
+              0% {
+                opacity: 1;
+                transform: translateY(0) scale(0.5);
+              }
+              50% {
+                opacity: 0.8;
+                transform: translateY(-50px) scale(1);
+              }
+              100% {
+                opacity: 0;
+                transform: translateY(-100px) scale(0.5);
+              }
+            }
+          `}</style>
+        </div>
       )}
-
-      {/* CSS for float animation */}
-      <style jsx>{`
-        @keyframes float {
-          0% {
-            opacity: 1;
-            transform: translateY(0) scale(0.5);
-          }
-          50% {
-            opacity: 0.8;
-            transform: translateY(-50px) scale(1);
-          }
-          100% {
-            opacity: 0;
-            transform: translateY(-100px) scale(0.5);
-          }
-        }
-      `}</style>
     </div>
   );
 }

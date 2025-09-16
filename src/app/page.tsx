@@ -14,10 +14,7 @@ import { ConsumerTestimonial } from "@/components/ui/ConsumerTestimonial";
 import { WalletOnboarding } from "@/components/onboarding/WalletOnboarding";
 import { AchievementDisplay } from "@/components/reputation/AchievementDisplay";
 import { NetworkStatus } from "@/components/core/NetworkStatus";
-import {
-  ParticleSystem,
-  SuccessCelebration,
-} from "@/components/ui/ParticleSystem";
+import { SuccessCelebration } from "@/components/ui/ParticleSystem";
 import { useWallet } from "@/hooks/useWallet";
 import { useUIStore } from "@/stores/uiStore";
 import { useAnimation } from "@/hooks/useAnimation";

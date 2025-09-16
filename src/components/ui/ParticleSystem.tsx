@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { gsap } from "gsap";
+// Import gsap with type assertion for build compatibility
+const gsap = require('gsap').gsap;
 
 interface ParticleSystemProps {
   trigger?: boolean;

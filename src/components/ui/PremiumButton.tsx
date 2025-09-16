@@ -132,62 +132,65 @@ export const Button = forwardRef<HTMLButtonElement, PremiumButtonProps>(
     const isDisabled = disabled || isLoading;
 
     return (
-      <button
-        ref={ref}
-        className={cn(
-          baseClasses,
-          sizeClasses[size],
-          variantClasses[variant],
-          glow && glowClasses,
-          pulse && "animate-pulse",
-          gradient && "bg-gradient-to-r",
-          glass && "glass-button",
-          !isDisabled && "hover:scale-105 hover:-translate-y-1 hover:rotate-1",
-          !isDisabled && "active:scale-95 active:translate-y-0 active:rotate-0",
-          isDisabled && "opacity-50 cursor-not-allowed",
-          className
-        )}
-        disabled={isDisabled}
-        onKeyDown={handleKeyDown}
-        aria-disabled={isDisabled}
-        aria-busy={isLoading}
-        tabIndex={isDisabled ? -1 : 0}
-        {...props}
-      >
-        {/* Enhanced Shimmer & Sparkle Effect */}
-        <div className="absolute inset-0 -top-px overflow-hidden rounded-inherit">
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" />
-          {/* Sparkle particles on hover */}
-          <div className="absolute top-1/2 left-1/4 w-1 h-1 bg-white rounded-full opacity-0 group-hover:opacity-100 group-hover:animate-ping transition-all duration-300 delay-100" />
-          <div className="absolute top-1/3 right-1/3 w-0.5 h-0.5 bg-white rounded-full opacity-0 group-hover:opacity-100 group-hover:animate-ping transition-all duration-300 delay-200" />
-          <div className="absolute bottom-1/3 left-1/2 w-1 h-1 bg-white rounded-full opacity-0 group-hover:opacity-100 group-hover:animate-ping transition-all duration-300 delay-150" />
-        </div>
-
-        {/* Content */}
-        <div className="relative flex items-center justify-center gap-inherit">
-          {isLoading ? (
-            <>
-              <LoadingSpinner size="sm" className="text-current" />
-              {loadingText && <span>{loadingText}</span>}
-            </>
-          ) : (
-            <>
-              {icon && iconPosition === "left" && (
-                <span className="flex-shrink-0">{icon}</span>
-              )}
-              {children && <span>{children}</span>}
-              {icon && iconPosition === "right" && (
-                <span className="flex-shrink-0">{icon}</span>
-              )}
-            </>
+      <div className="magnet-wrapper">
+        <button
+          ref={ref}
+          className={cn(
+            "magnet-btn",
+            baseClasses,
+            sizeClasses[size],
+            variantClasses[variant],
+            glow && glowClasses,
+            pulse && "animate-pulse",
+            gradient && "bg-gradient-to-r",
+            glass && "glass-button",
+            !isDisabled && "hover:scale-105 hover:-translate-y-1 hover:rotate-1",
+            !isDisabled && "active:scale-95 active:translate-y-0 active:rotate-0",
+            isDisabled && "opacity-50 cursor-not-allowed",
+            className
           )}
-        </div>
+          disabled={isDisabled}
+          onKeyDown={handleKeyDown}
+          aria-disabled={isDisabled}
+          aria-busy={isLoading}
+          tabIndex={isDisabled ? -1 : 0}
+          {...props}
+        >
+          {/* Enhanced Shimmer & Sparkle Effect */}
+          <div className="absolute inset-0 -top-px overflow-hidden rounded-inherit">
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" />
+            {/* Sparkle particles on hover */}
+            <div className="absolute top-1/2 left-1/4 w-1 h-1 bg-white rounded-full opacity-0 group-hover:opacity-100 group-hover:animate-ping transition-all duration-300 delay-100" />
+            <div className="absolute top-1/3 right-1/3 w-0.5 h-0.5 bg-white rounded-full opacity-0 group-hover:opacity-100 group-hover:animate-ping transition-all duration-300 delay-200" />
+            <div className="absolute bottom-1/3 left-1/2 w-1 h-1 bg-white rounded-full opacity-0 group-hover:opacity-100 group-hover:animate-ping transition-all duration-300 delay-150" />
+          </div>
 
-        {/* Glow Effect */}
-        {glow && (
-          <div className="absolute inset-0 rounded-inherit bg-gradient-to-r from-current to-current opacity-0 group-hover:opacity-20 transition-opacity duration-300 blur-xl" />
-        )}
-      </button>
+          {/* Content */}
+          <div className="relative flex items-center justify-center gap-inherit">
+            {isLoading ? (
+              <>
+                <LoadingSpinner size="sm" className="text-current" />
+                {loadingText && <span>{loadingText}</span>}
+              </>
+            ) : (
+              <>
+                {icon && iconPosition === "left" && (
+                  <span className="flex-shrink-0">{icon}</span>
+                )}
+                {children && <span>{children}</span>}
+                {icon && iconPosition === "right" && (
+                  <span className="flex-shrink-0">{icon}</span>
+                )}
+              </>
+            )}
+          </div>
+
+          {/* Glow Effect */}
+          {glow && (
+            <div className="absolute inset-0 rounded-inherit bg-gradient-to-r from-current to-current opacity-0 group-hover:opacity-20 transition-opacity duration-300 blur-xl" />
+          )}
+        </button>
+      </div>
     );
   }
 );
