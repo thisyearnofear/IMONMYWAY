@@ -3,6 +3,7 @@ import "./globals.css";
 import { SmartNotificationCenter } from '@/components/smart/SmartNotificationCenter'
 import { PremiumNavigation } from "@/components/layout/PremiumNavigation";
 import { GlobalErrorBoundary } from '@/components/core/GlobalErrorBoundary';
+import ThreeBackground from "@/components/three/ThreeBackground";
 
 export const metadata: Metadata = {
   title: "IMONMYWAY - Punctuality Protocol on Somnia",
@@ -26,7 +27,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="min-h-screen bg-background text-foreground">
+      <body className="min-h-screen bg-background text-foreground relative overflow-x-hidden">
+        <ThreeBackground />
         <GlobalErrorBoundary enableRecovery={true} showErrorDetails={process.env.NODE_ENV === 'development'}>
           <PremiumNavigation />
           {children}
