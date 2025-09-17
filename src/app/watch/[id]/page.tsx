@@ -93,7 +93,7 @@ export default function WatchPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sharingId]);
 
-  const updateMap = (session: any) => {
+  const updateMap = async (session: any) => {
     if (!mapRef.current || typeof window === "undefined") return;
 
     const { latitude, longitude, path, destination, active } = session;
@@ -103,25 +103,28 @@ export default function WatchPage() {
       return;
     }
 
-    import("leaflet").then((L) => {
+    try {
+      const L = await import("leaflet");
+
       // Update or create user marker
       if (!markerRef.current) {
-        markerRef.current = createUserMarker([latitude, longitude], active).addTo(
+        markerRef.current = (await createUserMarker([latitude, longitude], active)).addTo(
           mapRef.current
         );
         mapRef.current.setView([latitude, longitude], 16);
       } else {
         markerRef.current.setLatLng([latitude, longitude]);
         // Update icon if active state changed
-        markerRef.current.setIcon(createUserMarker([latitude, longitude], active).options.icon);
+        const newMarker = await createUserMarker([latitude, longitude], active);
+        markerRef.current.setIcon(newMarker.options.icon);
       }
 
       // Update destination marker
       if (destination) {
         if (!destinationMarkerRef.current) {
-          destinationMarkerRef.current = createDestinationMarker(
+          destinationMarkerRef.current = (await createDestinationMarker(
             [destination.lat, destination.lng]
-          ).addTo(mapRef.current);
+          )).addTo(mapRef.current);
         } else {
           destinationMarkerRef.current.setLatLng([
             destination.lat,
@@ -135,7 +138,7 @@ export default function WatchPage() {
         if (pathRef.current) {
           pathRef.current.setLatLngs(path);
         } else {
-          pathRef.current = createPolyline(path, active).addTo(mapRef.current);
+          pathRef.current = (await createPolyline(path, active)).addTo(mapRef.current);
         }
       }
 
@@ -144,7 +147,9 @@ export default function WatchPage() {
         [latitude, longitude],
         Math.max(mapRef.current.getZoom(), 13)
       );
-    });
+    } catch (error) {
+      console.error("Error updating map:", error);
+    }
   };
 
   if (isLoading) {

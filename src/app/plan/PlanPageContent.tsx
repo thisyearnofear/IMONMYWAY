@@ -154,17 +154,23 @@ export default function PlanPageContent() {
           <MapContainer
             className="h-full"
             center={planData ? planData.startCoords : [40.7128, -74.006]}
-            onMapReady={(map) => {
+            onMapReady={async (map) => {
               if (planData && typeof window !== "undefined") {
-                import("leaflet").then((L) => {
-                  const startMarker = createStartMarker(planData.startCoords).addTo(map);
-                  const endMarker = createDestinationMarker(planData.endCoords).addTo(map);
+                try {
+                  const L = await import("leaflet");
+                  const startMarker = await createStartMarker(planData.startCoords);
+                  const endMarker = await createDestinationMarker(planData.endCoords);
+                  const polyline = await createPolyline([planData.startCoords, planData.endCoords], true);
 
-                  const polyline = createPolyline([planData.startCoords, planData.endCoords], true).addTo(map);
+                  startMarker.addTo(map);
+                  endMarker.addTo(map);
+                  polyline.addTo(map);
 
-                  const group = L.featureGroup([startMarker, endMarker, polyline]);
+                  const group = L.default.featureGroup([startMarker, endMarker, polyline]);
                   fitBoundsToMarkers(map, group);
-                });
+                } catch (error) {
+                  console.error("Error adding markers to map:", error);
+                }
               }
             }}
           />
@@ -251,22 +257,27 @@ export default function PlanPageContent() {
               <MapContainer
                 className="h-96"
                 center={planData ? planData.startCoords : [40.7128, -74.006]}
-                onMapReady={(map) => {
+                onMapReady={async (map) => {
                   if (planData && typeof window !== "undefined") {
-                    import("leaflet").then((L) => {
+                    try {
+                      const L = await import("leaflet");
                       // Add markers for start and end
-                      const startMarker = createStartMarker(planData.startCoords).addTo(
-                        map
-                      );
-                      const endMarker = createDestinationMarker(planData.endCoords).addTo(map);
+                      const startMarker = await createStartMarker(planData.startCoords);
+                      const endMarker = await createDestinationMarker(planData.endCoords);
 
                       // Add line between points
-                      const polyline = createPolyline([planData.startCoords, planData.endCoords], true).addTo(map);
+                      const polyline = await createPolyline([planData.startCoords, planData.endCoords], true);
+
+                      startMarker.addTo(map);
+                      endMarker.addTo(map);
+                      polyline.addTo(map);
 
                       // Fit map to show both points
-                      const group = L.featureGroup([startMarker, endMarker, polyline]);
+                      const group = L.default.featureGroup([startMarker, endMarker, polyline]);
                       fitBoundsToMarkers(map, group);
-                    });
+                    } catch (error) {
+                      console.error("Error adding markers to map:", error);
+                    }
                   }
                 }}
               />
