@@ -37,46 +37,130 @@ A decentralized betting protocol that combines real-time location tracking with 
 - **Modern browser** with WebSocket and Geolocation support
 - **HTTPS required** in production for GPS access
 
-### Installation
+### Local Development Setup
 
 1. **Clone the repository**
 
-   ```bash
-   git clone <your-repo-url>
-   cd runner-eta
-   ```
+    ```bash
+    git clone <your-repo-url>
+    cd imonmyway
+    ```
 
 2. **Install dependencies**
 
-   ```bash
-   pnpm install
-   ```
+    ```bash
+    pnpm install
+    ```
 
 3. **Set up the database**
 
-   Follow the detailed database setup guide in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+    Follow the detailed database setup guide in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 
-   Or use the automated setup script:
+    Or use the automated setup script:
 
-   ```bash
-   ./scripts/setup-database.sh
-   ```
+    ```bash
+    ./scripts/setup-database.sh
+    ```
 
 4. **Start the development server**
 
-   ```bash
-   pnpm dev              # Development with hot reload + Socket.IO
-   ```
+    ```bash
+    pnpm dev              # Development with hot reload + Socket.IO
+    ```
 
-5. **Build for production**
+5. **Open your browser**
+    Navigate to [http://localhost:3000](http://localhost:3000)
 
-   ```bash
-   pnpm build           # Production build with Turbopack
-   pnpm start           # Start production server
-   ```
+### Production Deployment
 
-6. **Open your browser**
-   Navigate to [http://localhost:3000](http://localhost:3000)
+#### Frontend Deployment (Netlify)
+
+1. **Build the frontend**
+
+    ```bash
+    pnpm build
+    ```
+
+2. **Deploy to Netlify**
+    - Connect your GitHub repository to Netlify
+    - Set build command: `pnpm build`
+    - Set publish directory: `out`
+    - Your frontend will be available at: `https://your-app.netlify.app`
+
+#### Backend Deployment (Server)
+
+1. **Upload backend files to your server**
+
+    ```bash
+    # Upload the backend files
+    scp server.js package.json user@your-server:/var/www/your-app-backend/
+    scp backend-server.js user@your-server:/var/www/your-app-backend/
+    ```
+
+2. **Install dependencies on server**
+
+    ```bash
+    ssh user@your-server
+    cd /var/www/your-app-backend
+    npm install --production
+    ```
+
+3. **Start the backend with PM2**
+
+    ```bash
+    # For development/testing
+    NODE_ENV=production PORT=3001 node server.js
+
+    # For production with PM2
+    pm2 start backend-server.js --name your-app-backend
+    pm2 save
+    pm2 startup
+    ```
+
+4. **Configure Nginx (if using)**
+
+    Create `/etc/nginx/sites-available/your-app-backend`:
+
+    ```nginx
+    server {
+        listen 80;
+        server_name your-server-ip-or-domain;
+
+        location /socket.io/ {
+            proxy_pass http://localhost:3001;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        location / {
+            proxy_pass http://localhost:3001;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+    }
+    ```
+
+5. **Enable the site and reload Nginx**
+
+    ```bash
+    ln -sf /etc/nginx/sites-available/your-app-backend /etc/nginx/sites-enabled/
+    nginx -t
+    nginx -s reload
+    ```
+
+#### Current Deployment Status
+
+- **Frontend**: ✅ Deployed at `https://imonmyway.netlify.app`
+- **Backend**: ✅ Deployed at `http://157.180.36.156` (Hetzner server)
+- **Database**: PostgreSQL with Prisma ORM
+- **WebSocket**: Socket.IO for real-time communication
 
 ## 📱 Usage
 
@@ -117,6 +201,8 @@ For detailed information about the project:
 
 ### Environment Variables
 
+#### Frontend (.env.local)
+
 Create a `.env.local` file for local development:
 
 ```env
@@ -129,18 +215,71 @@ PRIVATE_KEY="your_wallet_private_key_here"
 # Server configuration
 NODE_ENV=development
 PORT=3000
+
+# Socket.IO configuration (for production)
+NEXT_PUBLIC_SOCKET_URL="http://157.180.36.156"
+```
+
+#### Backend Environment Variables
+
+For production backend deployment:
+
+```env
+# Server configuration
+NODE_ENV=production
+PORT=3001
+
+# Database (if using)
+DATABASE_URL="postgresql://user:password@host:5432/dbname"
+
+# CORS origins (comma-separated)
+CORS_ORIGINS="https://imonmyway.netlify.app,http://localhost:3000"
+```
+
+#### PM2 Ecosystem Configuration
+
+Create `ecosystem.config.js` for PM2:
+
+```javascript
+module.exports = {
+  apps: [{
+    name: 'imonmyway-backend',
+    script: 'backend-server.js',
+    instances: 1,
+    autorestart: true,
+    watch: false,
+    max_memory_restart: '1G',
+    env: {
+      NODE_ENV: 'production',
+      PORT: 3001
+    }
+  }]
+};
 ```
 
 ### Production Deployment
 
-**Important**: This app uses a custom Socket.IO server (`server.js`) for real-time WebSocket connections.
+**Important**: This app uses a custom Socket.IO server (`backend-server.js`) for real-time WebSocket connections.
 
 - **Node.js hosting required** (not static hosting)
-- **Supports**: Railway, Render, DigitalOcean, AWS EC2, etc.
+- **Supports**: Railway, Render, DigitalOcean, AWS EC2, Hetzner, etc.
 - **HTTPS required** for geolocation API access
 - **WebSocket support** needed for real-time features
 - **PostgreSQL database** required for production use
 - **Somnia mainnet** configured and ready for production
+- **PM2 recommended** for process management
+- **Nginx recommended** for reverse proxy and SSL termination
+
+#### Deployment Checklist
+
+- [x] Frontend deployed to Netlify
+- [x] Backend deployed to Hetzner server
+- [x] PM2 process management configured
+- [x] Nginx reverse proxy set up
+- [x] Socket.IO CORS configured
+- [x] Health endpoint responding
+- [ ] SSL certificates (optional)
+- [ ] Custom domain (optional)
 
 ## 📱 Mobile Optimization
 
@@ -227,6 +366,55 @@ pnpm lint            # ESLint with Next.js 15 rules
 - **Gas Estimation**: Built-in gas cost estimation
 - **Transaction Handling**: Real transaction processing with error handling
 - **Event Logging**: Comprehensive event logging for analytics
+
+## 🔧 Troubleshooting
+
+### Backend Connection Issues
+
+**Problem**: Frontend can't connect to backend
+```bash
+# Check if backend is running
+ssh user@your-server "pm2 status"
+
+# Check backend logs
+ssh user@your-server "pm2 logs imonmyway-backend --lines 20"
+
+# Test health endpoint
+curl http://157.180.36.156/health
+```
+
+**Problem**: Socket.IO connection fails
+- Ensure CORS origins include your frontend domain
+- Check that Nginx is properly configured for WebSocket upgrades
+- Verify firewall allows port 80/443
+
+### Database Issues
+
+**Problem**: Database connection fails
+```bash
+# Test database connection
+npx prisma db push
+
+# Check database logs
+# (depends on your database setup)
+```
+
+### Build Issues
+
+**Problem**: Build fails
+```bash
+# Clear cache and reinstall
+rm -rf node_modules .next
+pnpm install
+pnpm build
+```
+
+### Performance Issues
+
+**Problem**: Slow loading times
+- Check PM2 logs for memory issues
+- Monitor server resources
+- Consider scaling up server resources
 
 ## 🤝 Contributing
 

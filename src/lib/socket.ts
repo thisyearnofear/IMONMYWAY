@@ -14,7 +14,7 @@ class SocketManager {
 
   connect(): Socket {
     if (!this.socket) {
-      this.socket = io({
+      this.socket = io('http://157.180.36.156', {
         transports: ['websocket', 'polling']
       })
     }
