@@ -23,17 +23,17 @@ interface UseWalletReturn extends WalletState {
   trackTransactionSpeed: (txHash: string) => Promise<void>
 }
 
-// ✅ PRODUCTION READY: Somnia Mainnet Configuration
+// ✅ CORRECTED: Somnia Testnet Configuration (Chain ID 50312 is testnet)
 const SOMNIA_NETWORK = {
-  chainId: '0xC478', // 50312 in hex (Somnia mainnet)
-  chainName: 'Somnia Network',
+  chainId: '0xC478', // 50312 in hex (Somnia testnet)
+  chainName: 'Somnia Testnet',
   nativeCurrency: {
-    name: 'SOMI',
-    symbol: 'SOMI',
+    name: 'Somnia Test Token',
+    symbol: 'STT',
     decimals: 18,
   },
   rpcUrls: ['https://dream-rpc.somnia.network/'],
-  blockExplorerUrls: ['https://explorer.somnia.network/'],
+  blockExplorerUrls: ['https://shannon-explorer.somnia.network/'],
 }
 
 export function useWallet(): UseWalletReturn {
