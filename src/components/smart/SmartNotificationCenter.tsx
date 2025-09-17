@@ -43,6 +43,7 @@ export function SmartNotificationCenter() {
     if (isConnected && address) {
       generateSmartNotifications();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isConnected, address, preferences]);
 
   const generateSmartNotifications = () => {
@@ -168,6 +169,7 @@ export function SmartNotificationCenter() {
         }, notification.duration);
       }
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [notifications]);
 
   // Hide center when no notifications

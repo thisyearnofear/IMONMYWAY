@@ -598,7 +598,8 @@ export class UnifiedLoadingManager {
 
 export function useUnifiedExperience() {
   const { addToast } = useUIStore()
-  const metrics = { isLowPerformance: false, fps: 60 } // Simple mock
+
+  const metrics = useMemo(() => ({ isLowPerformance: false, fps: 60 }), [])
 
   const prefersReducedMotion = useMemo(() => {
     if (typeof window === 'undefined') return false

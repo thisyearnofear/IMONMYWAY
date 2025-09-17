@@ -169,7 +169,7 @@ export function useWallet(): UseWalletReturn {
       })
       setWalletState(prev => ({ ...prev, isConnecting: false }))
     }
-  }, [isMetaMaskInstalled, updateWalletState, addToast])
+  }, [isMetaMaskInstalled, updateWalletState, addToast, walletState.address])
 
   // Disconnect wallet
   const disconnect = useCallback(() => {
@@ -185,7 +185,7 @@ export function useWallet(): UseWalletReturn {
       type: 'info',
       message: 'Wallet disconnected',
     })
-  }, [addToast, updateNetworkMetrics])
+  }, [addToast])
 
   // Switch to Somnia Network
   const switchToSomnia = useCallback(async () => {
@@ -272,7 +272,7 @@ export function useWallet(): UseWalletReturn {
         return false
       }
     }
-  }, [addToast])
+  }, [addToast, updateNetworkMetrics])
 
   // Listen for account and chain changes
   useEffect(() => {

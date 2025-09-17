@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { motion } from "framer-motion";
+import WebGLParticleSystem from "@/components/three/ParticleSystem";
 import { PremiumNavigation } from "@/components/layout/PremiumNavigation";
 import { ToastContainer } from "@/components/ui/Toast";
 import { ReputationBadge } from "@/components/reputation/ReputationBadge";
@@ -12,6 +14,7 @@ import { useWallet } from "@/hooks/useWallet";
 import { socketManager } from "@/lib/socket";
 import { formatTime } from "@/lib/utils";
 import { MapContainer } from "@/components/map/MapContainer";
+import { createUserMarker, createDestinationMarker, createPolyline } from "@/lib/map-utils";
 
 export default function WatchPage() {
   const params = useParams();
@@ -87,6 +90,7 @@ export default function WatchPage() {
       clearWatchedSession();
       socket.disconnect();
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sharingId]);
 
   const updateMap = (session: any) => {
@@ -102,48 +106,21 @@ export default function WatchPage() {
     import("leaflet").then((L) => {
       // Update or create user marker
       if (!markerRef.current) {
-        markerRef.current = L.marker([latitude, longitude]).addTo(
+        markerRef.current = createUserMarker([latitude, longitude], active).addTo(
           mapRef.current
         );
         mapRef.current.setView([latitude, longitude], 16);
       } else {
         markerRef.current.setLatLng([latitude, longitude]);
+        // Update icon if active state changed
+        markerRef.current.setIcon(createUserMarker([latitude, longitude], active).options.icon);
       }
-
-      // Update marker color based on active status
-      const iconUrl = active
-        ? "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png"
-        : "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-grey.png";
-
-      markerRef.current.setIcon(
-        L.icon({
-          iconUrl,
-          shadowUrl:
-            "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
-          iconSize: [25, 41],
-          iconAnchor: [12, 41],
-          popupAnchor: [1, -34],
-          shadowSize: [41, 41],
-        })
-      );
 
       // Update destination marker
       if (destination) {
         if (!destinationMarkerRef.current) {
-          destinationMarkerRef.current = L.marker(
-            [destination.lat, destination.lng],
-            {
-              icon: L.icon({
-                iconUrl:
-                  "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png",
-                shadowUrl:
-                  "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
-                iconSize: [25, 41],
-                iconAnchor: [12, 41],
-                popupAnchor: [1, -34],
-                shadowSize: [41, 41],
-              }),
-            }
+          destinationMarkerRef.current = createDestinationMarker(
+            [destination.lat, destination.lng]
           ).addTo(mapRef.current);
         } else {
           destinationMarkerRef.current.setLatLng([
@@ -158,11 +135,7 @@ export default function WatchPage() {
         if (pathRef.current) {
           pathRef.current.setLatLngs(path);
         } else {
-          pathRef.current = L.polyline(path, {
-            color: active ? "blue" : "gray",
-            weight: 3,
-            opacity: 0.7,
-          }).addTo(mapRef.current);
+          pathRef.current = createPolyline(path, active).addTo(mapRef.current);
         }
       }
 
@@ -223,12 +196,17 @@ export default function WatchPage() {
         </div>
 
         {/* Status Bar */}
-        <div className="bg-white rounded-lg shadow-md p-4 mb-6">
+        <motion.div
+          className="glass-enhanced rounded-2xl shadow-2xl p-6 mb-6 border border-white/20"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div
                 className={`flex items-center space-x-2 ${
-                  watchedSession.active ? "text-green-600" : "text-gray-500"
+                  watchedSession.active ? "text-green-400" : "text-gray-400"
                 }`}
               >
                 <div
@@ -243,7 +221,7 @@ export default function WatchPage() {
                 </span>
               </div>
 
-              <div className="text-gray-600">
+              <div className="text-white/70">
                 <span className="font-medium">🏃‍♂️ Pace:</span> {watchedSession.pace} min/mile
               </div>
 
@@ -259,37 +237,43 @@ export default function WatchPage() {
 
             {watchedSession.eta && watchedSession.destination && (
               <div className="text-right">
-                <div className="text-2xl font-bold text-blue-600">
+                <div className="text-2xl font-bold text-blue-400">
                   {formatTime(watchedSession.eta)}
                 </div>
-                <div className="text-sm text-gray-600">⏰ Estimated Arrival</div>
+                <div className="text-sm text-white/70">⏰ Estimated Arrival</div>
               </div>
             )}
           </div>
 
           {watchedSession.stakeAmount && (
-            <div className="mt-3 pt-3 border-t border-gray-200">
-              <div className="text-sm text-gray-600">
+            <div className="mt-3 pt-3 border-t border-white/20">
+              <div className="text-sm text-white/70">
                 <span className="font-medium">💵 Prize Pool:</span>
-                <span className="ml-2 text-green-600 font-medium">
+                <span className="ml-2 text-green-400 font-medium">
                   {(Number(watchedSession.stakeAmount) / 1e18).toFixed(3)} STT
                 </span>
-                <span className="ml-2 text-purple-600 text-xs">
+                <span className="ml-2 text-purple-400 text-xs">
                   (2.5x payout if successful!)
                 </span>
               </div>
             </div>
           )}
-        </div>
+        </motion.div>
 
         {/* Map */}
-        <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
+        <motion.div
+          className="glass-enhanced rounded-2xl shadow-2xl overflow-hidden mb-6 border border-white/20"
+          initial={{ opacity: 0, scale: 0.98 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8 }}
+          viewport={{ once: true }}
+        >
           <div className="relative">
             <span
-              className={`absolute top-4 left-4 z-10 px-2 py-1 rounded text-sm font-medium ${
+              className={`absolute top-4 left-4 z-10 px-3 py-2 rounded-full text-sm font-medium backdrop-blur-sm ${
                 watchedSession.active
-                  ? "bg-green-600 text-white"
-                  : "bg-gray-500 text-white"
+                  ? "bg-green-500/90 text-white shadow-lg"
+                  : "bg-gray-500/90 text-white shadow-lg"
               }`}
             >
               {watchedSession.active ? "Live Tracking" : "Last Known Location"}
@@ -304,95 +288,119 @@ export default function WatchPage() {
               }}
             />
           </div>
-        </div>
+        </motion.div>
 
         {/* Betting Interface - Temporarily disabled */}
         {activeBet && isConnected && (
-          <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-            <p className="text-yellow-800">Betting interface temporarily unavailable</p>
-          </div>
+          <motion.div
+            className="mb-6 glass-modern bg-yellow-500/10 border border-yellow-400/30 rounded-xl p-4"
+            whileHover={{ scale: 1.02 }}
+            transition={{ type: "spring", stiffness: 300 }}
+          >
+            <p className="text-yellow-300">Betting interface temporarily unavailable</p>
+          </motion.div>
         )}
 
         {/* Betting Prompt for Non-Connected Users */}
         {watchedSession.isStaked && !isConnected && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-            <h3 className="font-semibold text-blue-900 mb-2">
+          <motion.div
+            className="glass-modern bg-blue-500/10 border border-blue-400/30 rounded-xl p-6 mb-6"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+          >
+            <h3 className="font-semibold text-blue-300 mb-2">
               Want to Bet on This Commitment?
             </h3>
-            <p className="text-blue-800 text-sm mb-3">
+            <p className="text-blue-200 text-sm mb-3">
               Connect your wallet to bet on whether this person will make it on
               time!
             </p>
-            <button className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
+            <button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl text-sm font-medium hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg transform hover:scale-105">
               Connect Wallet to Bet
             </button>
-          </div>
+          </motion.div>
         )}
 
         {/* Info Cards */}
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+        <motion.div
+          className="grid md:grid-cols-2 gap-6"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          transition={{ duration: 0.8, staggerChildren: 0.2 }}
+          viewport={{ once: true }}
+        >
+          <motion.div
+            className="glass-enhanced rounded-2xl shadow-2xl p-6 border border-white/20"
+            whileHover={{ scale: 1.02, y: -2 }}
+            transition={{ type: "spring", stiffness: 300 }}
+          >
+            <h3 className="text-lg font-bold text-white mb-4">
               📍 Current Location
             </h3>
             <div className="space-y-3 text-sm">
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <span className="text-gray-600 font-medium">Last Seen:</span>
-                <span className="font-semibold text-gray-900">
+              <div className="flex items-center justify-between p-4 glass-modern rounded-lg">
+                <span className="text-white/70 font-medium">Last Seen:</span>
+                <span className="font-semibold text-white">
                   {new Date(watchedSession.lastUpdated).toLocaleTimeString()}
                 </span>
               </div>
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <span className="text-gray-600 font-medium">GPS Accuracy:</span>
-                <span className="font-semibold text-green-600">
+              <div className="flex items-center justify-between p-4 glass-modern rounded-lg bg-green-500/10 border border-green-400/30">
+                <span className="text-white/70 font-medium">GPS Accuracy:</span>
+                <span className="font-semibold text-green-400">
                   High Precision
                 </span>
               </div>
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <span className="text-gray-600 font-medium">Update Frequency:</span>
-                <span className="font-semibold text-blue-600">
+              <div className="flex items-center justify-between p-4 glass-modern rounded-lg bg-blue-500/10 border border-blue-400/30">
+                <span className="text-white/70 font-medium">Update Frequency:</span>
+                <span className="font-semibold text-blue-400">
                   Real-time
                 </span>
               </div>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <motion.div
+            className="glass-enhanced rounded-2xl shadow-2xl p-6 border border-white/20"
+            whileHover={{ scale: 1.02, y: -2 }}
+            transition={{ type: "spring", stiffness: 300 }}
+          >
+            <h3 className="text-lg font-bold text-white mb-4">
               🏁 Challenge Progress
             </h3>
             <div className="space-y-3 text-sm">
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <span className="text-gray-600 font-medium">Status:</span>
+              <div className="flex items-center justify-between p-4 glass-modern rounded-lg">
+                <span className="text-white/70 font-medium">Status:</span>
                 <span
                   className={`font-semibold ${
-                    watchedSession.active ? "text-green-600" : "text-gray-500"
+                    watchedSession.active ? "text-green-400" : "text-gray-400"
                   }`}
                 >
                   {watchedSession.active ? "🚀 Active Journey" : "⏸️ Paused"}
                 </span>
               </div>
               {watchedSession.destination && (
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <span className="text-gray-600 font-medium">Destination:</span>
-                  <span className="font-semibold text-purple-600">🎯 Set</span>
+                <div className="flex items-center justify-between p-4 glass-modern rounded-lg bg-purple-500/10 border border-purple-400/30">
+                  <span className="text-white/70 font-medium">Destination:</span>
+                  <span className="font-semibold text-purple-400">🎯 Set</span>
                 </div>
               )}
               {watchedSession.isStaked && (
-                <div className="flex items-center justify-between p-3 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
-                  <span className="text-gray-600 font-medium">Reward Type:</span>
-                  <span className="font-semibold text-purple-600">💎 Staked Challenge</span>
+                <div className="flex items-center justify-between p-4 glass-modern rounded-lg bg-gradient-to-r from-purple-500/10 to-blue-500/10 border border-purple-400/30">
+                  <span className="text-white/70 font-medium">Reward Type:</span>
+                  <span className="font-semibold text-purple-400">💎 Staked Challenge</span>
                 </div>
               )}
-              <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                <span className="text-gray-600 font-medium">Track Length:</span>
-                <span className="font-semibold text-blue-600">
+              <div className="flex items-center justify-between p-4 glass-modern rounded-lg bg-blue-500/10 border border-blue-400/30">
+                <span className="text-white/70 font-medium">Track Length:</span>
+                <span className="font-semibold text-blue-400">
                   {watchedSession.path.length} GPS points
                 </span>
               </div>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </main>
 
       <ToastContainer />
