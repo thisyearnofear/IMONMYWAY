@@ -132,6 +132,25 @@ export const GameifiedInterface: React.FC<GameifiedInterfaceProps> = ({
   const [showAchievement, setShowAchievement] = useState<Achievement | null>(null);
   const [particles, setParticles] = useState<Array<{ id: number; x: number; y: number }>>([]);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Particle System
+  const createParticleExplosion = () => {
+    const newParticles = Array.from({ length: 12 }, (_, i) => ({
+      id: Date.now() + i,
+      x: Math.random() * 100,
+      y: Math.random() * 100
+    }));
+    
+    setParticles(newParticles);
+    setTimeout(() => setParticles([]), 2000);
+  };
+
+  // Viral Moment Trigger
+  const triggerViralMoment = (type: string, data: any) => {
+    createParticleExplosion();
+    onViralMoment?.(type, data);
+  };
+
   // XP and Level System
   const addXP = useCallback((amount: number, reason: string) => {
     setProgress(prev => {
@@ -154,9 +173,6 @@ export const GameifiedInterface: React.FC<GameifiedInterfaceProps> = ({
     });
   }, []);
 
-    });
-  };
-
   // Achievement System
   const unlockAchievement = (achievementId: string) => {
     setProgress(prev => {
@@ -178,24 +194,6 @@ export const GameifiedInterface: React.FC<GameifiedInterfaceProps> = ({
         viralScore: prev.viralScore + getRarityScore(achievement.rarity)
       };
     });
-  };
-
-  // Viral Moment Trigger
-  const triggerViralMoment = (type: string, data: any) => {
-    createParticleExplosion();
-    onViralMoment?.(type, data);
-  };
-
-  // Particle System
-  const createParticleExplosion = () => {
-    const newParticles = Array.from({ length: 12 }, (_, i) => ({
-      id: Date.now() + i,
-      x: Math.random() * 100,
-      y: Math.random() * 100
-    }));
-    
-    setParticles(newParticles);
-    setTimeout(() => setParticles([]), 2000);
   };
 
   // Social Sharing
