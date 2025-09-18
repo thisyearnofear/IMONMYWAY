@@ -3,11 +3,13 @@ import "./globals.css";
 import { SmartNotificationCenter } from '@/components/smart/SmartNotificationCenter'
 import { PremiumNavigation } from "@/components/layout/PremiumNavigation";
 import { GlobalErrorBoundary } from '@/components/core/GlobalErrorBoundary';
+import { ToastProvider, ToastContainer } from '@/components/unified/UnifiedToast';
 
 export const metadata: Metadata = {
   title: "IMONMYWAY - Punctuality Protocol on Somnia",
   description:
     "Put your money where your mouth is. Stake tokens on punctuality commitments and let others bet on your success with real-time GPS verification on Somnia Network.",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3001'),
   icons: {
     icon: '/IOMYfavicon.ico',
     apple: '/IOMYsquare.png',
@@ -27,11 +29,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen bg-background text-foreground relative overflow-x-hidden">
-        <GlobalErrorBoundary enableRecovery={true} showErrorDetails={process.env.NODE_ENV === 'development'}>
-          <PremiumNavigation />
-          {children}
-          <SmartNotificationCenter />
-        </GlobalErrorBoundary>
+        <ToastProvider>
+          <GlobalErrorBoundary enableRecovery={true} showErrorDetails={process.env.NODE_ENV === 'development'}>
+            <PremiumNavigation />
+            {children}
+            <SmartNotificationCenter />
+            <ToastContainer />
+          </GlobalErrorBoundary>
+        </ToastProvider>
       </body>
     </html>
   );
