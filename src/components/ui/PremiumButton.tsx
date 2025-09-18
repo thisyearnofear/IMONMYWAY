@@ -65,20 +65,15 @@ export const Button = forwardRef<HTMLButtonElement, PremiumButtonProps>(
 
     const variantClasses = {
       primary: cn(
-        "bg-gradient-to-r from-blue-600 to-purple-600",
-        "hover:from-blue-700 hover:to-purple-700",
-        "text-white shadow-lg hover:shadow-xl",
+        "btn-primary",
         "focus:ring-blue-500"
       ),
       secondary: cn(
-        "bg-gradient-to-r from-gray-600 to-gray-700",
-        "hover:from-gray-700 hover:to-gray-800",
-        "text-white shadow-lg hover:shadow-xl",
+        "btn-secondary", 
         "focus:ring-gray-500"
       ),
       glass: cn(
-        "glass-button",
-        "text-white hover:text-white",
+        "btn-glass",
         "focus:ring-white/20"
       ),
       outline: cn(
@@ -87,8 +82,7 @@ export const Button = forwardRef<HTMLButtonElement, PremiumButtonProps>(
         "text-white focus:ring-white/20"
       ),
       ghost: cn(
-        "bg-transparent hover:bg-white/10",
-        "text-white/80 hover:text-white",
+        "btn-glass",
         "focus:ring-white/20"
       ),
       danger: cn(

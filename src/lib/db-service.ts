@@ -104,6 +104,33 @@ export class DatabaseService {
     }
   }
 
+  async getAllUsers() {
+    try {
+      return Array.from(storage.users.values());
+    } catch (error) {
+      console.error('❌ Error fetching all users:', error);
+      throw error;
+    }
+  }
+
+  async getAnalytics(walletAddress: string) {
+    try {
+      const userAnalytics = [];
+      for (const [_, event] of storage.analyticsEvents) {
+        if (event.userId === walletAddress) {
+          userAnalytics.push({
+            ...event,
+            metadata: event.eventData || {}
+          });
+        }
+      }
+      return userAnalytics;
+    } catch (error) {
+      console.error('❌ Error fetching user analytics:', error);
+      throw error;
+    }
+  }
+
   // ============================================================================
   // SESSION MANAGEMENT
   // ============================================================================
