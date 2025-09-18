@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 // Simple SVG icons to replace lucide-react
 const Sparkles = ({ className }: { className?: string }) => (
@@ -132,9 +132,8 @@ export const GameifiedInterface: React.FC<GameifiedInterfaceProps> = ({
   const [showAchievement, setShowAchievement] = useState<Achievement | null>(null);
   const [particles, setParticles] = useState<Array<{ id: number; x: number; y: number }>>([]);
   const containerRef = useRef<HTMLDivElement>(null);
-
   // XP and Level System
-  const addXP = (amount: number, reason: string) => {
+  const addXP = useCallback((amount: number, reason: string) => {
     setProgress(prev => {
       const newXP = prev.xp + amount;
       const newLevel = Math.floor(newXP / 100) + 1;
@@ -152,6 +151,9 @@ export const GameifiedInterface: React.FC<GameifiedInterfaceProps> = ({
         level: newLevel,
         viralScore: prev.viralScore + (leveledUp ? 50 : 10)
       };
+    });
+  }, []);
+
     });
   };
 

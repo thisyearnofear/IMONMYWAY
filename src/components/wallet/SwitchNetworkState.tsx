@@ -27,7 +27,7 @@ export const SwitchNetworkState = memo(function SwitchNetworkState({
     >
       <div className="mb-4 p-4 bg-orange-500/20 border border-orange-500/30 rounded-xl">
         <p className="text-orange-200 font-medium mb-2">⚠️ Switch to Somnia Network</p>
-        <p className="text-sm text-orange-200/80">You're connected to the wrong network</p>
+        <p className="text-sm text-orange-200/80">You&apos;re connected to the wrong network</p>
       </div>
       
       <button 

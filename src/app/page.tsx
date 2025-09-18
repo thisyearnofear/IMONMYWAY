@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useState, useCallback } from "react";
+import Link from "next/link";
 import WebGLParticleSystem from "@/components/three/ParticleSystem";
 import { NetworkStatus } from "@/components/core/NetworkStatus";
 import { useHeroState } from "@/hooks/useHeroState";
