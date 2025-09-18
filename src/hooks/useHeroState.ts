@@ -38,7 +38,7 @@ export function useHeroState(): HeroStateReturn {
 
   // Memoize wallet state info to prevent unnecessary recalculations
   const walletInfo = useMemo(
-    () => getWalletStateInfo(isConnected, chainId),
+    () => getWalletStateInfo(isConnected, chainId ?? undefined),
     [isConnected, chainId]
   );
 

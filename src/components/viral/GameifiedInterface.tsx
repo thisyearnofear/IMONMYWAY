@@ -134,7 +134,7 @@ export const GameifiedInterface: React.FC<GameifiedInterfaceProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Particle System
-  const createParticleExplosion = () => {
+  const createParticleExplosion = useCallback(() => {
     const newParticles = Array.from({ length: 12 }, (_, i) => ({
       id: Date.now() + i,
       x: Math.random() * 100,
@@ -143,13 +143,13 @@ export const GameifiedInterface: React.FC<GameifiedInterfaceProps> = ({
     
     setParticles(newParticles);
     setTimeout(() => setParticles([]), 2000);
-  };
+  }, []);
 
   // Viral Moment Trigger
-  const triggerViralMoment = (type: string, data: any) => {
+  const triggerViralMoment = useCallback((type: string, data: any) => {
     createParticleExplosion();
     onViralMoment?.(type, data);
-  };
+  }, [createParticleExplosion, onViralMoment]);
 
   // XP and Level System
   const addXP = useCallback((amount: number, reason: string) => {
@@ -171,7 +171,7 @@ export const GameifiedInterface: React.FC<GameifiedInterfaceProps> = ({
         viralScore: prev.viralScore + (leveledUp ? 50 : 10)
       };
     });
-  }, []);
+  }, [triggerViralMoment]);
 
   // Achievement System
   const unlockAchievement = (achievementId: string) => {
