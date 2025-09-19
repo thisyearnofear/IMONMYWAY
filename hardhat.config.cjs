@@ -15,11 +15,20 @@ const config = {
     }
   },
   networks: {
-    // ✅ PRODUCTION READY: Somnia Mainnet
-    somnia: {
+    somniaMainnet: {
+      // RPCs:
+      // - https://api.infra.mainnet.somnia.network/ (official)
+      // - https://www.ankr.com/rpc/somnia (Ankr)
+      // - https://somnia.publicnode.com (Public Node)
+      // - https://somnia-json-rpc.stakely.io (Stakely)
+      url: "https://api.infra.mainnet.somnia.network/",
+      chainId: 5031,
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+    },
+    somniaTestnet: {
       url: "https://dream-rpc.somnia.network/",
       chainId: 50312,
-      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : []
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
     }
   }
 };

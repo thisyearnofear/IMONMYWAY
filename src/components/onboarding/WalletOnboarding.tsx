@@ -1,10 +1,13 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/PremiumButton'
-import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-import { useWallet } from "@/hooks/useWallet";
-import { useUIStore } from "@/stores/uiStore";
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { useWallet } from '@/hooks/useWallet';
+import { useUIStore } from '@/stores/uiStore';
+import { getNetworkConfig } from '@/contracts/addresses';
+
+const activeNetwork = getNetworkConfig();
 
 interface WalletOnboardingProps {
   onComplete: () => void;
@@ -27,38 +30,38 @@ export function WalletOnboarding({
 
   const steps = [
     {
-      title: "Welcome to IMONMYWAY! 🎯",
+      title: 'Welcome to IMONMYWAY! 🎯',
       description:
-        "First punctuality accountability protocol on Somnia. Stake tokens on your commitments and let others bet on your success.",
-      icon: "🏃‍♂️",
+        'First punctuality accountability protocol on Somnia. Stake tokens on your commitments and let others bet on your success.',
+      icon: '🏃‍♂️',
       action: null,
     },
     {
-      title: "Connect Your Wallet 🔗",
+      title: 'Connect Your Wallet 🔗',
       description:
-        "Connect MetaMask to create staked commitments and participate in betting.",
-      icon: "🦊",
-      action: "connect",
+        'Connect MetaMask to create staked commitments and participate in betting.',
+      icon: '🦊',
+      action: 'connect',
     },
     {
-      title: "Switch to Somnia Network ⚡",
+      title: 'Switch to Somnia Network ⚡',
       description:
-        "Somnia offers lightning-fast transactions perfect for real-time betting.",
-      icon: "🌐",
-      action: "network",
+        'Somnia offers lightning-fast transactions perfect for real-time betting.',
+      icon: '🌐',
+      action: 'network',
     },
     {
       title: "You're All Set! 🎉",
       description:
         "Start creating staked commitments or bet on others' punctuality.",
-      icon: "✅",
+      icon: '✅',
       action: null,
     },
   ];
 
   useEffect(() => {
-    if (isConnected && chainId === 50312) {
-      // Auto-advance to final step when fully connected to Somnia mainnet
+    if (isConnected && chainId === activeNetwork.chainId) {
+      // Auto-advance to final step when fully connected to the active Somnia network
       setStep(3);
     } else if (isConnected) {
       // Move to network step if connected but wrong network
@@ -80,18 +83,18 @@ export function WalletOnboarding({
       await connect();
       setRetryCount(0);
       addToast({
-        type: "success",
-        message: "Wallet connected successfully! 🎉",
+        type: 'success',
+        message: 'Wallet connected successfully! 🎉',
       });
       nextStep();
     } catch (error: any) {
-      console.error("Connection failed:", error);
+      console.error('Connection failed:', error);
       const errorMessage = getErrorMessage(error);
       setLastError(errorMessage);
 
       if (retryCount < maxRetries) {
         addToast({
-          type: "warning",
+          type: 'warning',
           message: `${errorMessage} Retrying... (${
             retryCount + 1
           }/${maxRetries})`,
@@ -102,7 +105,7 @@ export function WalletOnboarding({
         }, 2000);
       } else {
         addToast({
-          type: "error",
+          type: 'error',
           message: errorMessage,
         });
       }
@@ -111,15 +114,15 @@ export function WalletOnboarding({
 
   const getErrorMessage = (error: any): string => {
     if (error.code === 4001) {
-      return "Connection rejected. Please approve the connection in MetaMask.";
+      return 'Connection rejected. Please approve the connection in MetaMask.';
     }
     if (error.code === -32002) {
-      return "Connection already pending. Check MetaMask for pending requests.";
+      return 'Connection already pending. Check MetaMask for pending requests.';
     }
-    if (error.message?.includes("User rejected")) {
-      return "Connection cancelled. Please try connecting again.";
+    if (error.message?.includes('User rejected')) {
+      return 'Connection cancelled. Please try connecting again.';
     }
-    return error.message || "Failed to connect wallet. Please try again.";
+    return error.message || 'Failed to connect wallet. Please try again.';
   };
 
   const handleNetworkSwitch = async () => {
@@ -128,18 +131,18 @@ export function WalletOnboarding({
       await switchToSomnia();
       setRetryCount(0);
       addToast({
-        type: "success",
-        message: "Switched to Somnia Network! ⚡",
+        type: 'success',
+        message: 'Switched to Somnia Network! ⚡',
       });
       nextStep();
     } catch (error: any) {
-      console.error("Network switch failed:", error);
+      console.error('Network switch failed:', error);
       const errorMessage = getNetworkErrorMessage(error);
       setLastError(errorMessage);
 
       if (retryCount < maxRetries) {
         addToast({
-          type: "warning",
+          type: 'warning',
           message: `${errorMessage} Retrying... (${
             retryCount + 1
           }/${maxRetries})`,
@@ -150,7 +153,7 @@ export function WalletOnboarding({
         }, 2000);
       } else {
         addToast({
-          type: "error",
+          type: 'error',
           message: errorMessage,
         });
       }
@@ -159,57 +162,57 @@ export function WalletOnboarding({
 
   const getNetworkErrorMessage = (error: any): string => {
     if (error.code === 4001) {
-      return "Network switch rejected. Please approve in MetaMask.";
+      return 'Network switch rejected. Please approve in MetaMask.';
     }
     if (error.code === 4902) {
-      return "Somnia Network not found. Adding network automatically...";
+      return 'Somnia Network not found. Adding network automatically...';
     }
-    if (error.message?.includes("User rejected")) {
+    if (error.message?.includes('User rejected')) {
       return "Network switch cancelled. Please try again.";
     }
-    return error.message || "Failed to switch network. Please try again.";
+    return error.message || 'Failed to switch network. Please try again.';
   };
 
   const currentStep = steps[step];
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl">
+    <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4'>
+      <div className='bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl'>
         {/* Progress Bar */}
-        <div className="h-1 bg-gray-200">
+        <div className='h-1 bg-gray-200'>
           <div
-            className="h-full bg-gradient-to-r from-blue-600 to-purple-600 transition-all duration-500 ease-out"
+            className='h-full bg-gradient-to-r from-blue-600 to-purple-600 transition-all duration-500 ease-out'
             style={{ width: `${((step + 1) / steps.length) * 100}%` }}
           />
         </div>
 
         {/* Content */}
-        <div className="p-8">
+        <div className='p-8'>
           {/* Icon */}
           <div
             className={`text-center mb-6 transition-all duration-300 ${
-              isAnimating ? "scale-75 opacity-50" : "scale-100 opacity-100"
+              isAnimating ? 'scale-75 opacity-50' : 'scale-100 opacity-100'
             }`}
           >
-            <div className="text-6xl mb-4 animate-bounce-gentle">
+            <div className='text-6xl mb-4 animate-bounce-gentle'>
               {currentStep.icon}
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">
+            <h2 className='text-2xl font-bold text-gray-900 mb-3'>
               {currentStep.title}
             </h2>
-            <p className="text-gray-600 leading-relaxed">
+            <p className='text-gray-600 leading-relaxed'>
               {currentStep.description}
             </p>
 
             {/* Error Display */}
             {lastError && (
-              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg animate-fade-in">
-                <div className="flex items-center space-x-2">
-                  <span className="text-red-500">⚠️</span>
-                  <p className="text-red-700 text-sm">{lastError}</p>
+              <div className='mt-4 p-3 bg-red-50 border border-red-200 rounded-lg animate-fade-in'>
+                <div className='flex items-center space-x-2'>
+                  <span className='text-red-500'>⚠️</span>
+                  <p className='text-red-700 text-sm'>{lastError}</p>
                 </div>
                 {retryCount > 0 && retryCount < maxRetries && (
-                  <p className="text-red-600 text-xs mt-1">
+                  <p className='text-red-600 text-xs mt-1'>
                     Retry {retryCount} of {maxRetries}...
                   </p>
                 )}
@@ -218,29 +221,29 @@ export function WalletOnboarding({
           </div>
 
           {/* Action Buttons */}
-          <div className="space-y-3">
-            {currentStep.action === "connect" && (
+          <div className='space-y-3'>
+            {currentStep.action === 'connect' && (
               <Button
                 onClick={handleConnect}
                 disabled={isConnecting}
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-200"
+                className='w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-200'
               >
                 {isConnecting ? (
                   <LoadingSpinner
-                    size="sm"
-                    color="white"
-                    message="Connecting..."
+                    size='sm'
+                    color='white'
+                    message='Connecting...'
                   />
                 ) : (
-                  "Connect MetaMask"
+                  'Connect MetaMask'
                 )}
               </Button>
             )}
 
-            {currentStep.action === "network" && (
+            {currentStep.action === 'network' && (
               <Button
                 onClick={handleNetworkSwitch}
-                className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 transform hover:scale-105 transition-all duration-200"
+                className='w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 transform hover:scale-105 transition-all duration-200'
               >
                 Switch to Somnia Network
               </Button>
@@ -249,7 +252,7 @@ export function WalletOnboarding({
             {step === 0 && (
               <Button
                 onClick={nextStep}
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-200"
+                className='w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-200'
               >
                 Get Started
               </Button>
@@ -258,7 +261,7 @@ export function WalletOnboarding({
             {step === steps.length - 1 && (
               <Button
                 onClick={onComplete}
-                className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 transform hover:scale-105 transition-all duration-200"
+                className='w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 transform hover:scale-105 transition-all duration-200'
               >
                 Start Using Protocol
               </Button>
@@ -268,7 +271,7 @@ export function WalletOnboarding({
             {step < steps.length - 1 && (
               <button
                 onClick={onSkip}
-                className="w-full text-gray-500 hover:text-gray-700 text-sm py-2 transition-colors duration-200"
+                className='w-full text-gray-500 hover:text-gray-700 text-sm py-2 transition-colors duration-200'
               >
                 Skip for now
               </button>
@@ -276,12 +279,12 @@ export function WalletOnboarding({
           </div>
 
           {/* Step Indicators */}
-          <div className="flex justify-center space-x-2 mt-6">
+          <div className='flex justify-center space-x-2 mt-6'>
             {steps.map((_, index) => (
               <div
                 key={index}
                 className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                  index <= step ? "bg-blue-600" : "bg-gray-300"
+                  index <= step ? 'bg-blue-600' : 'bg-gray-300'
                 }`}
               />
             ))}

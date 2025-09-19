@@ -2,6 +2,17 @@ import { useState, useEffect, useCallback } from 'react'
 import { useUIStore } from '@/stores/uiStore'
 import { dbService } from '@/lib/db-service'
 import { cacheService } from '@/lib/cache-service'
+import { getNetworkConfig } from '@/contracts/addresses'
+
+const activeNetwork = getNetworkConfig()
+
+const SOMNIA_NETWORK_PARAMS_FOR_WALLET = {
+  chainId: `0x${activeNetwork.chainId.toString(16)}`,
+  chainName: activeNetwork.name,
+  nativeCurrency: activeNetwork.nativeCurrency,
+  rpcUrls: [activeNetwork.rpcUrl],
+  blockExplorerUrls: [activeNetwork.blockExplorer],
+}
 
 interface WalletState {
   address: string | null
@@ -21,19 +32,6 @@ interface UseWalletReturn extends WalletState {
   disconnect: () => void
   switchToSomnia: () => Promise<boolean>
   trackTransactionSpeed: (txHash: string) => Promise<void>
-}
-
-// ✅ CORRECTED: Somnia Testnet Configuration (Chain ID 50312 is testnet)
-const SOMNIA_NETWORK = {
-  chainId: '0xC478', // 50312 in hex (Somnia testnet)
-  chainName: 'Somnia Testnet',
-  nativeCurrency: {
-    name: 'Somnia Test Token',
-    symbol: 'STT',
-    decimals: 18,
-  },
-  rpcUrls: ['https://dream-rpc.somnia.network/'],
-  blockExplorerUrls: ['https://shannon-explorer.somnia.network/'],
 }
 
 export function useWallet(): UseWalletReturn {
@@ -119,13 +117,13 @@ export function useWallet(): UseWalletReturn {
 
       // Auto-add Somnia network if not already added
       const currentChainId = await window.ethereum.request({ method: 'eth_chainId' })
-      const isOnSomnia = parseInt(currentChainId, 16) === 50312
+      const isOnSomnia = parseInt(currentChainId, 16) === activeNetwork.chainId
 
       if (!isOnSomnia) {
         try {
           await window.ethereum.request({
             method: 'wallet_addEthereumChain',
-            params: [SOMNIA_NETWORK],
+            params: [SOMNIA_NETWORK_PARAMS_FOR_WALLET],
           })
           addToast({
             type: 'success',
@@ -141,7 +139,7 @@ export function useWallet(): UseWalletReturn {
         ...prev,
         networkMetrics: {
           ...prev.networkMetrics,
-          isOnSomnia: parseInt(currentChainId, 16) === 50312,
+          isOnSomnia: parseInt(currentChainId, 16) === activeNetwork.chainId,
         },
       }))
 
@@ -202,7 +200,7 @@ export function useWallet(): UseWalletReturn {
       // Try to switch to Somnia network
       await window.ethereum.request({
         method: 'wallet_switchEthereumChain',
-        params: [{ chainId: SOMNIA_NETWORK.chainId }],
+        params: [{ chainId: SOMNIA_NETWORK_PARAMS_FOR_WALLET.chainId }],
       })
 
       updateNetworkMetrics({ isOnSomnia: true })
@@ -222,7 +220,7 @@ export function useWallet(): UseWalletReturn {
 
           await window.ethereum.request({
             method: 'wallet_addEthereumChain',
-            params: [SOMNIA_NETWORK],
+            params: [SOMNIA_NETWORK_PARAMS_FOR_WALLET],
           })
 
           updateNetworkMetrics({ isOnSomnia: true })
@@ -266,7 +264,7 @@ export function useWallet(): UseWalletReturn {
         }
 
         addToast({
-          message: errorMessage + ' Please ensure you\'re using the latest MetaMask version.',
+          message: errorMessage + " Please ensure you're using the latest MetaMask version.",
           type: 'error',
         })
         return false

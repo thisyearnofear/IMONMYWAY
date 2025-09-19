@@ -361,7 +361,7 @@ pnpm lint            # ESLint with Next.js 15 rules
 
 ### Blockchain Integration
 
-- **Somnia Mainnet**: Production deployment on chainId 50312
+- **Somnia Mainnet**: Production deployment on chainId 5031
 - **Contract Address**: `0xE93ECD999526BBBaCd35FA808E6F590BB1017246`
 - **Gas Estimation**: Built-in gas cost estimation
 - **Transaction Handling**: Real transaction processing with error handling
