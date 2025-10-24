@@ -288,6 +288,8 @@ export default function WatchPage() {
             <MapContainer
               className="h-96"
               center={[watchedSession.latitude, watchedSession.longitude]}
+              userId={isConnected && address ? address : undefined}
+              destination={watchedSession.destination ? [watchedSession.destination.lat, watchedSession.destination.lng] : undefined}
               onMapReady={(map) => {
                 mapRef.current = map;
                 updateMap(watchedSession);

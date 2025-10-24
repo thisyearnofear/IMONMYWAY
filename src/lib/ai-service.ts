@@ -1,9 +1,11 @@
 // AI Service for Punctuality Protocol
 // Single source of truth for all AI logic and model management
+// Implements lazy initialization, performance monitoring, and adaptive processing
 
 import { aiConfig, isFeatureEnabled, getPerformanceConfig } from '@/config/ai-config';
 import { dbService } from '@/lib/db-service';
 import { cacheService } from '@/lib/cache-service';
+import { performanceMonitor, adaptiveLoader, getDeviceCapabilities } from '@/lib/performance';
 
 // ============================================================================
 // AI DATA STRUCTURES

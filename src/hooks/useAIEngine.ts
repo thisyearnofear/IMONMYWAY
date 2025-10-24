@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useUIStore, type AIState } from '@/stores/uiStore';
 import { aiService } from '@/lib/ai-service';
 import { 
@@ -9,6 +9,25 @@ import {
   BettingOdds 
 } from '@/lib/ai-service';
 import { aiConfig, getPerformanceConfig, isFeatureEnabled } from '@/config/ai-config';
+import { getDeviceCapabilities, AdaptiveLoader, type DeviceCapabilities, performanceMonitor } from '@/lib/performance';
+
+// ============================================================================
+// TYPE DEFINITIONS
+// ============================================================================
+
+interface PerformanceMetrics {
+  predictionAccuracy: number;
+  responseTime: number;
+  modelConfidence: number;
+}
+
+interface AdaptiveProcessingConfig {
+  deviceTier: 'lowEnd' | 'midRange' | 'highEnd';
+  maxConcurrentPredictions: number;
+  modelComplexity: 'light' | 'balanced' | 'full';
+  cacheStrategy: 'aggressive' | 'moderate' | 'conservative';
+  predictionInterval: number;
+}
 
 // ============================================================================
 // AI ENGINE HOOK
@@ -40,20 +59,21 @@ interface UseAIEngineReturn {
   cachedBettingOdds: Record<string, BettingOdds>;
   
   // Performance Metrics
-  aiPerformanceMetrics: {
-    predictionAccuracy: number;
-    responseTime: number;
-    modelConfidence: number;
-  };
-  
+  aiPerformanceMetrics: PerformanceMetrics;
+
   // AI State Management
   setAIProcessing: (processing: boolean) => void;
   updateAISettings: (settings: Partial<AIState['aiSettings']>) => void;
-  updateAIPerformanceMetrics: (metrics: Partial<AIState['aiPerformanceMetrics']>) => void;
-  
+  updateAIPerformanceMetrics: (metrics: Partial<PerformanceMetrics>) => void;
+
   // Utility Functions
   isFeatureEnabled: (feature: keyof typeof aiConfig.features) => boolean;
   getPerformanceTier: () => keyof typeof aiConfig.performance.deviceCapabilities;
+
+  // Adaptive Processing
+  getAdaptiveProcessingConfig: () => AdaptiveProcessingConfig;
+  getDeviceCapabilities: () => DeviceCapabilities;
+  shouldDeferPrediction: (priority: 'low' | 'medium' | 'high') => boolean;
 }
 
 export function useAIEngine(): UseAIEngineReturn {
@@ -105,6 +125,77 @@ export function useAIEngine(): UseAIEngineReturn {
     } else {
       return 'highEnd';
     }
+  }, []);
+
+  // Adaptive Processing Methods
+  const getAdaptiveProcessingConfig = useCallback((): AdaptiveProcessingConfig => {
+    const deviceCaps = getDeviceCapabilities();
+    const performanceTier = getPerformanceTier();
+    
+    // Determine device tier based on capabilities
+    let deviceTier: 'lowEnd' | 'midRange' | 'highEnd' = 'midRange';
+    if (deviceCaps.memory <= 2 || deviceCaps.cores <= 2 || deviceCaps.connection === 'slow') {
+      deviceTier = 'lowEnd';
+    } else if (deviceCaps.memory >= 8 && deviceCaps.cores >= 8 && deviceCaps.connection === 'fast') {
+      deviceTier = 'highEnd';
+    }
+    
+    // Configure processing based on device tier
+    switch (deviceTier) {
+      case 'lowEnd':
+        return {
+          deviceTier,
+          maxConcurrentPredictions: 1,
+          modelComplexity: 'light',
+          cacheStrategy: 'aggressive',
+          predictionInterval: 5000 // 5 seconds
+        };
+      case 'highEnd':
+        return {
+          deviceTier,
+          maxConcurrentPredictions: 4,
+          modelComplexity: 'full',
+          cacheStrategy: 'conservative',
+          predictionInterval: 1000 // 1 second
+        };
+      default: // midRange
+        return {
+          deviceTier,
+          maxConcurrentPredictions: 2,
+          modelComplexity: 'balanced',
+          cacheStrategy: 'moderate',
+          predictionInterval: 3000 // 3 seconds
+        };
+    }
+  }, [getPerformanceTier]);
+
+  const shouldDeferPrediction = useCallback((priority: 'low' | 'medium' | 'high'): boolean => {
+    const deviceCaps = getDeviceCapabilities();
+    const adaptiveConfig = getAdaptiveProcessingConfig();
+    
+    // Always process high priority predictions
+    if (priority === 'high') return false;
+    
+    // Defer on low-end devices or when battery is low
+    if (deviceCaps.memory < 2 || deviceCaps.connection === 'slow' || deviceCaps.battery === 'low') {
+      // Defer low priority on constrained devices
+      if (priority === 'low') return true;
+      
+      // Defer medium priority on severely constrained devices
+      if (priority === 'medium' && deviceCaps.memory < 1.5) return true;
+    }
+    
+    // Defer based on adaptive config
+    if (adaptiveConfig.deviceTier === 'lowEnd' && priority === 'medium') {
+      return true;
+    }
+    
+    return false;
+  }, [getAdaptiveProcessingConfig]);
+
+  // Get current device capabilities
+  const getCurrentDeviceCapabilities = useCallback((): DeviceCapabilities => {
+    return getDeviceCapabilities();
   }, []);
 
   // Get stake recommendation with caching
@@ -376,7 +467,13 @@ export function useAIEngine(): UseAIEngineReturn {
     
     // Utility Functions
     isFeatureEnabled: checkFeatureEnabled,
-    getPerformanceTier
+    getPerformanceTier,
+    
+    // Adaptive Processing
+    getAdaptiveProcessingConfig,
+    getDeviceCapabilities: getCurrentDeviceCapabilities,
+    shouldDeferPrediction,
+    
   }), [
     uiStore,
     getStakeRecommendation,
@@ -388,7 +485,10 @@ export function useAIEngine(): UseAIEngineReturn {
     updateAISettings,
     updateAIPerformanceMetrics,
     checkFeatureEnabled,
-    getPerformanceTier
+    getPerformanceTier,
+    getAdaptiveProcessingConfig,
+    getCurrentDeviceCapabilities,
+    shouldDeferPrediction
   ]);
 
   return aiEngineReturn;
