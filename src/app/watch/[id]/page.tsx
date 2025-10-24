@@ -8,6 +8,7 @@ import WebGLParticleSystem from "@/components/three/ParticleSystem";
 import { PremiumNavigation } from "@/components/layout/PremiumNavigation";
 import { ToastContainer } from "@/components/ui/Toast";
 import { ReputationBadge } from "@/components/reputation/ReputationBadge";
+import { UnifiedBettingInterface } from "@/components/ai/UnifiedBettingInterface";
 import { useLocationStore } from "@/stores/locationStore";
 import { useUIStore } from "@/stores/uiStore";
 import { useWallet } from "@/hooks/useWallet";
@@ -295,14 +296,24 @@ export default function WatchPage() {
           </div>
         </motion.div>
 
-        {/* Betting Interface - Temporarily disabled */}
-        {activeBet && isConnected && (
+        {/* AI-Enhanced Unified Betting Interface */}
+        {watchedSession && watchedSession.isStaked && isConnected && (
           <motion.div
-            className="mb-6 glass-modern bg-yellow-500/10 border border-yellow-400/30 rounded-xl p-4"
-            whileHover={{ scale: 1.02 }}
-            transition={{ type: "spring", stiffness: 300 }}
+            className="mb-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
           >
-            <p className="text-yellow-300">Betting interface temporarily unavailable</p>
+            <UnifiedBettingInterface
+              commitmentId={watchedSession.commitmentId || ''}
+              stakeAmount={Number(watchedSession.stakeAmount || 0) / 1e18}
+              deadline={new Date()} // Placeholder - would be actual deadline
+              currentProgress={watchedSession.path?.length ? Math.min(100, watchedSession.path.length * 2) : 0}
+              status={watchedSession.active ? 'active' : watchedSession.eta ? 'completed' : 'failed'}
+              destinationReached={!!watchedSession.eta}
+              estimatedArrival={watchedSession.eta ? new Date(watchedSession.eta) : null}
+              timeRemaining={watchedSession.eta ? Math.max(0, (watchedSession.eta - Date.now()) / 1000) : null}
+            />
           </motion.div>
         )}
 

@@ -1,140 +1,252 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { useState, useCallback } from "react";
 import Link from "next/link";
-import WebGLParticleSystem from "@/components/three/ParticleSystem";
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/PremiumButton";
+import { Card, DataPanel, DataRow } from "@/components/ui/PremiumCard";
+import { WalletOnboarding } from "@/components/onboarding/WalletOnboarding";
+import { AchievementDisplay } from "@/components/reputation/AchievementDisplay";
 import { NetworkStatus } from "@/components/core/NetworkStatus";
-import { useHeroState } from "@/hooks/useHeroState";
-import { WalletStateRenderer } from "@/components/wallet";
+import { useWallet } from "@/hooks/useWallet";
+import { useUIStore } from "@/stores/uiStore";
+import { useAnimation } from "@/hooks/useAnimation";
+import { useNotification } from "@/hooks/useNotification";
+import { cn } from "@/lib/utils";
 
 export default function HomePage() {
-  const [showLearnMore, setShowLearnMore] = useState(false);
-  const { heroState, formattedAddress, walletInfo, connect, switchToSomnia, isConnecting } = useHeroState();
+  const { connect, isConnected } = useWallet();
+  const { getAnimationClass, triggerCelebration } = useAnimation();
+  const { success } = useNotification();
   
-  const handleLearnMore = useCallback(() => {
-    setShowLearnMore(!showLearnMore);
-  }, [showLearnMore]);
+  // Local state for onboarding modal
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  // Show onboarding after 2 seconds for new users
+  useEffect(() => {
+    if (!isConnected) {
+      const timer = setTimeout(() => {
+        setShowOnboarding(true);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [isConnected]);
+
+  const handleCelebration = () => {
+    triggerCelebration({ type: 'success', intensity: 'medium' });
+    success("Welcome to the future of punctuality!");
+  };
 
   return (
-    <div className="min-h-screen relative">
-      {/* Enhanced 3D Background with WebGL Particles */}
-      <WebGLParticleSystem count={1500} color="#60a5fa" size={0.02} />
-
-      {/* Subtle gradient overlays for depth */}
-      <div className="fixed inset-0 bg-gradient-to-br from-indigo-950/50 via-purple-950/30 to-pink-950/15" />
-      <div className="fixed inset-0 bg-[radial-gradient(circle_at_30%_40%,rgba(59,130,246,0.1),transparent_70%)]" />
-
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Grid overlay background */}
+      <div className="fixed inset-0 grid-overlay opacity-30" />
+      
       <NetworkStatus />
-
-      <main className="relative z-10 min-h-screen flex flex-col">
-        {/* Hero Section - Enhanced with Raised Platform */}
-        <section className="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-          <motion.div 
-            className="max-w-md mx-auto"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-          >
-            {/* Raised Platform Container */}
-            <div className="glass-enhanced p-8 md:p-6 text-center shadow-3xl hover:shadow-3xl transition-all duration-500 hover:scale-[1.02]">
-              {/* Main Headline */}
-              <motion.div
-                className="mb-8"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.2 }}
-              >
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-                  Run on Time. Win Big.
-                </h1>
-                <p className="text-lg text-white/80">
-                  Bet on your punctuality. Earn crypto.
-                </p>
-              </motion.div>
-
-              {/* Contextual Content Based on Wallet State */}
-              <WalletStateRenderer
-                heroState={heroState}
-                formattedAddress={formattedAddress}
-                networkName={walletInfo.networkName}
-                onConnect={connect}
-                onSwitchNetwork={switchToSomnia}
-                onLearnMore={handleLearnMore}
-                isConnecting={isConnecting}
-              />
-
-              {/* Learn More Expandable Content */}
-              {showLearnMore && (
-                <motion.div
-                  className="mt-6 p-6 bg-white/5 rounded-xl border border-white/10"
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <h3 className="text-lg font-semibold mb-4 text-white">How IMONMYWAY Works</h3>
-                  <div className="space-y-3 text-sm text-white/80">
-                    <div className="flex items-start gap-3">
-                      <span className="text-blue-400">🗺️</span>
-                      <div>
-                        <strong>Plan Your Route:</strong> Set destination and departure time with optimal route calculation.
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <span className="text-purple-400">💰</span>
-                      <div>
-                        <strong>Place Your Bet:</strong> Stake crypto tokens on your punctuality commitment.
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <span className="text-green-400">📍</span>
-                      <div>
-                        <strong>GPS Verification:</strong> Real-time tracking with smart contract automation.
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-
-              {/* Benefits - Always show for READY_TO_USE and CONNECT_WALLET states */}
-              {(heroState === 'READY_TO_USE' || heroState === 'CONNECT_WALLET') && (
-                <motion.div
-                  className="grid grid-cols-3 gap-4 mt-8"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.6, delay: 0.6 }}
-                >
-                  <motion.div className="text-center" whileHover={{ scale: 1.1 }}>
-                    <div className="text-4xl mb-1">🏃‍♂️</div>
-                    <p className="text-xs text-white/70">Perfect Pace</p>
-                  </motion.div>
-                  <motion.div className="text-center" whileHover={{ scale: 1.1 }}>
-                    <div className="text-4xl mb-1">💰</div>
-                    <p className="text-xs text-white/70">Bet & Win</p>
-                  </motion.div>
-                  <motion.div className="text-center" whileHover={{ scale: 1.1 }}>
-                    <div className="text-4xl mb-1">📍</div>
-                    <p className="text-xs text-white/70">GPS Verified</p>
-                  </motion.div>
-                </motion.div>
-              )}
-            </div>
-          </motion.div>
-        </section>
-
-        {/* Simplified Footer - Optional quick links */}
-        <section className="py-8 px-4 text-center">
-          <div className="flex justify-center space-x-6">
-            <Link href="/leaderboard" className="text-white/70 hover:text-white transition-colors">
-              Leaderboard
-            </Link>
-            <Link href="/profile" className="text-white/70 hover:text-white transition-colors">
-              Profile
-            </Link>
+      
+      <main className="relative z-10 container mx-auto px-4 py-16 max-w-6xl safe-area-top">
+        {/* Hero Section */}
+        <div className="text-center mb-16">
+          {/* Status Badge */}
+          <div className="inline-flex items-center space-x-2 glass-elevated px-6 py-3 rounded-full text-sm font-mono font-medium mb-8 animate-fade-in">
+            <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+            <span className="text-white/90 uppercase tracking-wider">PROTOCOL_ACTIVE</span>
           </div>
-        </section>
+
+          {/* Main Title */}
+          <h1 className="text-6xl md:text-8xl font-black text-white mb-8 animate-scale-in pixel-perfect">
+            <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-green-400 bg-clip-text text-transparent">
+              IMONMYWAY
+            </span>
+          </h1>
+
+          {/* Subtitle */}
+          <div className="space-y-4 mb-12">
+            <p className="text-xl md:text-2xl text-white/80 max-w-4xl mx-auto leading-relaxed animate-fade-in font-medium">
+              <span className="font-mono text-blue-400">&gt;</span> Bet money on your punctuality
+              <br />
+              <span className="font-mono text-green-400">&gt;</span> Friends bet against you • GPS auto-verifies • Winner takes all
+            </p>
+            
+            {/* Live Example */}
+            <div className="terminal max-w-2xl mx-auto text-left">
+              <div className="terminal-line">USER_STAKES: 100 TOKENS → "I&apos;ll be there by 3:00 PM"</div>
+              <div className="terminal-line">FRIEND_BETS: 50 TOKENS → "No way, traffic is crazy"</div>
+              <div className="terminal-line">GPS_VERIFIED: ARRIVED_AT_2:58_PM → USER_WINS_150_TOKENS</div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="space-y-6 animate-fade-in">
+            {/* Primary Value Prop */}
+            <div className="glass-elevated p-6 rounded-xl max-w-2xl mx-auto mb-8">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-white mb-2">
+                  💰 STAKE → 📍 ARRIVE → 🎉 WIN 2.5X
+                </div>
+                <div className="text-white/70 font-mono text-sm">
+                  Friends bet against you • GPS proves you made it • Smart contracts pay out
+                </div>
+              </div>
+            </div>
+
+            {/* Action Flow */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <Link href="/plan">
+                <Button
+                  variant="glass"
+                  size="lg"
+                  icon="1️⃣"
+                  className="text-lg px-8 py-4 glow-primary w-full sm:w-auto"
+                >
+                  PLAN ROUTE
+                </Button>
+              </Link>
+              <div className="hidden sm:block text-white/50 font-mono">→</div>
+              <Link href="/share">
+                <Button
+                  variant="success"
+                  size="lg"
+                  icon="2️⃣"
+                  className="text-lg px-8 py-4 w-full sm:w-auto"
+                >
+                  STAKE & INVITE
+                </Button>
+              </Link>
+              <div className="hidden sm:block text-white/50 font-mono">→</div>
+              <Button
+                variant="secondary"
+                size="lg"
+                icon="3️⃣"
+                disabled
+                className="text-lg px-8 py-4 w-full sm:w-auto opacity-50"
+              >
+                AUTO VERIFY
+              </Button>
+            </div>
+
+            {/* Quick Stats */}
+            <div className="flex justify-center space-x-8 text-sm font-mono">
+              <div className="text-center">
+                <div className="text-green-400 font-bold">2.5X</div>
+                <div className="text-white/60">PAYOUT</div>
+              </div>
+              <div className="text-center">
+                <div className="text-blue-400 font-bold">±2M</div>
+                <div className="text-white/60">GPS ACCURACY</div>
+              </div>
+              <div className="text-center">
+                <div className="text-purple-400 font-bold">AUTO</div>
+                <div className="text-white/60">VERIFICATION</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Features Grid */}
+        <div className="grid md:grid-cols-3 gap-8 mb-16">
+          <DataPanel 
+            className="p-8 animate-fade-in hover:glow-primary transition-all duration-300 min-h-[280px]"
+            title="ROUTE_OPTIMIZER"
+          >
+            <div className="flex justify-center mb-6">
+              <div className="w-16 h-16 glass-elevated rounded-lg flex items-center justify-center pixel-perfect">
+                <span className="text-3xl">🗺️</span>
+              </div>
+            </div>
+            <div className="space-y-2 text-sm">
+              <DataRow label="AI_TRAFFIC_ANALYSIS" value="ACTIVE" status="success" />
+              <DataRow label="ETA_PREDICTION" value="REAL_TIME" status="success" />
+              <DataRow label="GPS_ACCURACY" value="±2M" status="neutral" />
+            </div>
+          </DataPanel>
+
+          <DataPanel 
+            className="p-8 animate-fade-in hover:glow-success transition-all duration-300 min-h-[280px]"
+            title="SOCIAL_BETTING"
+          >
+            <div className="flex justify-center mb-6">
+              <div className="w-16 h-16 glass-elevated rounded-lg flex items-center justify-center pixel-perfect">
+                <span className="text-3xl">💰</span>
+              </div>
+            </div>
+            <div className="space-y-2 text-sm">
+              <DataRow label="STAKE_TOKENS" value="ENABLED" status="success" />
+              <DataRow label="FRIEND_BETS" value="LIVE" status="success" />
+              <DataRow label="PAYOUT_RATIO" value="1:2.5" status="neutral" />
+            </div>
+          </DataPanel>
+
+          <DataPanel 
+            className="p-8 animate-fade-in hover:glow-primary transition-all duration-300 min-h-[280px]"
+            title="BLOCKCHAIN_VERIFY"
+          >
+            <div className="flex justify-center mb-6">
+              <div className="w-16 h-16 glass-elevated rounded-lg flex items-center justify-center pixel-perfect">
+                <span className="text-3xl">📍</span>
+              </div>
+            </div>
+            <div className="space-y-2 text-sm">
+              <DataRow label="PROOF_OF_ARRIVAL" value="IMMUTABLE" status="success" />
+              <DataRow label="SMART_CONTRACTS" value="DEPLOYED" status="success" />
+              <DataRow label="NETWORK" value="SOMNIA" status="neutral" />
+            </div>
+          </DataPanel>
+        </div>
+
+        {/* Terminal Status */}
+        <div className="terminal mb-16 animate-fade-in">
+          <div className="terminal-line">SYSTEM_STATUS: ALL_MODULES_OPERATIONAL</div>
+          <div className="terminal-line">GPS_TRACKING: PRECISION_MODE_ENABLED</div>
+          <div className="terminal-line">BLOCKCHAIN_SYNC: BLOCK_HEIGHT_CURRENT</div>
+          <div className="terminal-line">READY_FOR_COMMITMENT_PROTOCOL_INITIALIZATION</div>
+        </div>
+
+        {/* Achievements Section */}
+        <div className="mb-16 animate-fade-in">
+          <AchievementDisplay />
+        </div>
+
+        {/* Stats Panel */}
+        <DataPanel 
+          className="p-12 text-center animate-fade-in"
+          title="PROTOCOL_STATISTICS"
+        >
+          <div className="grid grid-cols-3 gap-8 mb-8">
+            <div className="text-center">
+              <div className="text-4xl font-black font-mono text-blue-400 mb-2">
+                100%
+              </div>
+              <div className="text-white/70 font-mono text-sm uppercase">BLOCKCHAIN_VERIFIED</div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl font-black font-mono text-green-400 mb-2">
+                REAL_TIME
+              </div>
+              <div className="text-white/70 font-mono text-sm uppercase">GPS_TRACKING</div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl font-black font-mono text-purple-400 mb-2">
+                SOCIAL
+              </div>
+              <div className="text-white/70 font-mono text-sm uppercase">BETTING_PROTOCOL</div>
+            </div>
+          </div>
+          
+          {/* Progress Bar */}
+          <div className="progress-bar h-3 rounded-full mb-4">
+            <div className="progress-fill w-3/4 rounded-full" />
+          </div>
+          <div className="text-white/60 font-mono text-sm">
+            SYSTEM_READINESS: 75% • AWAITING_USER_INPUT
+          </div>
+        </DataPanel>
       </main>
+
+      {/* Wallet Onboarding Modal */}
+      {showOnboarding && <WalletOnboarding 
+        onComplete={() => setShowOnboarding(false)} 
+        onSkip={() => setShowOnboarding(false)} 
+      />}
     </div>
   );
 }

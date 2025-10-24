@@ -7,6 +7,9 @@ import { Card } from "@/components/ui/PremiumCard";
 import { useComponentAnimation } from "@/hooks/useAnimation";
 import { useComponentNotification } from "@/hooks/useNotification";
 import { useWallet } from "@/hooks/useWallet";
+import { useSmartDefaults } from "@/hooks/useSmartDefaults";
+import { useAIEngine } from "@/hooks/useAIEngine";
+import { useUIStore } from "@/stores/uiStore";
 import { cn } from "@/lib/utils";
 
 interface SmartStakeInputProps {
@@ -33,42 +36,61 @@ export function SmartStakeInput({
   const [stakeAmount, setStakeAmount] = useState("0.01");
   const [error, setError] = useState("");
   const [showRecommendation, setShowRecommendation] = useState(false);
+  const [isLoadingRecommendation, setIsLoadingRecommendation] = useState(false);
 
-  const { isConnected } = useWallet();
+  const { isConnected, address } = useWallet();
+  const { aiState } = useUIStore();
+  const { getStakeRecommendation, aiPerformanceMetrics } = useAIEngine();
+  const { smartDefaults, loading: defaultsLoading } = useSmartDefaults();
   const { cardAnimation, getStaggeredDelay } = useComponentAnimation("SmartStakeInput");
   const { notifyContextual, notifyError, notifySuccess } = useComponentNotification("SmartStakeInput");
-  
-  // Simple mock for deleted hook
-  const preferences = {
-    successRate: 0.75,
-    preferredStakeAmounts: ["0.01", "0.05", "0.1", "0.5"]
+
+
+
+  // Initialize recommendation when component mounts or context changes
+  useEffect(() => {
+    if (isConnected && context && address) {
+      const loadRecommendation = async () => {
+        const recommendation = await getStakeRecommendation(address, {
+          estimatedTime: context.timeAvailable ? context.timeAvailable * 60 : 1800, // Convert to seconds
+          distance: context.distance || 5, // Default distance if not provided
+          targetLocation: { lat: 0, lng: 0 }, // Placeholder coordinates for this example
+          deadline: new Date(Date.now() + (context.timeAvailable ? context.timeAvailable * 60000 : 3600000)) // 1 hour default
+        });
+        if (recommendation && recommendation.confidence > 0.7) { // 70% confidence threshold
+          setShowRecommendation(true);
+          // Auto-apply recommendation if confidence is very high and user has a good reputation
+          if (recommendation.confidence > 0.85) {
+            setStakeAmount(recommendation.suggestedStake);
+          }
+        }
+      };
+      
+      loadRecommendation();
+    }
+  }, [isConnected, context, address, getStakeRecommendation]);
+
+  // Get smart defaults from the enhanced hook
+  const getSmartDefaultsBasedOnContext = () => {
+    if (smartDefaults) {
+      return smartDefaults;
+    }
+    
+    // Fallback defaults
+    return {
+      stakeAmount: "0.01",
+      routePreference: "fastest" as const,
+      privacyLevel: "friends_only" as const,
+      notificationPreferences: {
+        arrivalReminders: true,
+        betNotifications: true,
+        achievementNotifications: true
+      },
+      riskTolerance: "balanced" as const
+    };
   };
 
-  const getRecommendedStakeAmount = (_params: any) => ({
-    value: "0.05",
-    confidence: 75,
-    reason: "Balanced recommendation based on typical usage"
-  });
-
-  const recordUserAction = (_action: any) => {}; // No-op
-
-  // Get smart recommendation
-  const recommendation = getRecommendedStakeAmount({
-    distance: context?.distance,
-    timeAvailable: context?.timeAvailable,
-    currentBalance: parseFloat(userBalance)
-  });
-
-  // Show recommendation for new users or when context changes
-  useEffect(() => {
-    if (isConnected && recommendation.confidence > 70) {
-      setShowRecommendation(true);
-      // Auto-apply recommendation if confidence is very high
-      if (recommendation.confidence > 85 && preferences.successRate > 0.8) {
-        setStakeAmount(recommendation.value);
-      }
-    }
-  }, [isConnected, recommendation, preferences.successRate]);
+  const smartPreferences = getSmartDefaultsBasedOnContext();
 
   const validateStake = (amount: string) => {
     const numAmount = parseFloat(amount);
@@ -107,11 +129,11 @@ export function SmartStakeInput({
     try {
       await onStakeSet(stakeAmount);
       
-      // Record user action for learning
-      await recordUserAction({
-        type: "stake_created",
-        data: { amount: stakeAmount, context }
-      });
+      // Record user action for AI learning
+      if (address) {
+        // In a real implementation, this would update user behavior data for the AI model
+        console.log(`User ${address} created stake of ${stakeAmount} STT`);
+      }
 
       notifySuccess(`Stake of ${stakeAmount} STT created successfully!`);
       notifyContextual("stake_created", { amount: stakeAmount });
@@ -120,26 +142,45 @@ export function SmartStakeInput({
     }
   };
 
-  const applyRecommendation = () => {
-    setStakeAmount(recommendation.value);
-    setShowRecommendation(false);
-    notifyContextual("recommendation_applied", { 
-      amount: recommendation.value,
-      confidence: recommendation.confidence 
-    });
+  const applyRecommendation = async () => {
+    if (address && context) {
+      const recommendation = await getStakeRecommendation(address, {
+        estimatedTime: context.timeAvailable ? context.timeAvailable * 60 : 1800, // Convert to seconds
+        distance: context.distance || 5, // Default distance if not provided
+        targetLocation: { lat: 0, lng: 0 }, // Placeholder coordinates for this example
+        deadline: new Date(Date.now() + (context.timeAvailable ? context.timeAvailable * 60000 : 3600000)) // 1 hour default
+      });
+      if (recommendation) {
+        setStakeAmount(recommendation.suggestedStake);
+        setShowRecommendation(false);
+        notifyContextual("recommendation_applied", { 
+          amount: recommendation.suggestedStake,
+          confidence: Math.round(recommendation.confidence * 100)
+        });
+      }
+    }
   };
 
-  // Smart quick amounts based on user preferences and context
+  // Smart quick amounts based on user preferences, defaults, and AI recommendations
   const getSmartQuickAmounts = () => {
-    const baseAmounts = preferences.preferredStakeAmounts.length > 0 
-      ? preferences.preferredStakeAmounts 
-      : ["0.01", "0.05", "0.1", "0.5"];
+    // Start with default amounts
+    const baseAmounts = ["0.01", "0.05", "0.1", "0.25", "0.5", "1.0"];
     
-    // Add recommendation if it's not already in the list
-    if (!baseAmounts.includes(recommendation.value)) {
-      baseAmounts.push(recommendation.value);
+    // Add AI recommendation if available
+    if (aiState.stakeRecommendations && address && context) {
+      const cacheKey = `${address}_${context?.distance || 0}_${context?.timeAvailable || 0}`;
+      const cachedRecommendation = aiState.stakeRecommendations[cacheKey];
+      if (cachedRecommendation && !baseAmounts.includes(cachedRecommendation.suggestedStake)) {
+        baseAmounts.push(cachedRecommendation.suggestedStake);
+      }
     }
     
+    // Add smart defaults stake amount if not already in the list
+    if (smartDefaults && !baseAmounts.includes(smartDefaults.stakeAmount)) {
+      baseAmounts.push(smartDefaults.stakeAmount);
+    }
+    
+    // Filter by min/max and sort
     return baseAmounts
       .map(amount => parseFloat(amount))
       .filter(amount => amount >= parseFloat(minStake) && amount <= parseFloat(maxStake))
@@ -159,22 +200,20 @@ export function SmartStakeInput({
           <div>
             <h3 className="text-xl font-semibold text-gray-900">Set Your Stake</h3>
             <p className="text-sm text-gray-600">
-              {preferences.successRate > 0 
-                ? `${(preferences.successRate * 100).toFixed(0)}% success rate`
-                : "Smart recommendations enabled"
-              }
+              {smartPreferences.riskTolerance === 'conservative' ? 'Conservative approach' : 
+               smartPreferences.riskTolerance === 'aggressive' ? 'Aggressive approach' : 'Balanced approach'}
             </p>
           </div>
         </div>
-        {showRecommendation && (
+        {showRecommendation && !isLoadingRecommendation && (
           <div className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
-            AI Suggested
+            AI Recommended
           </div>
         )}
       </div>
 
       {/* Smart Recommendation Banner */}
-      {showRecommendation && (
+      {showRecommendation && !isLoadingRecommendation && (
         <div 
           className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4 border border-blue-200"
           style={{ animationDelay: `${getStaggeredDelay(0)}ms` }}
@@ -183,15 +222,17 @@ export function SmartStakeInput({
             <div className="flex-1">
               <div className="flex items-center space-x-2 mb-2">
                 <span className="text-lg">🤖</span>
-                <span className="font-medium text-blue-900">Smart Recommendation</span>
+                <span className="font-medium text-blue-900">AI Recommendation</span>
                 <span className="text-xs bg-blue-200 text-blue-700 px-2 py-1 rounded-full">
-                  {recommendation.confidence}% confident
+                  {Math.round(aiState.aiPerformanceMetrics.modelConfidence * 100)}% confident
                 </span>
               </div>
               <p className="text-sm text-blue-800 mb-2">
-                Suggested stake: <span className="font-mono font-bold">{recommendation.value} STT</span>
+                Suggested stake: <span className="font-mono font-bold">{aiState.stakeRecommendations[`${address}_${context?.distance || 0}_${context?.timeAvailable || 0}`]?.suggestedStake || '0.05'} STT</span>
               </p>
-              <p className="text-xs text-blue-700">{recommendation.reason}</p>
+              <p className="text-xs text-blue-700">
+                {aiState.stakeRecommendations[`${address}_${context?.distance || 0}_${context?.timeAvailable || 0}`]?.reasoning || 'Based on your profile and commitment details'}
+              </p>
             </div>
             <div className="flex space-x-2">
               <button
@@ -207,6 +248,16 @@ export function SmartStakeInput({
                 Dismiss
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Loading Recommendation State */}
+      {isLoadingRecommendation && (
+        <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4 border border-blue-200">
+          <div className="flex items-center">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+            <span className="text-sm text-blue-800">Calculating optimal stake recommendation...</span>
           </div>
         </div>
       )}
@@ -233,7 +284,7 @@ export function SmartStakeInput({
           className={cn(
             "text-lg font-mono transition-all duration-200",
             error ? "border-red-500 ring-red-200" : "focus:ring-blue-200",
-            stakeAmount === recommendation.value && "ring-2 ring-blue-300 border-blue-400"
+            stakeAmount === (aiState.stakeRecommendations[`${address}_${context?.distance || 0}_${context?.timeAvailable || 0}`]?.suggestedStake || '') && "ring-2 ring-blue-300 border-blue-400"
           )}
         />
         {error && (
@@ -248,13 +299,13 @@ export function SmartStakeInput({
             Quick Select:
           </label>
           <span className="text-xs text-gray-500">
-            Based on your preferences
+            Based on AI analysis
           </span>
         </div>
         <div className="grid grid-cols-4 gap-2">
           {smartQuickAmounts.map((amount, index) => {
-            const isRecommended = amount === recommendation.value;
-            const isPreferred = preferences.preferredStakeAmounts.includes(amount);
+            const isRecommended = amount === (aiState.stakeRecommendations[`${address}_${context?.distance || 0}_${context?.timeAvailable || 0}`]?.suggestedStake);
+            const isDefault = smartDefaults && amount === smartDefaults.stakeAmount;
             
             return (
               <button
@@ -267,7 +318,7 @@ export function SmartStakeInput({
                     ? "bg-blue-100 border-blue-500 text-blue-700 ring-2 ring-blue-300"
                     : isRecommended
                     ? "bg-purple-50 border-purple-300 text-purple-700 hover:bg-purple-100"
-                    : isPreferred
+                    : isDefault
                     ? "bg-green-50 border-green-300 text-green-700 hover:bg-green-100"
                     : "bg-gray-50 border-gray-300 text-gray-700 hover:bg-gray-100"
                 )}
@@ -278,7 +329,7 @@ export function SmartStakeInput({
                   {isRecommended && (
                     <span className="text-xs text-purple-600">🤖</span>
                   )}
-                  {isPreferred && !isRecommended && (
+                  {isDefault && !isRecommended && (
                     <span className="text-xs text-green-600">⭐</span>
                   )}
                 </div>
@@ -318,20 +369,23 @@ export function SmartStakeInput({
       {/* Enhanced Stake Button */}
       <Button
         onClick={handleSubmit}
-        disabled={!!error || !stakeAmount || isLoading}
+        disabled={!!error || !stakeAmount || isLoading || isLoadingRecommendation}
         className="w-full"
         variant="primary"
       >
-        Stake {stakeAmount} STT
+        {isLoading ? "Creating..." : isLoadingRecommendation ? "Analyzing..." : `💰 Stake ${stakeAmount} STT`}
       </Button>
 
       {/* Smart Tips */}
       <div className="text-xs text-gray-500 space-y-1">
         <p>💡 Your stake will be locked until the commitment deadline</p>
-        <p>✅ You&apos;ll get your stake back if you arrive on time</p>
+        <p>✅ You'll get your stake back if you arrive on time</p>
         <p>🎲 Others can bet on your success for additional rewards</p>
-        {preferences.successRate > 0.8 && (
-          <p className="text-green-600">🌟 High success rate - consider increasing your stake!</p>
+        {smartPreferences.riskTolerance === 'aggressive' && (
+          <p className="text-purple-600">🚀 High confidence - consider higher stake!</p>
+        )}
+        {smartPreferences.riskTolerance === 'conservative' && (
+          <p className="text-blue-600">🛡️ Conservative approach recommended</p>
         )}
       </div>
     </Card>

@@ -341,6 +341,27 @@ export class CacheService {
     }
   }
 
+  async get(key: string) {
+    try {
+      const cached = cache.get(key);
+      if (cached && Date.now() - cached.timestamp < (cached.ttl || 300) * 1000) { // Default TTL: 5 minutes
+        return cached;
+      }
+      return null;
+    } catch (error) {
+      console.error('❌ Error getting cached data:', error);
+      return null;
+    }
+  }
+
+  async set(key: string, value: any) {
+    try {
+      cache.set(key, value);
+    } catch (error) {
+      console.error('❌ Error setting cached data:', error);
+    }
+  }
+
   async getCacheStats() {
     try {
       return {

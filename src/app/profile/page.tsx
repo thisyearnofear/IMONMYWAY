@@ -6,6 +6,7 @@ import { motion } from 'framer-motion'
 import WebGLParticleSystem from '@/components/three/ParticleSystem'
 import { PremiumButton } from '@/components/ui/PremiumButton'
 import { ReputationBadge } from '@/components/reputation/ReputationBadge'
+import { PerformanceDashboard } from '@/components/ai/PerformanceDashboard'
 import { profileData, type UserProfile } from '@/lib/profile-data'
 import { useProfileRealtime, useReputationRealtime } from '@/hooks/useRealtime'
 
@@ -340,6 +341,18 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
+
+        {/* AI-Enhanced Performance Dashboard */}
+        {profile && (
+          <motion.div
+            className="mb-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+          >
+            <PerformanceDashboard />
+          </motion.div>
+        )}
 
         {/* Recent Sessions */}
         {profile?.recentSessions && profile.recentSessions.length > 0 && (

@@ -1,10 +1,45 @@
 import { create } from 'zustand'
+import { 
+  StakeRecommendation, 
+  ReputationPrediction, 
+  OptimizedRoute, 
+  AchievementPrediction,
+  BettingOdds 
+} from '@/lib/ai-service'
 
 interface Toast {
   id: string
   message: string
   type: 'success' | 'error' | 'warning' | 'info'
   duration?: number
+}
+
+export interface AIState {
+  // AI feature enablement
+  aiFeaturesEnabled: boolean
+  aiProcessing: boolean
+  
+  // AI predictions cache
+  stakeRecommendations: Record<string, StakeRecommendation>
+  reputationPredictions: Record<string, ReputationPrediction & { timestamp?: number }>
+  routeOptimizations: Record<string, OptimizedRoute>
+  achievementPredictions: Record<string, AchievementPrediction & { timestamp?: number }>
+  bettingOdds: Record<string, BettingOdds>
+  
+  // AI performance metrics
+  aiPerformanceMetrics: {
+    predictionAccuracy: number
+    responseTime: number
+    modelConfidence: number
+  }
+  
+  // AI settings
+  aiSettings: {
+    enablePredictions: boolean
+    enablePersonalization: boolean
+    enableSmartDefaults: boolean
+    privacyMode: boolean
+  }
 }
 
 interface UIState {
@@ -29,6 +64,9 @@ interface UIState {
   isCreatingSession: boolean
   isLoadingSession: boolean
   
+  // AI state (enhanced)
+  aiState: AIState
+  
   // Actions
   addToast: (toast: Omit<Toast, 'id'>) => void
   removeToast: (id: string) => void
@@ -44,6 +82,17 @@ interface UIState {
   
   setCreatingSession: (loading: boolean) => void
   setLoadingSession: (loading: boolean) => void
+  
+  // AI-related actions (enhanced)
+  updateAIState: (aiStateUpdate: Partial<AIState>) => void
+  setAIProcessing: (processing: boolean) => void
+  setStakeRecommendation: (key: string, recommendation: StakeRecommendation) => void
+  setReputationPrediction: (userId: string, prediction: ReputationPrediction) => void
+  setRouteOptimization: (key: string, route: OptimizedRoute) => void
+  setAchievementPrediction: (userId: string, prediction: AchievementPrediction) => void
+  setBettingOdds: (key: string, odds: BettingOdds) => void
+  updateAISettings: (settings: Partial<AIState['aiSettings']>) => void
+  updateAIPerformanceMetrics: (metrics: Partial<AIState['aiPerformanceMetrics']>) => void
 }
 
 export const useUIStore = create<UIState>((set, get) => ({
@@ -64,6 +113,28 @@ export const useUIStore = create<UIState>((set, get) => ({
   
   isCreatingSession: false,
   isLoadingSession: false,
+  
+  // Enhanced AI state
+  aiState: {
+    aiFeaturesEnabled: true,
+    aiProcessing: false,
+    stakeRecommendations: {},
+    reputationPredictions: {},
+    routeOptimizations: {},
+    achievementPredictions: {},
+    bettingOdds: {},
+    aiPerformanceMetrics: {
+      predictionAccuracy: 0.85,
+      responseTime: 0.5,
+      modelConfidence: 0.8
+    },
+    aiSettings: {
+      enablePredictions: true,
+      enablePersonalization: true,
+      enableSmartDefaults: true,
+      privacyMode: false
+    }
+  },
   
   // Actions
   addToast: (toast) => {
@@ -103,5 +174,81 @@ export const useUIStore = create<UIState>((set, get) => ({
   
   setCreatingSession: (loading) => set({ isCreatingSession: loading }),
   
-  setLoadingSession: (loading) => set({ isLoadingSession: loading })
+  setLoadingSession: (loading) => set({ isLoadingSession: loading }),
+  
+  // Enhanced AI-related actions
+  updateAIState: (aiStateUpdate) => set(state => ({
+    aiState: { ...state.aiState, ...aiStateUpdate }
+  })),
+  
+  setAIProcessing: (processing) => set(state => ({
+    aiState: { 
+      ...state.aiState, 
+      aiProcessing: processing 
+    }
+  })),
+  
+  setStakeRecommendation: (key, recommendation) => set(state => ({
+    aiState: { 
+      ...state.aiState,
+      stakeRecommendations: {
+        ...state.aiState.stakeRecommendations,
+        [key]: recommendation
+      }
+    }
+  })),
+  
+  setReputationPrediction: (userId, prediction) => set(state => ({
+    aiState: { 
+      ...state.aiState,
+      reputationPredictions: {
+        ...state.aiState.reputationPredictions,
+        [userId]: prediction
+      }
+    }
+  })),
+  
+  setRouteOptimization: (key, route) => set(state => ({
+    aiState: { 
+      ...state.aiState,
+      routeOptimizations: {
+        ...state.aiState.routeOptimizations,
+        [key]: route
+      }
+    }
+  })),
+  
+  setAchievementPrediction: (userId, prediction) => set(state => ({
+    aiState: { 
+      ...state.aiState,
+      achievementPredictions: {
+        ...state.aiState.achievementPredictions,
+        [userId]: prediction
+      }
+    }
+  })),
+  
+  setBettingOdds: (key, odds) => set(state => ({
+    aiState: { 
+      ...state.aiState,
+      bettingOdds: {
+        ...state.aiState.bettingOdds,
+        [key]: odds
+      }
+    }
+  })),
+  
+  updateAISettings: (settings) => set(state => ({
+    aiState: { 
+      ...state.aiState,
+      aiSettings: { ...state.aiState.aiSettings, ...settings }
+    }
+  })),
+  
+  updateAIPerformanceMetrics: (metrics) => set(state => ({
+    aiState: { 
+      ...state.aiState,
+      aiPerformanceMetrics: { ...state.aiState.aiPerformanceMetrics, ...metrics }
+    }
+  }))
 }))
