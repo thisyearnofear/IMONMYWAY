@@ -10,6 +10,10 @@ import { useWallet } from "@/hooks/useWallet";
 import { useSmartDefaults } from "@/hooks/useSmartDefaults";
 import { useAIEngine } from "@/hooks/useAIEngine";
 import { useUIStore } from "@/stores/uiStore";
+import { useAIPerformanceMonitoring } from "@/hooks/useAIPerformanceMonitoring";
+import { AILoadingSkeleton, ConfidenceBasedLoader } from "@/components/ui/AILoadingSkeleton";
+import { AdaptiveAIDisplay, ConfidenceBadge, ConfidenceGated } from "@/components/ui/AdaptiveAIDisplay";
+import { ConfidencePulse, AIHoverEffect } from "@/components/ui/AIMicroInteractions";
 import { cn } from "@/lib/utils";
 
 interface SmartStakeInputProps {

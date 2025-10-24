@@ -5,6 +5,10 @@ import { motion } from "framer-motion";
 import { useAIEngine } from "@/hooks/useAIEngine";
 import { useUIStore } from "@/stores/uiStore";
 import { useWallet } from "@/hooks/useWallet";
+import { useAIPerformanceMonitoring } from "@/hooks/useAIPerformanceMonitoring";
+import { AILoadingSkeleton } from "@/components/ui/AILoadingSkeleton";
+import { AdaptiveAIDisplay, ConfidenceBadge, ConfidenceProgress } from "@/components/ui/AdaptiveAIDisplay";
+import { ConfidencePulse, AIHoverEffect, AIStaggerContainer, AIStaggerItem } from "@/components/ui/AIMicroInteractions";
 import { cn } from "@/lib/utils";
 import { 
   ReputationPrediction, 
