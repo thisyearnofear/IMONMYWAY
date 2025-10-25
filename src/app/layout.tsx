@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { SmartNotificationCenter } from '@/components/smart/SmartNotificationCenter'
+import { SmartNotificationCenter } from '@/components/unified'
 import { PremiumNavigation } from "@/components/layout/PremiumNavigation";
 import { GlobalErrorBoundary } from '@/components/core/GlobalErrorBoundary';
 import { ToastProvider, ToastContainer } from '@/components/unified/UnifiedToast';
