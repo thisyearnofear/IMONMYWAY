@@ -1,17 +1,28 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { PremiumNavigation } from "@/components/layout/PremiumNavigation";
 import { ToastContainer } from "@/components/ui/Toast";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import WebGLParticleSystem from "@/components/three/ParticleSystem";
 import { Button } from "@/components/ui/PremiumButton";
-import { SmartStakeInput } from "@/components/smart/SmartStakeInput";
-import { MapContainer } from "@/components/map/MapContainer";
 import { useWallet } from "@/hooks/useWallet";
 import { useLocationStore } from "@/stores/locationStore";
 import { useUIStore } from "@/stores/uiStore";
+
+// Dynamic imports for components that might cause SSR issues
+const WebGLParticleSystem = dynamic(() => import("@/components/three/ParticleSystem"), {
+  ssr: false
+});
+
+const SmartStakeInput = dynamic(() => import("@/components/smart/SmartStakeInput").then(mod => ({ default: mod.SmartStakeInput })), {
+  ssr: false
+});
+
+const MapContainer = dynamic(() => import("@/components/map/MapContainer").then(mod => ({ default: mod.MapContainer })), {
+  ssr: false
+});
 
 export default function Share() {
   const [stakeAmount, setStakeAmount] = useState("");

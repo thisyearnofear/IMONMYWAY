@@ -1,14 +1,28 @@
 "use client"
 
 import { useEffect, useState, useCallback } from 'react'
+import dynamicImport from 'next/dynamic'
 import { useWallet } from '@/hooks/useWallet'
 import { motion } from 'framer-motion'
-import WebGLParticleSystem from '@/components/three/ParticleSystem'
 import { PremiumButton } from '@/components/ui/PremiumButton'
-import { ReputationBadge } from '@/components/reputation/ReputationBadge'
-import { PerformanceDashboard } from '@/components/ai/PerformanceDashboard'
 import { profileData, type UserProfile } from '@/lib/profile-data'
 import { useProfileRealtime, useReputationRealtime } from '@/hooks/useRealtime'
+
+// Dynamic imports for components that might cause SSR issues
+const WebGLParticleSystem = dynamicImport(() => import('@/components/three/ParticleSystem'), {
+  ssr: false
+})
+
+const ReputationBadge = dynamicImport(() => import('@/components/reputation/ReputationBadge').then(mod => ({ default: mod.ReputationBadge })), {
+  ssr: false
+})
+
+const PerformanceDashboard = dynamicImport(() => import('@/components/ai/PerformanceDashboard').then(mod => ({ default: mod.PerformanceDashboard })), {
+  ssr: false
+})
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic'
 
 export default function ProfilePage() {
   const { isConnected, address } = useWallet()

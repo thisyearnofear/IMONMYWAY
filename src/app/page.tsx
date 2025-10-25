@@ -2,16 +2,24 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/PremiumButton";
 import { Card, DataPanel, DataRow } from "@/components/ui/PremiumCard";
 import { WalletOnboarding } from "@/components/onboarding/WalletOnboarding";
-import { AchievementDisplay } from "@/components/reputation/AchievementDisplay";
-import { NetworkStatus } from "@/components/core/NetworkStatus";
 import { useWallet } from "@/hooks/useWallet";
 import { useUIStore } from "@/stores/uiStore";
 import { useAnimation } from "@/hooks/useAnimation";
 import { useNotification } from "@/hooks/useNotification";
 import { cn } from "@/lib/utils";
+
+// Dynamic imports for components that might cause SSR issues
+const AchievementDisplay = dynamic(() => import("@/components/reputation/AchievementDisplay").then(mod => ({ default: mod.AchievementDisplay })), {
+  ssr: false
+});
+
+const NetworkStatus = dynamic(() => import("@/components/core/NetworkStatus").then(mod => ({ default: mod.NetworkStatus })), {
+  ssr: false
+});
 
 export default function HomePage() {
   const { connect, isConnected } = useWallet();

@@ -64,7 +64,7 @@ export function AIMicroInteraction({
           initial: { y: 0 },
           animate: {
             y: [0, -8, 0],
-            transition: { duration, repeat: Infinity, ease: "easeInOut" }
+            transition: { duration, repeat: Infinity }
           }
         };
 
@@ -73,7 +73,7 @@ export function AIMicroInteraction({
           initial: { backgroundPosition: "200% center" },
           animate: {
             backgroundPosition: ["-200% center", "200% center"],
-            transition: { duration, repeat: Infinity, ease: "linear" }
+            transition: { duration, repeat: Infinity }
           }
         };
 
@@ -94,7 +94,7 @@ export function AIMicroInteraction({
           initial: { y: 0 },
           animate: {
             y: [0, -12, 0],
-            transition: { duration, repeat: Infinity, ease: "easeInOut" }
+            transition: { duration, repeat: Infinity }
           }
         };
 
@@ -103,7 +103,7 @@ export function AIMicroInteraction({
           initial: { rotate: 0 },
           animate: {
             rotate: 360,
-            transition: { duration, repeat: Infinity, ease: "linear" }
+            transition: { duration, repeat: Infinity }
           }
         };
 
@@ -112,12 +112,15 @@ export function AIMicroInteraction({
           initial: { x: 0 },
           animate: {
             x: [0, 8, -8, 0],
-            transition: { duration, repeat: Infinity, ease: "easeInOut" }
+            transition: { duration, repeat: Infinity }
           }
         };
 
       default:
-        return {};
+        return {
+          initial: { opacity: 1 },
+          animate: { opacity: 1 }
+        };
     }
   };
 
