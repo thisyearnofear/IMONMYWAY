@@ -238,24 +238,7 @@ CORS_ORIGINS="https://imonmyway.netlify.app,http://localhost:3000"
 
 #### PM2 Ecosystem Configuration
 
-Create `ecosystem.config.js` for PM2:
-
-```javascript
-module.exports = {
-  apps: [{
-    name: 'imonmyway-backend',
-    script: 'backend-server.js',
-    instances: 1,
-    autorestart: true,
-    watch: false,
-    max_memory_restart: '1G',
-    env: {
-      NODE_ENV: 'production',
-      PORT: 3001
-    }
-  }]
-};
-```
+Create `deployment/backend/ecosystem.config.js` for PM2 (see deployment configuration).
 
 ### Production Deployment
 
