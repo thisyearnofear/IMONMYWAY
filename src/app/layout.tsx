@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { SmartNotificationCenter } from '@/components/unified'
 import { PremiumNavigation } from "@/components/layout/PremiumNavigation";
 import { GlobalErrorBoundary } from '@/components/core/GlobalErrorBoundary';
 import { ToastProvider, ToastContainer } from '@/components/unified/UnifiedToast';
@@ -33,7 +32,7 @@ export default function RootLayout({
           <GlobalErrorBoundary enableRecovery={true} showErrorDetails={process.env.NODE_ENV === 'development'}>
             <PremiumNavigation />
             {children}
-            <SmartNotificationCenter />
+            {/* <SmartNotificationCenter /> */}
             <ToastContainer />
           </GlobalErrorBoundary>
         </ToastProvider>
