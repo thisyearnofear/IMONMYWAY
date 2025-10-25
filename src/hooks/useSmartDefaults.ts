@@ -206,27 +206,47 @@ export function useSmartDefaults() {
     setSmartDefaults(prev => prev ? { ...prev, [key]: value } : null);
   }, []);
 
-  // Save defaults to local storage or remote (placeholder)
+  // Enhanced defaults persistence with database integration
   const saveDefaults = useCallback(async (defaults: SmartDefaults) => {
     try {
-      // In the future, this could save to a user profile service
+      // Save to localStorage for immediate access
       localStorage.setItem('smartDefaults', JSON.stringify(defaults));
+      
+      // Save to database if user is connected
+      if (walletAddress) {
+        const { dbService } = await import('@/lib/db-service');
+        await dbService.updateUser(walletAddress, { 
+          smartDefaults: defaults,
+          lastDefaultsUpdate: Date.now()
+        });
+      }
     } catch (err) {
       console.error('Error saving defaults:', err);
     }
-  }, []);
+  }, [walletAddress]);
 
-  // Load defaults from local storage or remote (placeholder)
+  // Enhanced defaults loading with database fallback
   const loadDefaults = useCallback(async (): Promise<SmartDefaults | null> => {
     try {
-      // In the future, this could load from a user profile service
+      // Try database first if user is connected
+      if (walletAddress) {
+        const { dbService } = await import('@/lib/db-service');
+        const user = await dbService.getUserByWallet(walletAddress);
+        if (user?.smartDefaults) {
+          // Update localStorage with database data
+          localStorage.setItem('smartDefaults', JSON.stringify(user.smartDefaults));
+          return user.smartDefaults;
+        }
+      }
+      
+      // Fallback to localStorage
       const saved = localStorage.getItem('smartDefaults');
       return saved ? JSON.parse(saved) : null;
     } catch (err) {
       console.error('Error loading defaults:', err);
       return null;
     }
-  }, []);
+  }, [walletAddress]);
 
   // Initialize smart defaults on hook mount if wallet is connected
   useEffect(() => {

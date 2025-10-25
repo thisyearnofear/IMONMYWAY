@@ -39,10 +39,29 @@ export default function WatchPage() {
 
   const { isConnected, address } = useWallet();
 
-  // Simple mocks for deleted hooks
-  const getCommitmentDetails = (_id: string) => {}; // No-op
-  const getUserReputation = (_address: string) => {}; // No-op
-  const activeBets = []; // Empty array
+  // Real data fetching functions
+  const getCommitmentDetails = async (id: string) => {
+    try {
+      const { dbService } = await import('@/lib/db-service');
+      return await dbService.getCommitment(id);
+    } catch (error) {
+      console.error('Error fetching commitment:', error);
+      return null;
+    }
+  };
+  
+  const getUserReputation = async (address: string) => {
+    try {
+      const { dbService } = await import('@/lib/db-service');
+      const user = await dbService.getUserByWallet(address);
+      return user?.reputation || 7500; // Default reputation
+    } catch (error) {
+      console.error('Error fetching reputation:', error);
+      return 7500;
+    }
+  };
+  
+  const [activeBets, setActiveBets] = useState<any[]>([]);
 
   const { addToast, setConnected } = useUIStore();
 

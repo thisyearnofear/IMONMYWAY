@@ -30,15 +30,73 @@ export default function Share() {
   const [isCreating, setIsCreating] = useState(false);
 
   const router = useRouter();
-  const { isConnected } = useWallet();
+  const { isConnected, balance, address, chainId } = useWallet();
   const { currentLocation } = useLocationStore();
   const { addToast } = useUIStore();
 
-  // Simple mock for createCommitment - replace with actual implementation
-  const createCommitment = async (_start: any, _end: any, _deadline: number, _pace: number, _amount: string) => {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    return `commitment_${Date.now()}`; // Mock commitment ID
+  // Real commitment creation using contracts and database
+  const createCommitment = async (start: any, end: any, deadline: number, pace: number, amount: string) => {
+    const { dbService } = await import('@/lib/db-service');
+    const { getContract } = await import('@/lib/contracts');
+    
+    if (!address) throw new Error('Wallet not connected');
+    
+    try {
+      // Create commitment in database first
+      const commitmentData = {
+        userAddress: address,
+        startLocation: start,
+        targetLocation: end,
+        arrivalDeadline: deadline,
+        estimatedPace: pace,
+        stakeAmount: amount,
+        status: 'active',
+        createdAt: Date.now()
+      };
+      
+      const commitmentId = await dbService.createCommitment(commitmentData);
+      
+      // If blockchain is available, create on-chain commitment
+      if (window.ethereum && chainId) {
+        const { BrowserProvider } = await import('ethers');
+        const provider = new BrowserProvider(window.ethereum);
+        const signer = await provider.getSigner();
+        const contract = getContract(chainId, signer);
+        
+        // Convert coordinates to contract format (scaled integers)
+        const startLoc = [
+          Math.round(start.lat * 1e6), 
+          Math.round(start.lng * 1e6), 
+          Math.round(Date.now() / 1000), 
+          100 // accuracy
+        ];
+        const endLoc = [
+          Math.round(end.lat * 1e6), 
+          Math.round(end.lng * 1e6), 
+          deadline, 
+          100 // accuracy
+        ];
+        
+        const tx = await contract.createCommitment(
+          startLoc, 
+          endLoc, 
+          deadline, 
+          pace, 
+          { value: ethers.parseEther(amount) }
+        );
+        
+        // Update commitment with transaction hash
+        await dbService.updateCommitment(commitmentId, { 
+          transactionHash: tx.hash,
+          blockchainStatus: 'pending'
+        });
+      }
+      
+      return commitmentId;
+    } catch (error) {
+      console.error('Error creating commitment:', error);
+      throw error;
+    }
   };
 
   const handleStakeSet = async (amount: string) => {
@@ -167,7 +225,7 @@ export default function Share() {
           <SmartStakeInput
             onStakeSet={handleStakeSet}
             isLoading={isCreating}
-            userBalance="1.5" // Mock balance
+            userBalance={balance || "0.0"}
             context={{
               distance: destination && currentLocation
                 ? Math.round(

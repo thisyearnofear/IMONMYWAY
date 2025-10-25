@@ -152,8 +152,10 @@ export function useAnimation() {
 
     // Sound feedback (future enhancement)
     if (sound) {
-      // TODO: Implement audio feedback with user preference
-      console.log(`🔊 Playing ${type} sound`)
+      // Audio feedback with Web Audio API
+      if (config.sound && typeof window !== 'undefined') {
+        await playAudioFeedback(config.type, config.intensity)
+      }
     }
   }, [isLowPerformance, prefersReducedMotion, getAnimationClass])
 
@@ -187,6 +189,67 @@ export function useAnimation() {
 }
 
 // Hook for component-specific animations
+// ============================================================================
+// AUDIO FEEDBACK SYSTEM
+// ============================================================================
+
+async function playAudioFeedback(type: CelebrationConfig['type'], intensity: CelebrationConfig['intensity']) {
+  try {
+    // Check user preference for audio (respects browser autoplay policies)
+    const audioEnabled = localStorage.getItem('audioFeedbackEnabled') !== 'false'
+    if (!audioEnabled) return
+
+    // Create audio context (lazy initialization)
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+    
+    // Resume context if suspended (required by browsers)
+    if (audioContext.state === 'suspended') {
+      await audioContext.resume()
+    }
+
+    // Audio parameters based on celebration type and intensity
+    const audioConfig = {
+      success: { frequency: 523.25, duration: 0.3 }, // C5
+      achievement: { frequency: 659.25, duration: 0.5 }, // E5
+      bet_won: { frequency: 783.99, duration: 0.4 }, // G5
+      commitment_fulfilled: { frequency: 440, duration: 0.6 } // A4
+    }
+
+    const intensityMultiplier = {
+      subtle: 0.1,
+      medium: 0.2,
+      intense: 0.3
+    }
+
+    const config = audioConfig[type]
+    const volume = intensityMultiplier[intensity]
+
+    // Create oscillator for tone
+    const oscillator = audioContext.createOscillator()
+    const gainNode = audioContext.createGain()
+
+    // Configure audio
+    oscillator.connect(gainNode)
+    gainNode.connect(audioContext.destination)
+    
+    oscillator.frequency.setValueAtTime(config.frequency, audioContext.currentTime)
+    oscillator.type = 'sine'
+    
+    // Envelope for smooth sound
+    gainNode.gain.setValueAtTime(0, audioContext.currentTime)
+    gainNode.gain.linearRampToValueAtTime(volume, audioContext.currentTime + 0.01)
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + config.duration)
+
+    // Play sound
+    oscillator.start(audioContext.currentTime)
+    oscillator.stop(audioContext.currentTime + config.duration)
+
+  } catch (error) {
+    // Fallback: no audio if Web Audio API fails
+    console.log(`🔊 Audio feedback: ${type} (${intensity})`)
+  }
+}
+
 export function useComponentAnimation(componentName: string) {
   const { getAnimationClass, getStaggeredDelay, triggerCelebration } = useAnimation()
 
