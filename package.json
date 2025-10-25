@@ -39,6 +39,7 @@
     "zustand": "^5.0.8"
   },
   "devDependencies": {
+    "@netlify/plugin-nextjs": "^5.14.3",
     "@nomicfoundation/hardhat-toolbox": "^6.1.0",
     "@tailwindcss/postcss": "^4.1.12",
     "@types/leaflet": "^1.9.12",
