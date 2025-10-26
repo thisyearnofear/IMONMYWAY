@@ -45,7 +45,7 @@ export const AI_MODEL_CONFIGS = {
   // Betting odds calculator
   bettingOdds: {
     modelId: 'odds-calculator-v1',
-    endpoint: 'https://imonmywayapi.persidian.com:3001/api/ai/odds-calculate'
+    endpoint: 'https://imonmywayapi.persidian.com:3001/api/ai/odds-calculate',
     maxOdds: 10, // Maximum odds for any bet
     minOdds: 1.1, // Minimum odds (slightly better than even)
     volatilityWindow: 24, // Hours for volatility calculation
@@ -165,11 +165,11 @@ export function isFeatureEnabled(featureName: keyof typeof AI_FEATURE_FLAGS): bo
 export function getDevicePerformanceTier(): keyof typeof AI_PERFORMANCE.deviceCapabilities {
   // Determine device tier based on hardware capabilities
   if (typeof navigator === 'undefined') return 'midRange'; // Server side render
-  
+
   // Simple heuristic for device tier
   const hardwareConcurrency = navigator.hardwareConcurrency || 4;
   const memory = (navigator as any).deviceMemory || 4; // 4GB as default
-  
+
   if (hardwareConcurrency <= 2 || memory <= 2) {
     return 'lowEnd';
   } else if (hardwareConcurrency <= 4 || memory <= 4) {
