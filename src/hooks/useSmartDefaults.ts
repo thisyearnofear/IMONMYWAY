@@ -213,13 +213,8 @@ export function useSmartDefaults() {
       localStorage.setItem('smartDefaults', JSON.stringify(defaults));
       
       // Save to database if user is connected
-      if (walletAddress) {
-        const { dbService } = await import('@/lib/db-service');
-        await dbService.updateUser(walletAddress, { 
-          smartDefaults: defaults,
-          lastDefaultsUpdate: Date.now()
-        });
-      }
+      // Note: Smart defaults are stored locally for now
+      // Database schema doesn't currently support smartDefaults field
     } catch (err) {
       console.error('Error saving defaults:', err);
     }

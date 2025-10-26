@@ -4,7 +4,7 @@ This file provides guidance to WARP (warp.dev) when working with code in this re
 
 ## Project Overview
 
-**Runner ETA** is a real-time location sharing application built with Next.js, TypeScript, and Socket.IO. It enables users to share live location updates with accurate ETA calculations based on running pace.
+**IMONMYWAY** is a decentralized betting protocol that combines real-time location tracking with financial accountability. Users stake tokens on their punctuality commitments and let others bet on their success. Built with Next.js, TypeScript, Socket.IO, and smart contracts on Somnia Network.
 
 ## Common Development Commands
 
@@ -34,19 +34,24 @@ Since this is a location-based app, test with:
 
 ### Tech Stack
 - **Frontend**: Next.js 15.5 with App Router, React 19.1, TypeScript 5.9
-- **Real-time**: Socket.IO 4.8 with custom Node.js server (`server.js`)
+- **Backend**: Standalone Socket.IO server (`backend/backend-server.js`) for real-time features
+- **Database**: PostgreSQL with Prisma ORM for production data
+- **Blockchain**: Solidity smart contracts on Somnia Network
 - **Styling**: Tailwind CSS 4.1 (Oxide Engine) with glass morphism design
-- **State Management**: Zustand 5.0 stores for location and UI state
-- **Maps**: Leaflet 1.9 for interactive mapping
+- **State Management**: Zustand 5.0 stores for location, betting, and UI state
+- **Maps**: Leaflet 1.9 for interactive mapping and route planning
 - **Build**: Next.js 15 Turbopack for 40-60% faster builds
 
 ### Key Architectural Components
 
-#### Custom Socket.IO Server (`server.js`)
-- **LocationService**: In-memory session management for active location sharing
-- **Real-time Location Updates**: WebSocket-based location broadcasting
+#### Standalone Socket.IO Backend (`backend/backend-server.js`)
+- **LocationService**: In-memory session management for active location sharing and betting sessions
+- **Real-time Location Updates**: WebSocket-based location broadcasting for live tracking
 - **ETA Calculations**: Haversine formula for distance + pace-based time estimates
+- **Betting Integration**: Real-time betting odds updates and commitment tracking
 - **Session Management**: UUID-based sharing sessions with automatic cleanup
+- **Health Checks**: Built-in `/health` endpoint for monitoring
+- **CORS Configuration**: Properly configured for Netlify frontend domain
 
 #### State Management (Zustand Stores)
 - **locationStore**: Manages current location, sharing sessions, watched sessions, and pace settings
@@ -56,31 +61,45 @@ Since this is a location-based app, test with:
 ```
 src/
 ├── app/                    # Next.js App Router pages
-│   ├── page.tsx           # Home page with mode selection
-│   ├── plan/page.tsx      # Route planning interface  
-│   ├── share/page.tsx     # Live tracking sharing
-│   └── watch/[id]/page.tsx # Watch shared location
+│   ├── page.tsx           # Home page with betting interface
+│   ├── plan/page.tsx      # Route planning and commitment creation
+│   ├── share/page.tsx     # Live tracking with betting integration
+│   ├── watch/[id]/page.tsx # Watch shared location and place bets
+│   ├── leaderboard/       # Reputation and betting leaderboard
+│   └── profile/           # User profile and betting history
 ├── components/
 │   ├── ui/                # Reusable UI components (Button, Toast, etc.)
 │   ├── map/               # Map-specific components (MapContainer, etc.)
+│   ├── wallet/            # Web3 wallet connection components
+│   ├── betting/           # Betting interface components
+│   ├── reputation/        # Reputation and achievement displays
 │   └── layout/            # Layout components (Navigation, ModeSwitch)
 ├── stores/                # Zustand state stores
+│   ├── locationStore.ts   # Location and tracking state
+│   └── uiStore.ts         # UI and betting state
+├── contracts/             # Smart contract ABIs and addresses
 ├── types/                 # TypeScript type definitions
 └── lib/                   # Utility functions
+backend/
+└── backend-server.js      # Standalone Socket.IO server for real-time features
 ```
 
 #### Real-time Data Flow
-1. **Location Sharing**: User creates session → gets UUID → starts broadcasting location
-2. **Location Updates**: GPS coordinates → Socket.IO → broadcast to watchers
-3. **ETA Calculation**: Current location + destination + pace → distance calculation → ETA
-4. **Session Management**: Automatic cleanup on disconnect, session deactivation
+1. **Commitment Creation**: User creates punctuality commitment → stakes tokens → gets UUID session
+2. **Location Sharing**: GPS coordinates → Socket.IO → broadcast to watchers and bettors
+3. **Betting Integration**: Real-time odds updates → bet placement → live betting feed
+4. **ETA Calculation**: Current location + destination + pace → distance calculation → ETA
+5. **Blockchain Integration**: On-time arrival → smart contract execution → token distribution
+6. **Session Management**: Automatic cleanup on disconnect, session deactivation
 
 ### Socket.IO Events
-- `createSharingID`: Create new sharing session
-- `updateLocation`: Broadcast location updates
-- `setDestination`: Set destination for ETA calculation  
-- `join`: Join sharing session as watcher
-- `watch`: Receive location updates
+- `createSharingID`: Create new location sharing session with betting integration
+- `updateLocation`: Broadcast location updates with real-time betting odds
+- `setDestination`: Set destination for ETA calculation and betting settlement
+- `join`: Join sharing session as watcher or bettor
+- `watch`: Receive location updates and betting data
+- `placeBet`: Place bet on user's punctuality
+- `bettingUpdate`: Real-time betting odds and pool updates
 
 ### Development Patterns
 
@@ -111,10 +130,11 @@ src/
 ## Development Notes
 
 ### Socket.IO Integration
-The app uses a custom Node.js server (`server.js`) instead of Vercel's serverless functions to support real-time WebSocket connections. This means:
-- Development runs on `http://localhost:3000` with both HTTP and WebSocket support
-- Production requires a Node.js hosting environment (not static hosting)
-- The Next.js app is integrated within the custom server using `next()` handler
+The app uses a standalone Socket.IO backend server (`backend/backend-server.js`) for real-time WebSocket connections, separate from the Next.js frontend. This architecture provides:
+- **Development**: Frontend on `http://localhost:3000`, backend on `http://localhost:3001`
+- **Production**: Frontend on Netlify CDN, backend on Hetzner VPS with PM2 process management
+- **Scalability**: Backend can be scaled independently with nginx reverse proxy
+- **Security**: Dedicated backend with proper CORS configuration for production domains
 
 ### Location Services
 - Requires HTTPS in production for geolocation API access
@@ -123,10 +143,12 @@ The app uses a custom Node.js server (`server.js`) instead of Vercel's serverles
 - Path tracking stores coordinate history for route visualization
 
 ### Performance Considerations
-- In-memory session storage (consider database for production scaling)
-- Automatic session cleanup prevents memory leaks
-- Map rendering optimized with Leaflet's built-in performance features
-- Real-time updates use efficient room-based broadcasting
+- **Backend**: Standalone Socket.IO server with PM2 clustering support
+- **Database**: PostgreSQL with Prisma ORM for production data persistence
+- **Caching**: In-memory session storage with Redis consideration for scaling
+- **Load Balancing**: nginx reverse proxy for backend distribution
+- **Monitoring**: Health check endpoints and PM2 process monitoring
+- **Real-time**: Efficient room-based broadcasting with connection limits
 
 ### Mobile Considerations
 - Touch-optimized UI with proper tap targets
@@ -138,8 +160,15 @@ The app uses a custom Node.js server (`server.js`) instead of Vercel's serverles
 
 ### Required Environment Variables
 ```bash
-NODE_ENV=development       # Set to 'production' for production
-PORT=3000                 # Server port (optional, defaults to 3000)
+# Frontend (.env.local)
+NEXT_PUBLIC_SOCKET_URL=http://localhost:3001  # Backend Socket.IO URL
+NEXT_PUBLIC_BASE_URL=http://localhost:3000    # Frontend URL
+
+# Backend (.env.production)
+NODE_ENV=production
+PORT=3001
+DATABASE_URL=postgresql://user:pass@host:5432/imonmyway_prod
+ALLOWED_ORIGINS=https://your-netlify-app.netlify.app
 ```
 
 ### Browser Compatibility
@@ -155,9 +184,11 @@ PORT=3000                 # Server port (optional, defaults to 3000)
 - Test offline/online scenarios for connection handling
 
 ### Real-time Testing
-- Open sharing link in multiple tabs/devices
-- Test connection drops and reconnections
-- Verify ETA updates when location/destination changes
+- Open sharing link in multiple tabs/devices to test betting interactions
+- Test connection drops and reconnections with betting state preservation
+- Verify ETA updates when location/destination changes affect betting odds
+- Test blockchain integration with mock transactions
+- Simulate on-time/late arrivals to test smart contract execution
 
 ### UI Testing
 - Test responsive design across device sizes

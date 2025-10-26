@@ -34,6 +34,18 @@ export default function Share() {
   const { currentLocation } = useLocationStore();
   const { addToast } = useUIStore();
 
+  // Helper function to calculate distance between two points
+  const calculateDistance = (start: { lat: number; lng: number }, end: { lat: number; lng: number }) => {
+    const R = 6371; // Earth's radius in kilometers
+    const dLat = (end.lat - start.lat) * Math.PI / 180;
+    const dLng = (end.lng - start.lng) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(start.lat * Math.PI / 180) * Math.cos(end.lat * Math.PI / 180) *
+              Math.sin(dLng/2) * Math.sin(dLng/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c; // Distance in kilometers
+  };
+
   // Real commitment creation using contracts and database
   const createCommitment = async (start: any, end: any, deadline: number, pace: number, amount: string) => {
     const { dbService } = await import('@/lib/db-service');
@@ -43,22 +55,25 @@ export default function Share() {
     
     try {
       // Create commitment in database first
+      const commitmentId = `commitment_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       const commitmentData = {
-        userAddress: address,
-        startLocation: start,
-        targetLocation: end,
-        arrivalDeadline: deadline,
-        estimatedPace: pace,
+        userId: address,
+        commitmentId: commitmentId,
         stakeAmount: amount,
-        status: 'active',
-        createdAt: Date.now()
+        deadline: new Date(deadline),
+        startLatitude: start.lat,
+        startLongitude: start.lng,
+        targetLatitude: end.lat,
+        targetLongitude: end.lng,
+        estimatedDistance: calculateDistance(start, end),
+        estimatedPace: pace
       };
       
-      const commitmentId = await dbService.createCommitment(commitmentData);
+      await dbService.createCommitment(commitmentData);
       
       // If blockchain is available, create on-chain commitment
       if (window.ethereum && chainId) {
-        const { BrowserProvider } = await import('ethers');
+        const { BrowserProvider, parseEther } = await import('ethers');
         const provider = new BrowserProvider(window.ethereum);
         const signer = await provider.getSigner();
         const contract = getContract(chainId, signer);
@@ -82,14 +97,11 @@ export default function Share() {
           endLoc, 
           deadline, 
           pace, 
-          { value: ethers.parseEther(amount) }
+          { value: parseEther(amount) }
         );
         
-        // Update commitment with transaction hash
-        await dbService.updateCommitment(commitmentId, { 
-          transactionHash: tx.hash,
-          blockchainStatus: 'pending'
-        });
+        // Update commitment status to pending
+        await dbService.updateCommitmentStatus(commitmentId, 'pending');
       }
       
       return commitmentId;
