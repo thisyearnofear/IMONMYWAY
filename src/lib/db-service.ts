@@ -90,6 +90,8 @@ export class DatabaseService {
     reputationScore: number
     totalStaked: string
     totalEarned: string
+    smartDefaults: any
+    lastDefaultsUpdate: number
   }>) {
     try {
       const user = storage.users.get(walletAddress);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useAIEngine } from "@/hooks/useAIEngine";
 import { useUIStore } from "@/stores/uiStore";
@@ -72,13 +72,7 @@ export function PerformanceDashboard() {
   const [timeframe, setTimeframe] = useState<'7d' | '30d' | '90d'>('30d');
 
   // Load AI predictions when component mounts
-  useEffect(() => {
-    if (address) {
-      loadAIPredictions();
-    }
-  }, [address, timeframe]);
-
-  const loadAIPredictions = async () => {
+  const loadAIPredictions = useCallback(async () => {
     if (!address) return;
     
     setIsLoading(true);
@@ -119,7 +113,13 @@ export function PerformanceDashboard() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [address, predictReputation, optimizeRoute, predictAchievements]);
+
+  useEffect(() => {
+    if (address) {
+      loadAIPredictions();
+    }
+  }, [address, timeframe, loadAIPredictions]);
 
   const generateSuggestedActions = (
     reputationPrediction: ReputationPrediction | null,

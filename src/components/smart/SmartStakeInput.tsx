@@ -383,7 +383,7 @@ export function SmartStakeInput({
       {/* Smart Tips */}
       <div className="text-xs text-gray-500 space-y-1">
         <p>💡 Your stake will be locked until the commitment deadline</p>
-        <p>✅ You'll get your stake back if you arrive on time</p>
+        <p>✅ You&apos;ll get your stake back if you arrive on time</p>
         <p>🎲 Others can bet on your success for additional rewards</p>
         {smartPreferences.riskTolerance === 'aggressive' && (
           <p className="text-purple-600">🚀 High confidence - consider higher stake!</p>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAIEngine } from '@/hooks/useAIEngine'
 
 interface ReputationChartProps {
@@ -33,13 +33,7 @@ export function ReputationChart({
   const [isLoading, setIsLoading] = useState(false)
 
   // Load AI predictions when component mounts and userId is provided
-  useEffect(() => {
-    if (userId) {
-      loadPredictions()
-    }
-  }, [userId])
-
-  const loadPredictions = async () => {
+  const loadPredictions = useCallback(async () => {
     if (!userId || !predictReputation || !predictAchievements) return
     
     setIsLoading(true)
@@ -61,7 +55,13 @@ export function ReputationChart({
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [userId, predictReputation, predictAchievements])
+
+  useEffect(() => {
+    if (userId) {
+      loadPredictions()
+    }
+  }, [userId, loadPredictions])
 
   // Get trend indicator based on predictions
   const getTrendIndicator = () => {
@@ -222,7 +222,7 @@ export function ReputationChart({
           {predictions.achievements && predictions.achievements.length > 0 && (
             <div>
               <div className="text-sm text-purple-800">
-                You're on track to unlock{' '}
+                You&apos;re on track to unlock{' '}
                 <span className="font-bold">{predictions.achievements[0].achievementId.replace(/_/g, ' ')}</span>
                 {' '}within {predictions.achievements[0].timeframe} days.
               </div>

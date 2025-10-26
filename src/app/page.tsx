@@ -77,8 +77,8 @@ export default function HomePage() {
             
             {/* Live Example */}
             <div className="terminal max-w-2xl mx-auto text-left">
-              <div className="terminal-line">USER_STAKES: 100 TOKENS → "I&apos;ll be there by 3:00 PM"</div>
-              <div className="terminal-line">FRIEND_BETS: 50 TOKENS → "No way, traffic is crazy"</div>
+              <div className="terminal-line">USER_STAKES: 100 TOKENS → &ldquo;I&apos;ll be there by 3:00 PM&rdquo;</div>
+              <div className="terminal-line">FRIEND_BETS: 50 TOKENS → &ldquo;No way, traffic is crazy&rdquo;</div>
               <div className="terminal-line">GPS_VERIFIED: ARRIVED_AT_2:58_PM → USER_WINS_150_TOKENS</div>
             </div>
           </div>

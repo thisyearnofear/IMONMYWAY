@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useAIEngine } from "@/hooks/useAIEngine";
 import { useUIStore } from "@/stores/uiStore";
@@ -67,13 +67,7 @@ export function UnifiedBettingInterface({
   const [odds, setOdds] = useState<BettingOdds | null>(null);
 
   // Load betting odds and AI suggestions when component mounts
-  useEffect(() => {
-    if (commitmentId && address) {
-      loadBettingData();
-    }
-  }, [commitmentId, address]);
-
-  const loadBettingData = async () => {
+  const loadBettingData = useCallback(async () => {
     if (!commitmentId || !address) return;
     
     setIsLoading(true);
@@ -119,7 +113,13 @@ export function UnifiedBettingInterface({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [commitmentId, address, calculateBettingOdds]);
+
+  useEffect(() => {
+    if (commitmentId && address) {
+      loadBettingData();
+    }
+  }, [commitmentId, address, loadBettingData]);
 
   const generateBettingOptions = (odds: BettingOdds): BettingOption[] => {
     return [

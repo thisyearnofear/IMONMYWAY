@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAIEngine } from '@/hooks/useAIEngine'
 
 interface ReputationBadgeProps {
@@ -26,13 +26,7 @@ export function ReputationBadge({
   const [isLoadingPrediction, setIsLoadingPrediction] = useState(false)
 
   // Load AI prediction when component mounts and userId is provided
-  useEffect(() => {
-    if (showPrediction && userId) {
-      loadPrediction()
-    }
-  }, [showPrediction, userId, predictionTimeframe])
-
-  const loadPrediction = async () => {
+  const loadPrediction = useCallback(async () => {
     if (!userId) return
     
     setIsLoadingPrediction(true)
@@ -44,7 +38,13 @@ export function ReputationBadge({
     } finally {
       setIsLoadingPrediction(false)
     }
-  }
+  }, [userId, predictionTimeframe, predictReputation])
+
+  useEffect(() => {
+    if (showPrediction && userId) {
+      loadPrediction()
+    }
+  }, [showPrediction, userId, predictionTimeframe, loadPrediction])
 
   const getColor = (score: number) => {
     if (score >= 9000) return 'text-green-600 bg-green-100'

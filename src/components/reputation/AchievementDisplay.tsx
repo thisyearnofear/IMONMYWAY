@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useWallet } from "@/hooks/useWallet";
 import { useAIEngine } from "@/hooks/useAIEngine";
 import { Card } from "@/components/ui/PremiumCard";
@@ -98,11 +98,7 @@ export function AchievementDisplay({
     }
   ];
 
-  useEffect(() => {
-    loadAchievements();
-  }, [address, userId]);
-
-  const loadAchievements = async () => {
+  const loadAchievements = useCallback(async () => {
     setIsLoading(true);
     try {
       // In a real app, you'd fetch from your backend
@@ -124,7 +120,11 @@ export function AchievementDisplay({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [limit, celebratingAchievement]);
+
+  useEffect(() => {
+    loadAchievements();
+  }, [address, userId, loadAchievements]);
 
   const getCategoryColor = (category: Achievement['category']) => {
     switch (category) {
