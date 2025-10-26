@@ -9,7 +9,7 @@ export const AI_MODEL_CONFIGS = {
   // Stake recommendation model
   stakeRecommendation: {
     modelId: 'stake-recommender-v1',
-    endpoint: '/api/ai/stake-recommend',
+    endpoint: 'https://imonmywayapi.persidian.com:3001/api/ai/stake-recommend',
     maxStakeMultiplier: 5, // Maximum stake relative to user balance
     minConfidence: 0.7, // Minimum confidence for AI recommendations
     defaultStake: '1.0', // Default stake when AI unavailable
@@ -19,7 +19,7 @@ export const AI_MODEL_CONFIGS = {
   // Reputation prediction model
   reputationPrediction: {
     modelId: 'reputation-predictor-v1',
-    endpoint: '/api/ai/reputation-predict',
+    endpoint: 'https://imonmywayapi.persidian.com:3001/api/ai/reputation-predict',
     predictionHorizon: 30, // Days to predict reputation changes
     updateInterval: 3600, // Update predictions every hour
     confidenceThreshold: 0.65,
@@ -28,7 +28,7 @@ export const AI_MODEL_CONFIGS = {
   // Route optimization model
   routeOptimization: {
     modelId: 'route-optimizer-v1',
-    endpoint: '/api/ai/route-optimize',
+    endpoint: 'https://imonmywayapi.persidian.com:3001/api/ai/route-optimize',
     maxAlternativeRoutes: 3,
     timeSavingsThreshold: 60, // Only suggest alternative if saves more than 60s
     trafficIntegration: true,
@@ -37,7 +37,7 @@ export const AI_MODEL_CONFIGS = {
   // Achievement prediction model
   achievementPrediction: {
     modelId: 'achievement-predictor-v1',
-    endpoint: '/api/ai/achievement-predict',
+    endpoint: 'https://imonmywayapi.persidian.com:3001/api/ai/achievement-predict',
     predictionWindow: 7, // Predict achievements in next 7 days
     motivationFactor: 1.5, // How much to encourage achievement hunting
   },
@@ -45,7 +45,7 @@ export const AI_MODEL_CONFIGS = {
   // Betting odds calculator
   bettingOdds: {
     modelId: 'odds-calculator-v1',
-    endpoint: '/api/ai/odds-calculate',
+    endpoint: 'https://imonmywayapi.persidian.com:3001/api/ai/odds-calculate'
     maxOdds: 10, // Maximum odds for any bet
     minOdds: 1.1, // Minimum odds (slightly better than even)
     volatilityWindow: 24, // Hours for volatility calculation

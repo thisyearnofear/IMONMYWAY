@@ -5,12 +5,13 @@
 [build.environment]
   NODE_VERSION = "18"
 
-[[plugins]]
-  package = "@netlify/plugin-nextjs"
-
-[functions]
-  node_bundler = "esbuild"
-
 # Disable processing for Next.js
 [build.processing]
   skip_processing = true
+
+# Redirect all API calls to your Hetzner backend
+[[redirects]]
+  from = "/api/*"
+  to = "https://imonmywayapi.persidian.com:3001/api/:splat"
+  status = 200
+  force = true
