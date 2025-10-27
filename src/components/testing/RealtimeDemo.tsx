@@ -65,7 +65,7 @@ export function RealtimeDemo() {
 
   return (
     <motion.div
-      className="fixed bottom-4 right-4 glass-enhanced p-4 rounded-xl border border-purple-400/30 bg-purple-500/10 z-50"
+      className="fixed bottom-4 right-4 bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 p-4 rounded-xl border border-purple-400/30 bg-purple-500/10 z-50"
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
     >

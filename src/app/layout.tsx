@@ -8,15 +8,15 @@ export const metadata: Metadata = {
   title: "IMONMYWAY - Punctuality Protocol on Somnia",
   description:
     "Put your money where your mouth is. Stake tokens on punctuality commitments and let others bet on your success with real-time GPS verification on Somnia Network.",
-  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3001'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'),
   icons: {
     icon: '/IOMYfavicon.ico',
     apple: '/IOMYsquare.png',
   },
   openGraph: {
-    title: "IMONMYWAY - Punctuality Protocol",
-    description: "First punctuality accountability protocol on Somnia Network",
-    images: ['/IOMYbanner.png'],
+  title: "IMONMYWAY - Punctuality Protocol",
+  description: "First punctuality accountability protocol on Somnia Network",
+  images: ['/IOMYbanner.png'],
   },
 };
 
@@ -26,13 +26,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className="min-h-screen bg-background text-foreground relative overflow-x-hidden">
+    <html lang="en" suppressHydrationWarning>
+      <body className="min-h-screen bg-graphite-900 text-white antialiased" suppressHydrationWarning={true}>
         <ToastProvider>
           <GlobalErrorBoundary enableRecovery={true} showErrorDetails={process.env.NODE_ENV === 'development'}>
             <PremiumNavigation />
-            {children}
-            {/* <SmartNotificationCenter /> */}
+            <main className="relative pt-20">
+              {children}
+            </main>
             <ToastContainer />
           </GlobalErrorBoundary>
         </ToastProvider>

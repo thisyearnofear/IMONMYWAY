@@ -128,7 +128,7 @@ export default function ProfilePage() {
         
         <main className="relative z-10 min-h-screen flex items-center justify-center px-4">
           <motion.div
-            className="glass-enhanced p-8 rounded-xl text-center max-w-md"
+            className="bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 p-8 rounded-xl text-center max-w-md"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
@@ -155,7 +155,7 @@ export default function ProfilePage() {
         
         <main className="relative z-10 container mx-auto px-4 py-8">
           <div className="space-y-6">
-            <div className="glass-enhanced p-8 rounded-xl animate-pulse">
+            <div className="p-8 rounded-xl animate-pulse bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10">
               <div className="flex items-center gap-6">
                 <div className="w-20 h-20 bg-white/10 rounded-full"></div>
                 <div className="flex-1">
@@ -166,7 +166,7 @@ export default function ProfilePage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="glass-enhanced p-6 rounded-xl animate-pulse">
+                <div key={i} className="p-6 rounded-xl animate-pulse bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10">
                   <div className="h-4 bg-white/10 rounded mb-2"></div>
                   <div className="h-8 bg-white/5 rounded"></div>
                 </div>
@@ -187,7 +187,7 @@ export default function ProfilePage() {
         
         <main className="relative z-10 min-h-screen flex items-center justify-center px-4">
           <motion.div
-            className="glass-enhanced p-8 rounded-xl text-center max-w-md border border-red-500/30"
+            className="bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 p-8 rounded-xl text-center max-w-md border border-red-500/30"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
@@ -218,7 +218,7 @@ export default function ProfilePage() {
         {/* Real-time Notifications */}
         {realtimeUpdate && (
           <motion.div
-            className="glass-enhanced p-4 rounded-xl mb-6 border border-blue-400/30 bg-blue-500/10"
+            className="p-4 rounded-xl mb-6 border border-blue-400/30 bg-blue-500/10 bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
@@ -232,7 +232,7 @@ export default function ProfilePage() {
 
         {reputationChange && (
           <motion.div
-            className={`glass-enhanced p-4 rounded-xl mb-6 border ${
+            className={`p-4 rounded-xl mb-6 border bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 ${
               reputationChange.newScore > reputationChange.oldScore 
                 ? 'border-green-400/30 bg-green-500/10' 
                 : 'border-red-400/30 bg-red-500/10'
@@ -261,7 +261,7 @@ export default function ProfilePage() {
 
         {/* Profile Header */}
         <motion.div
-          className="glass-enhanced p-8 rounded-xl mb-8"
+          className="p-8 rounded-xl mb-8 bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
@@ -285,7 +285,7 @@ export default function ProfilePage() {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="glass-enhanced p-6 rounded-xl">
+          <div className="p-6 rounded-xl bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10">
             <h3 className="text-lg font-semibold text-white mb-4">🏃‍♂️ Performance</h3>
             <div className="space-y-3">
               <div className="flex justify-between">
@@ -309,7 +309,7 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          <div className="glass-enhanced p-6 rounded-xl">
+          <div className="p-6 rounded-xl bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10">
             <h3 className="text-lg font-semibold text-white mb-4">🏆 Achievements</h3>
             <div className="text-center">
               <div className="text-3xl font-bold text-yellow-400 mb-2">
@@ -331,7 +331,7 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          <div className="glass-enhanced p-6 rounded-xl">
+          <div className="p-6 rounded-xl bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10">
             <h3 className="text-lg font-semibold text-white mb-4">🔥 Streaks</h3>
             <div className="space-y-3">
               <div className="flex justify-between">
@@ -371,7 +371,7 @@ export default function ProfilePage() {
         {/* Recent Sessions */}
         {profile?.recentSessions && profile.recentSessions.length > 0 && (
           <motion.div
-            className="glass-enhanced p-6 rounded-xl mb-8"
+            className="p-6 rounded-xl bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 mb-8"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
@@ -381,7 +381,7 @@ export default function ProfilePage() {
               {profile.recentSessions.slice(0, 5).map((session) => (
                 <div
                   key={session.id}
-                  className="flex items-center justify-between p-4 glass-modern rounded-lg"
+                  className="flex items-center justify-between p-4 bg-gradient-to-br from-gold/10 to-violet/10 rounded-lg border border-gold/20"
                 >
                   <div className="flex items-center gap-3">
                     <span className={`text-lg ${session.success ? 'text-green-400' : 'text-red-400'}`}>
@@ -411,7 +411,7 @@ export default function ProfilePage() {
         {/* No Data State */}
         {(!profile || profile.totalSessions === 0) && (
           <motion.div
-            className="glass-enhanced p-8 rounded-xl text-center"
+            className="p-8 rounded-xl text-center bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >

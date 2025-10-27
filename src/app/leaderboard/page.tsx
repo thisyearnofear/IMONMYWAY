@@ -126,7 +126,7 @@ export default function LeaderboardPage() {
         
         <main className="relative z-10 min-h-screen flex items-center justify-center px-4">
           <motion.div
-            className="glass-enhanced p-8 rounded-xl text-center max-w-md"
+            className="p-8 rounded-xl text-center max-w-md bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
@@ -167,7 +167,7 @@ export default function LeaderboardPage() {
           {/* User Rank Display */}
           {userRank && (
             <motion.div
-              className="mt-4 glass-enhanced p-4 rounded-xl inline-block"
+              className="mt-4 p-4 rounded-xl inline-block bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.3 }}
@@ -181,7 +181,7 @@ export default function LeaderboardPage() {
           {/* Real-time Activity Indicator */}
           {realtimeIndicator && (
             <motion.div
-              className="mt-4 glass-enhanced p-3 rounded-xl inline-block border border-green-400/30 bg-green-500/10"
+              className="mt-4 p-3 rounded-xl inline-block border border-green-400/30 bg-green-500/10 bg-gradient-to-br from-gold/5 to-violet/5"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
@@ -196,7 +196,7 @@ export default function LeaderboardPage() {
 
         {/* Filters */}
         <motion.div
-          className="glass-enhanced p-6 rounded-xl mb-8"
+          className="p-6 rounded-xl mb-8 bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
@@ -223,7 +223,7 @@ export default function LeaderboardPage() {
         {/* Error State */}
         {error && (
           <motion.div
-            className="glass-enhanced p-6 rounded-xl mb-8 border border-red-500/30"
+            className="p-6 rounded-xl mb-8 border border-red-500/30 bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
           >
@@ -246,7 +246,7 @@ export default function LeaderboardPage() {
         {isLoading && (
           <div className="space-y-4">
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="glass-enhanced p-6 rounded-xl animate-pulse">
+              <div key={i} className="p-6 rounded-xl animate-pulse bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-white/10 rounded-full"></div>
                   <div className="flex-1">
@@ -270,7 +270,7 @@ export default function LeaderboardPage() {
             {leaderboard.map((entry, index) => (
               <motion.div
                 key={entry.walletAddress}
-                className={`glass-enhanced p-6 rounded-xl transition-all duration-300 hover:scale-[1.02] ${
+                className={`p-6 rounded-xl transition-all duration-300 hover:scale-[1.02] bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 ${
                   entry.isCurrentUser ? 'ring-2 ring-blue-400/50 bg-blue-500/10' : ''
                 }`}
                 initial={{ opacity: 0, x: -20 }}

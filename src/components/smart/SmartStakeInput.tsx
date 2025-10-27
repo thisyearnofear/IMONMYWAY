@@ -55,21 +55,38 @@ export function SmartStakeInput({
   useEffect(() => {
     if (isConnected && context && address) {
       const loadRecommendation = async () => {
-        const recommendation = await getStakeRecommendation(address, {
-          estimatedTime: context.timeAvailable ? context.timeAvailable * 60 : 1800, // Convert to seconds
-          distance: context.distance || 5, // Default distance if not provided
-          targetLocation: { lat: 0, lng: 0 }, // Placeholder coordinates for this example
-          deadline: new Date(Date.now() + (context.timeAvailable ? context.timeAvailable * 60000 : 3600000)) // 1 hour default
-        });
-        if (recommendation && recommendation.confidence > 0.7) { // 70% confidence threshold
-          setShowRecommendation(true);
-          // Auto-apply recommendation if confidence is very high and user has a good reputation
-          if (recommendation.confidence > 0.85) {
-            setStakeAmount(recommendation.suggestedStake);
+        setIsLoadingRecommendation(true);
+        try {
+          // Add timeout to prevent hanging
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('AI service timeout')), 3000) // 3 second timeout
+          );
+
+          const recommendationPromise = getStakeRecommendation(address, {
+            estimatedTime: context.timeAvailable ? context.timeAvailable * 60 : 1800, // Convert to seconds
+            distance: context.distance || 5, // Default distance if not provided
+            targetLocation: { lat: 0, lng: 0 }, // Placeholder coordinates for this example
+            deadline: new Date(Date.now() + (context.timeAvailable ? context.timeAvailable * 60000 : 3600000)) // 1 hour default
+          });
+
+          const recommendation = await Promise.race([recommendationPromise, timeoutPromise]) as any;
+
+          if (recommendation && recommendation.confidence > 0.7) { // 70% confidence threshold
+            setShowRecommendation(true);
+            // Auto-apply recommendation if confidence is very high and user has a good reputation
+            if (recommendation.confidence > 0.85) {
+              setStakeAmount(recommendation.suggestedStake);
+            }
           }
+        } catch (error) {
+          console.warn('AI recommendation failed or timed out, using fallback:', error);
+          // Don't show recommendation if AI service fails
+          setShowRecommendation(false);
+        } finally {
+          setIsLoadingRecommendation(false);
         }
       };
-      
+
       loadRecommendation();
     }
   }, [isConnected, context, address, getStakeRecommendation]);
@@ -148,19 +165,35 @@ export function SmartStakeInput({
 
   const applyRecommendation = async () => {
     if (address && context) {
-      const recommendation = await getStakeRecommendation(address, {
-        estimatedTime: context.timeAvailable ? context.timeAvailable * 60 : 1800, // Convert to seconds
-        distance: context.distance || 5, // Default distance if not provided
-        targetLocation: { lat: 0, lng: 0 }, // Placeholder coordinates for this example
-        deadline: new Date(Date.now() + (context.timeAvailable ? context.timeAvailable * 60000 : 3600000)) // 1 hour default
-      });
-      if (recommendation) {
-        setStakeAmount(recommendation.suggestedStake);
-        setShowRecommendation(false);
-        notifyContextual("recommendation_applied", { 
-          amount: recommendation.suggestedStake,
-          confidence: Math.round(recommendation.confidence * 100)
+      setIsLoadingRecommendation(true);
+      try {
+        // Add timeout to prevent hanging
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('AI service timeout')), 3000) // 3 second timeout
+        );
+
+        const recommendationPromise = getStakeRecommendation(address, {
+          estimatedTime: context.timeAvailable ? context.timeAvailable * 60 : 1800, // Convert to seconds
+          distance: context.distance || 5, // Default distance if not provided
+          targetLocation: { lat: 0, lng: 0 }, // Placeholder coordinates for this example
+          deadline: new Date(Date.now() + (context.timeAvailable ? context.timeAvailable * 60000 : 3600000)) // 1 hour default
         });
+
+        const recommendation = await Promise.race([recommendationPromise, timeoutPromise]) as any;
+
+        if (recommendation) {
+          setStakeAmount(recommendation.suggestedStake);
+          setShowRecommendation(false);
+          notifyContextual("recommendation_applied", {
+            amount: recommendation.suggestedStake,
+            confidence: Math.round(recommendation.confidence * 100)
+          });
+        }
+      } catch (error) {
+        console.warn('AI recommendation failed or timed out:', error);
+        notifyError('AI recommendation unavailable, using default stake');
+      } finally {
+        setIsLoadingRecommendation(false);
       }
     }
   };
@@ -218,7 +251,7 @@ export function SmartStakeInput({
 
       {/* Smart Recommendation Banner */}
       {showRecommendation && !isLoadingRecommendation && (
-        <div 
+        <div
           className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4 border border-blue-200"
           style={{ animationDelay: `${getStaggeredDelay(0)}ms` }}
         >
@@ -241,9 +274,10 @@ export function SmartStakeInput({
             <div className="flex space-x-2">
               <button
                 onClick={applyRecommendation}
-                className="px-3 py-1 bg-blue-600 text-white text-xs rounded-md hover:bg-blue-700 transition-colors"
+                disabled={isLoadingRecommendation}
+                className="px-3 py-1 bg-blue-600 text-white text-xs rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Apply
+                {isLoadingRecommendation ? 'Applying...' : 'Apply'}
               </button>
               <button
                 onClick={() => setShowRecommendation(false)}
@@ -373,11 +407,11 @@ export function SmartStakeInput({
       {/* Enhanced Stake Button */}
       <Button
         onClick={handleSubmit}
-        disabled={!!error || !stakeAmount || isLoading || isLoadingRecommendation}
+        disabled={!!error || !stakeAmount || isLoading}
         className="w-full"
         variant="primary"
       >
-        {isLoading ? "Creating..." : isLoadingRecommendation ? "Analyzing..." : `💰 Stake ${stakeAmount} STT`}
+        {isLoading ? "Creating..." : `💰 Stake ${stakeAmount} STT`}
       </Button>
 
       {/* Smart Tips */}

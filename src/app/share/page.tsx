@@ -168,15 +168,17 @@ export default function Share() {
 
   if (!isConnected) {
     return (
-      <div className="min-h-screen relative bg-gradient-to-br from-slate-50 to-blue-50">
-        <WebGLParticleSystem count={1000} color="#60a5fa" size={0.02} />
+      <div className="min-h-screen relative">
+        <WebGLParticleSystem count={1500} color="#60a5fa" size={0.02} />
+        <div className="fixed inset-0 bg-gradient-to-br from-indigo-950/40 via-purple-950/20 to-pink-950/10" />
+        <div className="fixed inset-0 bg-[radial-gradient(circle_at_30%_40%,rgba(59,130,246,0.08),transparent_70%)]" />
         <motion.div
-          className="flex items-center justify-center min-h-screen"
+          className="flex items-center justify-center min-h-screen relative z-10"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
-          <div className="text-center max-w-md mx-auto p-6 glass-enhanced rounded-2xl shadow-2xl border border-white/20">
+          <div className="text-center max-w-md mx-auto p-6 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl shadow-2xl">
             <motion.div className="text-6xl mb-4" animate={{ scale: [1, 1.1, 1] }} transition={{ duration: 2, repeat: Infinity }}>
               🔗
             </motion.div>
@@ -204,10 +206,10 @@ export default function Share() {
 
       {/* Minimal Header */}
       <div className="relative z-10 p-4 text-center">
-        <h1 className="text-2xl font-bold text-white mb-1">
+        <h1 className="text-2xl font-bold text-gray-900 mb-1">
           Create Bet
         </h1>
-        <p className="text-white/70 text-sm">Tap map for destination, set stake</p>
+        <p className="text-gray-700 text-sm">Tap map for destination, set stake</p>
       </div>
 
       {/* Full-screen map */}
@@ -223,9 +225,9 @@ export default function Share() {
         />
         {!destination && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm">
-            <div className="text-center text-white">
+            <div className="text-center text-gray-900">
               <div className="text-6xl mb-2">📍</div>
-              <p className="text-lg">Tap to set destination</p>
+              <p className="text-lg font-medium">Tap to set destination</p>
             </div>
           </div>
         )}
@@ -258,10 +260,10 @@ export default function Share() {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5 }}
             >
-              <p className="text-white font-bold text-lg mb-2">
+              <p className="text-gray-900 font-bold text-lg mb-2">
                 Destination set: {destination[0].toFixed(4)}, {destination[1].toFixed(4)}
               </p>
-              <p className="text-white/70 text-sm mb-3">
+              <p className="text-gray-700 text-sm mb-3">
                 30 min limit • {destination && currentLocation ? (Math.sqrt(
                   Math.pow((destination[0] - currentLocation.latitude) * 111000, 2) +
                   Math.pow((destination[1] - currentLocation.longitude) * 111000, 2)
@@ -277,12 +279,12 @@ export default function Share() {
             {isCreating ? "Creating..." : "💰 Create Bet Challenge"}
           </Button>
           <motion.div
-            className="p-4 bg-blue-500/10 rounded-xl text-center border border-blue-400/30"
+            className="p-4 bg-blue-900/20 rounded-xl text-center border border-blue-400/30"
             whileHover={{ scale: 1.02 }}
             transition={{ type: "spring", stiffness: 300 }}
           >
-            <h4 className="font-medium text-blue-300 mb-2">How it works</h4>
-            <ul className="text-xs text-blue-200 space-y-1">
+            <h4 className="font-medium text-blue-100 mb-2">How it works</h4>
+            <ul className="text-sm text-blue-50 space-y-1">
               <li>• Tap map to set destination</li>
               <li>• Set stake amount</li>
               <li>• Share link for friends to bet</li>

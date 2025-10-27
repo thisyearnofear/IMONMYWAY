@@ -100,6 +100,7 @@ export function MobilePlanControls({
             value={startAddress}
             onChange={(e) => onStartAddressChange(e.target.value)}
             placeholder="e.g., Central Park, NYC"
+            variant="adaptive"
           />
           
           <Input
@@ -107,6 +108,7 @@ export function MobilePlanControls({
             value={endAddress}
             onChange={(e) => onEndAddressChange(e.target.value)}
             placeholder="e.g., Times Square, NYC"
+            variant="adaptive"
           />
 
           <div className="pt-2">

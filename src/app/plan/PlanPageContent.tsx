@@ -228,7 +228,7 @@ export default function PlanPageContent() {
         {/* Modern Map Section */}
         <ParallaxSection offset={-10} className="mb-8">
           <motion.div
-            className="glass-enhanced rounded-2xl overflow-hidden shadow-2xl border border-white/20"
+            className="rounded-2xl overflow-hidden shadow-2xl border border-gold/20 bg-gradient-to-br from-gold/10 to-violet/10"
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
@@ -295,6 +295,7 @@ export default function PlanPageContent() {
               onChange={(e) => setStartAddress(e.target.value)}
               placeholder="From..."
               className="md:col-span-1"
+              variant="dark"
             />
             <Input
               label="Destination"
@@ -302,6 +303,7 @@ export default function PlanPageContent() {
               onChange={(e) => setEndAddress(e.target.value)}
               placeholder="To..."
               className="md:col-span-1"
+              variant="dark"
             />
             <SpeedPicker className="md:col-span-1" />
           </div>

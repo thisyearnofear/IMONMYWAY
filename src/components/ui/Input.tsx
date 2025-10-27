@@ -5,26 +5,36 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string
   error?: string
   helperText?: string
+  variant?: 'light' | 'dark' | 'adaptive'
 }
 
 const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ className, label, error, helperText, id, ...props }, ref) => {
-    const inputId = id || label?.toLowerCase().replace(/\s+/g, '-')
+({ className, label, error, helperText, id, variant = 'adaptive', ...props }, ref) => {
+const inputId = id || label?.toLowerCase().replace(/\s+/g, '-')
 
-    return (
-      <div className="space-y-1">
-        {label && (
-          <label
-            htmlFor={inputId}
-            className="block text-sm font-medium text-gray-700"
-          >
-            {label}
-          </label>
-        )}
+return (
+<div className="space-y-1">
+{label && (
+<label
+htmlFor={inputId}
+className={`block text-sm font-medium ${
+  variant === 'dark' ? 'text-white' : 
+  variant === 'light' ? 'text-gray-700' : 
+  'text-gray-900'
+}`}
+>
+{label}
+</label>
+)}
         <input
           id={inputId}
           className={cn(
-            'flex h-11 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-base placeholder:text-gray-400 transition-smooth focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-gray-50 touch-target',
+            'flex h-11 w-full rounded-xl px-4 py-3 text-base transition-smooth focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-50 touch-target',
+            variant === 'dark'
+              ? 'border border-white/30 bg-white/95 text-gray-900 placeholder:text-gray-500 focus:ring-blue-400 focus:border-blue-400 disabled:bg-gray-50'
+              : variant === 'light'
+              ? 'border border-gray-200 bg-white text-gray-900 placeholder:text-gray-400 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50'
+              : 'border border-gray-300 bg-white text-gray-900 placeholder:text-gray-500 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50',
             error && 'border-red-300 focus:ring-red-500 focus:border-red-500 bg-red-50',
             className
           )}

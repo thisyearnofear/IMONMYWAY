@@ -24,7 +24,7 @@ export function AILoadingSkeleton({
 }: AILoadingSkeletonProps) {
   const renderCardSkeleton = () => (
     <motion.div
-      className="glass-enhanced rounded-xl p-6 space-y-4"
+      className="bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 rounded-xl p-6 space-y-4"
       animate={{ opacity: [0.6, 1, 0.6] }}
       transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
     >
@@ -46,7 +46,7 @@ export function AILoadingSkeleton({
 
   const renderChartSkeleton = () => (
     <motion.div
-      className="glass-enhanced rounded-xl p-6 space-y-4"
+      className="bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 rounded-xl p-6 space-y-4"
       animate={{ opacity: [0.6, 1, 0.6] }}
       transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
     >
@@ -65,7 +65,7 @@ export function AILoadingSkeleton({
 
   const renderListSkeleton = () => (
     <motion.div
-      className="glass-enhanced rounded-xl p-6 space-y-4"
+      className="bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 rounded-xl p-6 space-y-4"
       animate={{ opacity: [0.6, 1, 0.6] }}
       transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
     >
@@ -96,7 +96,7 @@ export function AILoadingSkeleton({
         {Array.from({ length: 4 }).map((_, i) => (
           <motion.div
             key={i}
-            className="glass-enhanced rounded-xl p-5 space-y-3"
+            className="bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 rounded-xl p-5 space-y-3"
             animate={{ opacity: [0.6, 1, 0.6] }}
             transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
           >
@@ -112,7 +112,7 @@ export function AILoadingSkeleton({
         {Array.from({ length: 2 }).map((_, i) => (
           <motion.div
             key={i}
-            className="glass-enhanced rounded-xl p-6 space-y-4"
+            className="bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 rounded-xl p-6 space-y-4"
             animate={{ opacity: [0.6, 1, 0.6] }}
             transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
           >
@@ -126,7 +126,7 @@ export function AILoadingSkeleton({
 
   const renderInputSkeleton = () => (
     <motion.div
-      className="glass-enhanced rounded-xl p-6 space-y-4"
+      className="bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 rounded-xl p-6 space-y-4"
       animate={{ opacity: [0.6, 1, 0.6] }}
       transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
     >
@@ -143,7 +143,7 @@ export function AILoadingSkeleton({
 
   const renderPredictionSkeleton = () => (
     <motion.div
-      className="glass-enhanced rounded-xl p-6 space-y-4"
+      className="bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 rounded-xl p-6 space-y-4"
       animate={{ opacity: [0.6, 1, 0.6] }}
       transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
     >
@@ -267,7 +267,7 @@ export function ConfidenceBasedLoader({
   return (
     <div className="space-y-4">
       <motion.div
-        className="glass-enhanced rounded-xl p-4"
+        className="bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 rounded-xl p-4"
         animate={{ opacity: [0.5, 1, 0.5] }}
         transition={{ duration: 2, repeat: Infinity }}
       >

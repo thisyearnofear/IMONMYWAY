@@ -50,7 +50,7 @@ export function CuteStatusBadge({
 
   return (
     <div className={cn(
-      "glass-enhanced px-3 py-2 rounded-full flex items-center gap-2",
+      "bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 px-3 py-2 rounded-full flex items-center gap-2",
       "hover:scale-105 transition-all duration-300 cursor-pointer group",
       className
     )}>

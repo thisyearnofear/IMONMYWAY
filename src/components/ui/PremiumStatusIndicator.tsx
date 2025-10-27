@@ -108,7 +108,7 @@ export function PremiumStatusIndicator({
 
   return (
     <div className={cn(
-      'glass-enhanced rounded-xl flex items-center border transition-all duration-300',
+      'bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 rounded-xl flex items-center border transition-all duration-300',
       sizeConfig.container,
       sizeConfig.padding,
       config.borderColor,

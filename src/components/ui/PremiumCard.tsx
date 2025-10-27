@@ -27,10 +27,10 @@ export const Card = forwardRef<HTMLDivElement, PremiumCardProps>(
     const baseClasses = "transition-all duration-500 ease-out"
     
     const variantClasses = {
-      premium: "glass-premium",
-      enhanced: "glass-enhanced", 
-      floating: "glass-floating",
-      minimal: "glass-premium"
+      premium: "bg-gradient-to-br from-gold/15 to-violet/15 border border-gold/30 rounded-xl",
+      enhanced: "bg-gradient-to-br from-gold/10 to-violet/10 border border-gold/20 rounded-xl", 
+      floating: "bg-gradient-to-br from-gold/10 to-violet/10 rounded-full",
+      minimal: "bg-gradient-to-br from-gold/15 to-violet/15 border border-gold/30 rounded-xl"
     }
     
     const depthClasses = {
@@ -54,9 +54,7 @@ export const Card = forwardRef<HTMLDivElement, PremiumCardProps>(
           className
         )}
         onClick={disabled ? undefined : onClick}
-        style={{
-          '--glass-depth': depth,
-        } as React.CSSProperties}
+        style={{}}
       >
         {children}
       </div>
@@ -86,7 +84,7 @@ export function CardHeader({
     <div className={cn('flex items-center justify-between mb-6', className)}>
       <div className="flex items-center gap-3">
         {icon && (
-          <div className="w-12 h-12 glass-premium rounded-xl flex items-center justify-center text-xl">
+          <div className="w-12 h-12 bg-gradient-to-br from-gold/15 to-violet/15 border border-gold/30 rounded-xl flex items-center justify-center text-xl">
             {icon}
           </div>
         )}
@@ -95,7 +93,7 @@ export function CardHeader({
         </div>
       </div>
       {badge && (
-        <div className="glass-status">
+        <div className="bg-gradient-to-br from-gold/15 to-violet/15 border border-gold/30 rounded-xl p-1">
           {badge}
         </div>
       )}
@@ -250,11 +248,11 @@ export function DataRow({ label, value, status = 'neutral' }: DataRowProps) {
   
   return (
     <div className="flex justify-between items-center py-2 border-b border-white/5 last:border-b-0">
-      <span className="text-white/60 text-xs uppercase tracking-wide">
+      <span className="text-white/60 text-xs uppercase tracking-wider font-mono">
         {label}
       </span>
       <span className={cn(
-        'text-xs font-bold',
+        'text-xs font-bold font-mono',
         statusColors[status]
       )}>
         {value}

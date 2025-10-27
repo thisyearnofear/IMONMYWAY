@@ -41,7 +41,7 @@ export function AchievementDisplay({
       id: "first-journey",
       title: "First Journey",
       description: "Complete your first tracked journey",
-      icon: "🚀",
+      icon: "🕐",
       unlocked: true,
       category: "punctuality",
       unlockedAt: new Date(Date.now() - 86400000) // 1 day ago
@@ -50,7 +50,7 @@ export function AchievementDisplay({
       id: "punctual-pro",
       title: "Punctual Pro",
       description: "Arrive on time 10 times in a row",
-      icon: "⏰",
+      icon: "⏱️",
       unlocked: true,
       progress: 10,
       maxProgress: 10,
@@ -61,7 +61,7 @@ export function AchievementDisplay({
       id: "social-butterfly",
       title: "Social Butterfly",
       description: "Get 5 friends to bet on your journey",
-      icon: "🦋",
+      icon: "⏱️",
       unlocked: false,
       progress: 3,
       maxProgress: 5,
@@ -71,7 +71,7 @@ export function AchievementDisplay({
       id: "distance-warrior",
       title: "Distance Warrior",
       description: "Travel over 100km in total",
-      icon: "🏃‍♂️",
+      icon: "🧭",
       unlocked: false,
       progress: 67,
       maxProgress: 100,
@@ -81,7 +81,7 @@ export function AchievementDisplay({
       id: "consistency-king",
       title: "Consistency King",
       description: "Use the app for 30 consecutive days",
-      icon: "👑",
+      icon: "⏰",
       unlocked: false,
       progress: 12,
       maxProgress: 30,
@@ -91,7 +91,7 @@ export function AchievementDisplay({
       id: "early-adopter",
       title: "Early Adopter",
       description: "Join the beta program",
-      icon: "🌟",
+      icon: "⏳",
       unlocked: true,
       category: "special",
       unlockedAt: new Date(Date.now() - 604800000) // 1 week ago
@@ -128,25 +128,25 @@ export function AchievementDisplay({
 
   const getCategoryColor = (category: Achievement['category']) => {
     switch (category) {
-      case 'punctuality': return 'from-blue-500 to-cyan-500';
-      case 'social': return 'from-pink-500 to-purple-500';
-      case 'distance': return 'from-green-500 to-emerald-500';
-      case 'consistency': return 'from-orange-500 to-red-500';
-      case 'special': return 'from-yellow-500 to-amber-500';
-      default: return 'from-gray-500 to-gray-600';
+      case 'punctuality': return 'text-gold';
+      case 'social': return 'text-violet';
+      case 'distance': return 'text-gold';
+      case 'consistency': return 'text-violet';
+      case 'special': return 'text-gold';
+      default: return 'text-gray-400';
     }
   };
 
   if (isLoading) {
     return (
-      <Card className="p-6">
-        <div className="animate-pulse">
-          <div className="h-6 bg-gray-700 rounded mb-4 w-1/3"></div>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-24 bg-gray-700 rounded"></div>
-            ))}
-          </div>
+      <Card className="p-6 border border-white/10 bg-black/20">
+        <div className="animate-pulse mb-4">
+          <div className="h-6 bg-gradient-to-r from-gold/20 to-violet/20 rounded w-1/3"></div>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="h-20 bg-gradient-to-r from-gold/10 to-violet/10 rounded-lg border border-white/5"></div>
+          ))}
         </div>
       </Card>
     );
@@ -154,12 +154,12 @@ export function AchievementDisplay({
 
   return (
     <>
-      <Card className="p-6">
+      <Card className="p-6 border border-white/10 bg-black/20">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-white font-mono">
-            ACHIEVEMENTS_UNLOCKED
+          <h2 className="text-xl font-bold text-white font-display">
+            ACHIEVEMENTS_UNEARNED
           </h2>
-          <div className="text-sm text-white/60 font-mono">
+          <div className="text-sm text-gold/60 font-mono">
             {achievements.filter(a => a.unlocked).length}/{achievements.length}
           </div>
         </div>
@@ -169,39 +169,31 @@ export function AchievementDisplay({
             <div
               key={achievement.id}
               className={`
-                relative p-4 rounded-lg border transition-all duration-300 hover:scale-105
+                relative p-4 rounded-lg transition-all duration-300 hover:scale-105
                 ${achievement.unlocked 
-                  ? `bg-gradient-to-br ${getCategoryColor(achievement.category)} border-white/20` 
-                  : 'bg-gray-800 border-gray-600 opacity-60'
+                  ? `bg-gradient-to-br from-gold/10 to-violet/10 border border-gold/20` 
+                  : 'bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-700/50'
                 }
               `}
             >
               {/* Achievement Icon */}
-              <div className="text-3xl mb-2 text-center">
+              <div className={`text-2xl mb-2 text-center ${achievement.unlocked ? getCategoryColor(achievement.category) : 'text-gray-500'}`}>
                 {achievement.icon}
               </div>
 
               {/* Achievement Title */}
               <h3 className={`
-                text-sm font-semibold text-center mb-1
+                text-xs font-semibold text-center mb-2 font-mono uppercase tracking-wider
                 ${achievement.unlocked ? 'text-white' : 'text-gray-400'}
               `}>
                 {achievement.title}
               </h3>
 
-              {/* Achievement Description */}
-              <p className={`
-                text-xs text-center mb-2
-                ${achievement.unlocked ? 'text-white/80' : 'text-gray-500'}
-              `}>
-                {achievement.description}
-              </p>
-
               {/* Progress Bar (for incomplete achievements) */}
               {!achievement.unlocked && achievement.progress && achievement.maxProgress && (
-                <div className="w-full bg-gray-700 rounded-full h-2 mb-2">
+                <div className="w-full bg-gray-700/50 rounded-full h-1.5 mb-2">
                   <div
-                    className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                    className="bg-gradient-to-r from-gold to-violet h-1.5 rounded-full transition-all duration-500"
                     style={{
                       width: `${(achievement.progress / achievement.maxProgress) * 100}%`
                     }}
@@ -211,15 +203,15 @@ export function AchievementDisplay({
 
               {/* Progress Text */}
               {!achievement.unlocked && achievement.progress && achievement.maxProgress && (
-                <div className="text-xs text-center text-gray-400">
+                <div className="text-xs text-center text-gold/60 font-mono">
                   {achievement.progress}/{achievement.maxProgress}
                 </div>
               )}
 
               {/* Unlocked Indicator */}
               {achievement.unlocked && (
-                <div className="absolute top-2 right-2 text-yellow-400">
-                  ✓
+                <div className="absolute top-2 right-2">
+                  <div className="w-2 h-2 bg-gold rounded-full animate-pulse" />
                 </div>
               )}
             </div>
@@ -229,8 +221,8 @@ export function AchievementDisplay({
         {/* View All Button */}
         {achievements.length >= limit && (
           <div className="text-center mt-6">
-            <button className="text-blue-400 hover:text-blue-300 text-sm font-mono transition-colors">
-              VIEW_ALL_ACHIEVEMENTS →
+            <button className="text-gold hover:text-gold/80 font-mono text-sm transition-colors border border-gold/30 px-4 py-2 rounded">
+              VIEW_ALL_ACHIEVEMENTS_→
             </button>
           </div>
         )}

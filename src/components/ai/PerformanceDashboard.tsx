@@ -228,7 +228,7 @@ export function PerformanceDashboard() {
       {/* AI Confidence Banner */}
       {aiInsights.confidence > 0 && (
         <motion.div
-          className="glass-enhanced p-4 rounded-xl border border-blue-500/30 bg-blue-500/10"
+          className="bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 p-4 rounded-xl border border-blue-500/30 bg-blue-500/10"
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
         >
@@ -253,7 +253,7 @@ export function PerformanceDashboard() {
       {/* Key Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <motion.div
-          className="glass-enhanced p-5 rounded-xl"
+          className="bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 p-5 rounded-xl"
           whileHover={{ y: -5 }}
           transition={{ type: "spring", stiffness: 300 }}
         >
@@ -283,7 +283,7 @@ export function PerformanceDashboard() {
         </motion.div>
 
         <motion.div
-          className="glass-enhanced p-5 rounded-xl"
+          className="bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 p-5 rounded-xl"
           whileHover={{ y: -5 }}
           transition={{ type: "spring", stiffness: 300 }}
         >
@@ -310,7 +310,7 @@ export function PerformanceDashboard() {
         </motion.div>
 
         <motion.div
-          className="glass-enhanced p-5 rounded-xl"
+          className="bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 p-5 rounded-xl"
           whileHover={{ y: -5 }}
           transition={{ type: "spring", stiffness: 300 }}
         >
@@ -331,7 +331,7 @@ export function PerformanceDashboard() {
         </motion.div>
 
         <motion.div
-          className="glass-enhanced p-5 rounded-xl"
+          className="bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 p-5 rounded-xl"
           whileHover={{ y: -5 }}
           transition={{ type: "spring", stiffness: 300 }}
         >
@@ -359,7 +359,7 @@ export function PerformanceDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Success Rate Over Time */}
         <motion.div
-          className="glass-enhanced p-6 rounded-xl"
+          className="bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 p-6 rounded-xl"
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.1 }}
@@ -382,7 +382,7 @@ export function PerformanceDashboard() {
 
         {/* Earnings Distribution */}
         <motion.div
-          className="glass-enhanced p-6 rounded-xl"
+          className="bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 p-6 rounded-xl"
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.2 }}
@@ -424,7 +424,7 @@ export function PerformanceDashboard() {
 
       {/* AI Insights Section */}
       <motion.div
-        className="glass-enhanced p-6 rounded-xl"
+        className="bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 p-6 rounded-xl"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
@@ -518,7 +518,7 @@ export function PerformanceDashboard() {
       {/* Achievement Predictions */}
       {aiInsights.predictedAchievements && aiInsights.predictedAchievements.predictedAchievements.length > 0 && (
         <motion.div
-          className="glass-enhanced p-6 rounded-xl"
+          className="bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 p-6 rounded-xl"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}

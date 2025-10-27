@@ -9,7 +9,7 @@ export interface SpeedPreset {
 }
 
 export const SPEED_PRESETS: SpeedPreset[] = [
-  { id: 'walk-slow', label: 'Leisurely Walk', pace: 20, speed: 3, icon: '🚶', category: 'walking' },
+  { id: 'walk-slow', label: 'Casual Walk', pace: 20, speed: 3, icon: '🚶', category: 'walking' },
   { id: 'walk-brisk', label: 'Brisk Walk', pace: 15, speed: 4, icon: '🚶‍♂️', category: 'walking' },
   { id: 'jog-light', label: 'Light Jog', pace: 12, speed: 5, icon: '🏃‍♀️', category: 'running' },
   { id: 'run-normal', label: 'Running', pace: 8, speed: 7.5, icon: '🏃', category: 'running' },

@@ -10,7 +10,8 @@ interface PremiumButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
     | "outline"
     | "ghost"
     | "danger"
-    | "success";
+    | "success"
+    | "gradient";
   size?: "sm" | "md" | "lg" | "xl";
   isLoading?: boolean;
   loadingText?: string;
@@ -97,6 +98,12 @@ export const Button = forwardRef<HTMLButtonElement, PremiumButtonProps>(
         "text-white shadow-lg hover:shadow-xl",
         "focus:ring-green-500"
       ),
+      gradient: cn(
+        "bg-gradient-to-r from-violet-600 to-gold/80",
+        "hover:from-violet-500 hover:to-gold/90",
+        "text-white shadow-lg hover:shadow-xl",
+        "focus:ring-violet-500"
+      ),
     };
 
     const glowClasses = glow
@@ -108,6 +115,7 @@ export const Button = forwardRef<HTMLButtonElement, PremiumButtonProps>(
           ghost: "shadow-white/5 hover:shadow-white/10",
           danger: "shadow-red-500/25 hover:shadow-red-500/40",
           success: "shadow-green-500/25 hover:shadow-green-500/40",
+          gradient: "shadow-violet-500/25 hover:shadow-violet-500/40",
         }[variant]
       : "";
 
@@ -137,9 +145,9 @@ export const Button = forwardRef<HTMLButtonElement, PremiumButtonProps>(
             glow && glowClasses,
             pulse && "animate-pulse",
             gradient && "bg-gradient-to-r",
-            glass && "glass-button",
-            !isDisabled && "hover:scale-105 hover:-translate-y-1 hover:rotate-1",
-            !isDisabled && "active:scale-95 active:translate-y-0 active:rotate-0",
+            glass && "bg-gradient-to-br from-gold/15 to-violet/15 border border-gold/30 rounded-xl",
+            !isDisabled && "hover:scale-105 hover:-translate-y-1",
+            !isDisabled && "active:scale-95 active:translate-y-0",
             isDisabled && "opacity-50 cursor-not-allowed",
             className
           )}

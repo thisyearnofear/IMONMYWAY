@@ -222,7 +222,7 @@ export function ConfidenceGated({
         >
           {fallback || (
             showThresholdWarning && (
-              <div className="glass-enhanced rounded-lg p-4 border border-yellow-500/30 bg-yellow-500/5">
+              <div className="bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 rounded-lg p-4 border border-yellow-500/30 bg-yellow-500/5">
                 <div className="flex items-start gap-3">
                   <span className="text-lg">⚠️</span>
                   <div>

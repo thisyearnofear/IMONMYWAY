@@ -1,75 +1,6 @@
 import { createServer } from "http";
 import { Server } from "socket.io";
-import { v4 as uuidv4 } from "uuid";
-
-const port = process.env.PORT || 3001;
-
-// Location service - in-memory storage
-class LocationService {
-  constructor() {
-    this.activeSessions = new Map();
-  }
-
-  createSession(data) {
-    let sharingId;
-    do {
-      sharingId = uuidv4();
-    } while (this.activeSessions.has(sharingId));
-
-    const pace = data.pace || 8;
-    const newSession = {
-      sharingId,
-      latitude: 0,
-      longitude: 0,
-      path: [],
-      active: true,
-      pace,
-      destination: null,
-      eta: null,
-      createdAt: new Date(),
-      lastUpdated: new Date(),
-    };
-
-    this.activeSessions.set(sharingId, newSession);
-    return newSession;
-  }
-
-  getSession(sharingId) {
-    return this.activeSessions.get(sharingId);
-  }
-
-  updateSession(sharingId, updates) {
-    if (!this.activeSessions.has(sharingId)) {
-      return null;
-    }
-
-    const session = this.activeSessions.get(sharingId);
-    const updatedSession = { ...session, ...updates, lastUpdated: new Date() };
-
-    // Add to path if new coordinates are different
-    if (updates.latitude && updates.longitude && updatedSession.path) {
-      const lastPoint = updatedSession.path[updatedSession.path.length - 1];
-      if (
-        !lastPoint ||
-        lastPoint[0] !== updates.latitude ||
-        lastPoint[1] !== updates.longitude
-      ) {
-        updatedSession.path.push([updates.latitude, updates.longitude]);
-      }
-    }
-
-    this.activeSessions.set(sharingId, updatedSession);
-    return updatedSession;
-  }
-
-  setDestination(sharingId, destination) {
-    return this.updateSession(sharingId, { destination });
-  }
-
-  deactivateSession(sharingId) {
-    return this.updateSession(sharingId, { active: false });
-  }
-}
+import { locationService } from "../src/lib/shared/LocationService.js";
 
 // Distance calculation utility
 function calculateDistance(lat1, lon1, lat2, lon2) {
@@ -92,12 +23,18 @@ function toRadians(degrees) {
   return degrees * (Math.PI / 180);
 }
 
+const port = process.env.PORT || 3001;
+
 // Create HTTP server
 const server = createServer((req, res) => {
   // Simple health check endpoint
   if (req.url === '/health') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ status: 'ok', timestamp: new Date().toISOString() }));
+    res.end(JSON.stringify({ 
+      status: 'ok', 
+      timestamp: new Date().toISOString(),
+      activeSessions: locationService.getActiveSessionsCount()
+    }));
     return;
   }
   
@@ -122,15 +59,13 @@ const io = new Server(server, {
     origin: [
       "https://imonmyway.netlify.app",
       "http://localhost:3000",
-      "http://localhost:3001"
+      "http://localhost:3001",
+      "http://localhost:3002"
     ],
     methods: ["GET", "POST"],
     credentials: true
   },
 });
-
-// Initialize location service
-const locationService = new LocationService();
 
 // Socket.IO connection handling
 io.on("connection", (socket) => {

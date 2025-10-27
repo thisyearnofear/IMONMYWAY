@@ -13,7 +13,7 @@ export default function WatchPage() {
       
       <main className="relative z-10 min-h-screen flex items-center justify-center px-4">
         <motion.div
-          className="glass-enhanced p-8 rounded-xl text-center max-w-md"
+          className="bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 p-8 rounded-xl text-center max-w-md"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >

@@ -60,7 +60,7 @@ export function ButtonSkeleton({ className }: { className?: string }) {
 
 export function CardSkeleton({ className }: { className?: string }) {
   return (
-    <div className={cn("glass-enhanced p-6 space-y-4", className)}>
+    <div className={cn("bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 p-6 space-y-4", className)}>
       <Skeleton variant="text" lines={1} className="w-1/2 h-6" />
       <Skeleton variant="text" lines={3} />
       <div className="flex gap-2 mt-4">
@@ -85,7 +85,7 @@ export function UserSkeleton({ className }: { className?: string }) {
 
 export function RouteCardSkeleton() {
   return (
-    <div className="glass-enhanced p-6 space-y-4">
+    <div className="bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 p-6 space-y-4">
       <div className="flex justify-between items-start">
         <div className="flex-1">
           <Skeleton variant="text" className="w-1/2 h-6 mb-2" />
@@ -112,7 +112,7 @@ export function RouteCardSkeleton() {
 
 export function NavigationSkeleton() {
   return (
-    <div className="glass-nav p-4">
+    <div className="bg-gradient-to-br from-gold/10 to-violet/10 border border-gold/20 p-4 rounded-xl">
       <div className="container mx-auto flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Skeleton variant="circle" className="w-10 h-10" />
@@ -169,7 +169,7 @@ export function MapSkeleton({ className }: { className?: string }) {
 
       {/* Loading indicator */}
       <div className="absolute inset-0 flex items-center justify-center">
-        <div className="glass-enhanced px-4 py-2 rounded-lg">
+        <div className="bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 px-4 py-2 rounded-lg">
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             <span className="text-white/80 text-sm">Loading map...</span>

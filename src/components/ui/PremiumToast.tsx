@@ -71,7 +71,7 @@ function PremiumToast({ toast, onClose }: ToastProps) {
   return (
     <div
       className={cn(
-        'glass-toast relative overflow-hidden',
+        'bg-gradient-to-br from-gold/15 to-violet/15 border border-gold/30 relative overflow-hidden rounded-xl',
         'flex items-center gap-4 p-4 rounded-2xl',
         'backdrop-blur-xl border',
         `bg-gradient-to-r ${variant.bg}`,
@@ -84,7 +84,7 @@ function PremiumToast({ toast, onClose }: ToastProps) {
       {/* Icon */}
       <div className={cn(
         'flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center',
-        'glass-enhanced',
+        'bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10',
         variant.iconBg
       )}>
         <span className="text-lg">{variant.icon}</span>
@@ -100,7 +100,7 @@ function PremiumToast({ toast, onClose }: ToastProps) {
       {/* Close Button */}
       <button
         onClick={onClose}
-        className="flex-shrink-0 w-8 h-8 rounded-lg glass-enhanced hover:bg-white/10 transition-colors flex items-center justify-center group"
+        className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 hover:bg-white/10 transition-colors flex items-center justify-center group"
       >
         <svg 
           className="w-4 h-4 text-white/60 group-hover:text-white transition-colors" 

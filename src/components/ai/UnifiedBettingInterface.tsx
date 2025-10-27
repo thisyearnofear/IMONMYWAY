@@ -248,7 +248,7 @@ export function UnifiedBettingInterface({
       {/* AI Confidence Banner */}
       {aiPerformanceMetrics.modelConfidence > 0.7 && (
         <motion.div
-          className="glass-enhanced p-4 rounded-xl border border-purple-500/30 bg-purple-500/10"
+          className="bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 p-4 rounded-xl border border-purple-500/30 bg-purple-500/10"
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
         >
@@ -275,7 +275,7 @@ export function UnifiedBettingInterface({
       {/* AI Insights Panel */}
       {showAIInsights && (
         <motion.div
-          className="glass-enhanced p-6 rounded-xl border border-purple-500/30 bg-purple-500/10"
+          className="bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 p-6 rounded-xl border border-purple-500/30 bg-purple-500/10"
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
           exit={{ opacity: 0, height: 0 }}
@@ -359,7 +359,7 @@ export function UnifiedBettingInterface({
           <motion.div
             key={option.id}
             className={cn(
-              "glass-enhanced p-5 rounded-xl border transition-all duration-300 cursor-pointer",
+              "bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 p-5 rounded-xl border transition-all duration-300 cursor-pointer",
               selectedBet?.id === option.id 
                 ? "border-blue-500 bg-blue-500/10 ring-2 ring-blue-500/30" 
                 : "border-white/20 hover:border-white/40"
@@ -408,7 +408,7 @@ export function UnifiedBettingInterface({
       {/* Bet Amount Input */}
       {selectedBet && (
         <motion.div
-          className="glass-enhanced p-6 rounded-xl border border-white/20"
+          className="bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 p-6 rounded-xl border border-white/20"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
@@ -493,7 +493,7 @@ export function UnifiedBettingInterface({
 
       {/* Quick Bet Buttons */}
       {!selectedBet && (
-        <div className="glass-enhanced p-6 rounded-xl border border-white/20">
+        <div className="bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 p-6 rounded-xl border border-white/20">
           <h3 className="text-lg font-semibold text-white mb-4">
             Quick Bet Options
           </h3>
@@ -521,7 +521,7 @@ export function UnifiedBettingInterface({
       )}
 
       {/* Betting History Preview */}
-      <div className="glass-enhanced p-6 rounded-xl border border-white/20">
+      <div className="bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 p-6 rounded-xl border border-white/20">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-white">Recent Bets</h3>
           <button className="text-sm text-blue-400 hover:text-blue-300">
@@ -560,17 +560,17 @@ export function UnifiedBettingInterface({
 
       {/* Betting Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="glass-enhanced p-5 rounded-xl text-center">
+        <div className="bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 p-5 rounded-xl text-center">
           <div className="text-2xl font-bold text-white">24</div>
           <div className="text-sm text-white/70 mt-1">Total Bets</div>
         </div>
         
-        <div className="glass-enhanced p-5 rounded-xl text-center">
+        <div className="bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 p-5 rounded-xl text-center">
           <div className="text-2xl font-bold text-green-400">18</div>
           <div className="text-sm text-white/70 mt-1">Wins</div>
         </div>
         
-        <div className="glass-enhanced p-5 rounded-xl text-center">
+        <div className="bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 p-5 rounded-xl text-center">
           <div className="text-2xl font-bold text-white">75%</div>
           <div className="text-sm text-white/70 mt-1">Win Rate</div>
         </div>
