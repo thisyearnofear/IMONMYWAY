@@ -333,10 +333,10 @@ export function withPerformanceTracking<P extends object>(
 ): React.ComponentType<P> {
   const WrappedComponent = React.memo((props: P) => {
     React.useEffect(() => {
-      const startTime = performance.now();
+      const startTime = typeof window !== 'undefined' && typeof performance !== 'undefined' ? performance.now() : 0;
       
       return () => {
-        const endTime = performance.now();
+        const endTime = typeof window !== 'undefined' && typeof performance !== 'undefined' ? performance.now() : 0;
         performanceMonitor.recordMetric(`component-${componentName}`, endTime - startTime);
       };
     }, []);

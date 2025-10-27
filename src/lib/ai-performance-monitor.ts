@@ -60,6 +60,39 @@ export class AIPerformanceMonitor {
   private deviceCapabilities: DeviceCapabilities;
 
   static getInstance(): AIPerformanceMonitor {
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      // Return a mock object on the server
+      const mockInstance = new AIPerformanceMonitor();
+      // Override methods to be no-ops on server
+      mockInstance.recordOperation = () => {};
+      mockInstance.getAggregatedMetrics = () => null;
+      mockInstance.getAllAggregatedMetrics = () => new Map();
+      mockInstance.getOptimizationRecommendations = () => ({
+        shouldReduceComplexity: false,
+        shouldIncreaseCache: true,
+        shouldDeferOperations: false,
+        recommendedBatchSize: 5,
+        estimatedMemoryUsage: 10
+      });
+      mockInstance.getPerformanceScore = () => 100;
+      mockInstance.getOperationTrend = () => 'stable';
+      mockInstance.clearMetrics = () => {};
+      mockInstance.getDetailedReport = () => ({
+        deviceCapabilities: { memory: 4, cores: 4, connection: 'fast' as const, battery: 'high' as const, deviceType: 'desktop' as const },
+        performanceScore: 100,
+        aggregatedMetrics: new Map(),
+        recommendations: {
+          shouldReduceComplexity: false,
+          shouldIncreaseCache: true,
+          shouldDeferOperations: false,
+          recommendedBatchSize: 5,
+          estimatedMemoryUsage: 10
+        },
+        operationTrends: {}
+      });
+      return mockInstance;
+    }
+    
     if (!AIPerformanceMonitor.instance) {
       AIPerformanceMonitor.instance = new AIPerformanceMonitor();
     }
@@ -67,8 +100,19 @@ export class AIPerformanceMonitor {
   }
 
   constructor() {
-    this.deviceCapabilities = getDeviceCapabilities();
-    this.startAggregationLoop();
+    if (typeof window !== 'undefined') {
+      this.deviceCapabilities = getDeviceCapabilities();
+      this.startAggregationLoop();
+    } else {
+      // Default capabilities for server
+      this.deviceCapabilities = { 
+        memory: 4, 
+        cores: 4, 
+        connection: 'fast', 
+        battery: 'high', 
+        deviceType: 'desktop' 
+      };
+    }
   }
 
   /**
@@ -288,10 +332,12 @@ export class AIPerformanceMonitor {
   }
 
   private startAggregationLoop(): void {
-    // Update device capabilities periodically
-    this.updateInterval = setInterval(() => {
-      this.deviceCapabilities = getDeviceCapabilities();
-    }, 30000); // Every 30 seconds
+    if (typeof window !== 'undefined') {
+      // Update device capabilities periodically on the client
+      this.updateInterval = setInterval(() => {
+        this.deviceCapabilities = getDeviceCapabilities();
+      }, 30000); // Every 30 seconds
+    }
   }
 
   private getDefaultOptimization(): PerformanceOptimization {
@@ -346,13 +392,14 @@ export function createPerformanceTrackedOperation<T>(
   operation: () => Promise<{ result: T; confidence: number }>,
   options: { cacheHit?: boolean } = {}
 ): Promise<T> {
-  const startTime = performance.now();
+  const startTime = typeof window !== 'undefined' && typeof performance !== 'undefined' ? performance.now() : 0;
   const deviceCapabilities = getDeviceCapabilities();
   const deviceTier = getDeviceTier(deviceCapabilities);
 
   return operation()
     .then(({ result, confidence }) => {
-      const executionTime = performance.now() - startTime;
+      const endTime = typeof window !== 'undefined' && typeof performance !== 'undefined' ? performance.now() : 0;
+      const executionTime = typeof window !== 'undefined' && typeof performance !== 'undefined' ? endTime - startTime : 0;
 
       aiPerformanceMonitor.recordOperation({
         operationType,
@@ -367,7 +414,8 @@ export function createPerformanceTrackedOperation<T>(
       return result;
     })
     .catch((error) => {
-      const executionTime = performance.now() - startTime;
+      const endTime = typeof window !== 'undefined' && typeof performance !== 'undefined' ? performance.now() : 0;
+      const executionTime = typeof window !== 'undefined' && typeof performance !== 'undefined' ? endTime - startTime : 0;
 
       aiPerformanceMonitor.recordOperation({
         operationType,

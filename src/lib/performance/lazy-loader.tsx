@@ -203,7 +203,7 @@ export class ComponentPreloader {
   }
 
   static preloadOnIdle(config: PreloadConfig): void {
-    if ('requestIdleCallback' in window) {
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
       requestIdleCallback(() => {
         this.preloadComponents(config)
       })
@@ -312,7 +312,10 @@ export function useLoadingPerformance(componentName: string) {
   })
 
   useEffect(() => {
-    const startTime = performance.now()
+    // Only run performance monitoring on client side
+    if (typeof window === 'undefined' || typeof performance === 'undefined') return;
+
+    const startTime = typeof window !== 'undefined' && typeof performance !== 'undefined' ? performance.now() : 0
     let loadEndTime: number | null = null
 
     // Mark when component starts loading
@@ -320,7 +323,7 @@ export function useLoadingPerformance(componentName: string) {
 
     const observer = new PerformanceObserver((list) => {
       const entries = list.getEntries()
-      
+
       entries.forEach((entry) => {
         if (entry.name.includes(componentName)) {
           if (entry.name.includes('load-end')) {
@@ -333,11 +336,11 @@ export function useLoadingPerformance(componentName: string) {
     observer.observe({ entryTypes: ['mark', 'measure'] })
 
     return () => {
-      const endTime = performance.now()
-      
+      const endTime = typeof window !== 'undefined' && typeof performance !== 'undefined' ? performance.now() : 0
+
       // Mark when component finishes loading
       performance.mark(`${componentName}-load-end`)
-      
+
       // Measure total time
       performance.measure(
         `${componentName}-total-time`,
@@ -405,7 +408,7 @@ export function createLazyComponent<T = {}>(
 // ============================================================================
 
 export function analyzeBundleSize() {
-  if (process.env.NODE_ENV === 'development') {
+  if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
     // In development, we can analyze the bundle
     const scripts = Array.from(document.querySelectorAll('script[src]'))
     const totalSize = scripts.reduce((total, script) => {

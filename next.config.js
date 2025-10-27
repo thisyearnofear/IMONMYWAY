@@ -1,8 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Explicitly set the project root
-  output: 'export',
-  trailingSlash: true,
   images: {
     unoptimized: true
   },

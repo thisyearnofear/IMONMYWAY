@@ -129,7 +129,7 @@ export default function ViralTestSuite({ onTestComplete, autoRun = false }: Vira
     setIsRunning(true);
     setCurrentTest(0);
     setTestResults([]);
-    startTimeRef.current = performance.now();
+    startTimeRef.current = typeof window !== 'undefined' && typeof performance !== 'undefined' ? performance.now() : 0;
   };
 
   const recordMetric = (key: string, value: number) => {
@@ -154,7 +154,7 @@ export default function ViralTestSuite({ onTestComplete, autoRun = false }: Vira
     // Move to next test or complete suite
     if (currentTest < testScenarios.length - 1) {
       setCurrentTest(prev => prev + 1);
-      startTimeRef.current = performance.now();
+      startTimeRef.current = typeof window !== 'undefined' && typeof performance !== 'undefined' ? performance.now() : 0;
     } else {
       completeTestSuite();
     }
@@ -171,7 +171,7 @@ export default function ViralTestSuite({ onTestComplete, autoRun = false }: Vira
 
   // Test-specific handlers
   const handleSocialShare = () => {
-    const clickTime = performance.now() - startTimeRef.current;
+    const clickTime = (typeof window !== 'undefined' && typeof performance !== 'undefined' ? performance.now() : 0) - (startTimeRef.current || 0);
     recordMetric('clickTime', clickTime);
     recordMetric('shareRate', 1);
     
@@ -180,7 +180,7 @@ export default function ViralTestSuite({ onTestComplete, autoRun = false }: Vira
   };
 
   const handleAchievementClose = () => {
-    const viewDuration = performance.now() - startTimeRef.current;
+    const viewDuration = (typeof window !== 'undefined' && typeof performance !== 'undefined' ? performance.now() : 0) - (startTimeRef.current || 0);
     recordMetric('viewDuration', viewDuration);
     recordMetric('interactionRate', 1);
     
@@ -190,7 +190,7 @@ export default function ViralTestSuite({ onTestComplete, autoRun = false }: Vira
   };
 
   const handleViralMomentTrigger = () => {
-    const timeToComplete = performance.now() - startTimeRef.current;
+    const timeToComplete = (typeof window !== 'undefined' && typeof performance !== 'undefined' ? performance.now() : 0) - (startTimeRef.current || 0);
     recordMetric('timeToComplete', timeToComplete);
     recordMetric('streakCompletion', 1);
     
@@ -366,7 +366,7 @@ export default function ViralTestSuite({ onTestComplete, autoRun = false }: Vira
           <motion.button
             onClick={() => {
               setShowAchievement(true);
-              startTimeRef.current = performance.now();
+              startTimeRef.current = typeof window !== 'undefined' && typeof performance !== 'undefined' ? performance.now() : 0;
             }}
             className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
             whileHover={{ scale: 1.05 }}

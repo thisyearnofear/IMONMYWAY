@@ -72,7 +72,7 @@ export class QueryOptimizer {
       priority = 'medium'
     } = options
 
-    const startTime = performance.now()
+    const startTime = typeof window !== 'undefined' && typeof performance !== 'undefined' ? performance.now() : 0
     let cached = false
     let result: T
     let error: string | undefined
@@ -84,7 +84,7 @@ export class QueryOptimizer {
         if (cachedResult) {
           cached = true
           result = cachedResult
-          this.recordMetrics(queryName, performance.now() - startTime, cached, true)
+          this.recordMetrics(queryName, (typeof window !== 'undefined' && typeof performance !== 'undefined' ? performance.now() : 0) - startTime, cached, true)
           return result
         }
       }
@@ -97,12 +97,12 @@ export class QueryOptimizer {
         await cacheService.updateUserReputation(cacheKey, result as any)
       }
 
-      this.recordMetrics(queryName, performance.now() - startTime, cached, true)
+      this.recordMetrics(queryName, (typeof window !== 'undefined' && typeof performance !== 'undefined' ? performance.now() : 0) - startTime, cached, true)
       return result
 
     } catch (err) {
       error = (err as Error).message
-      this.recordMetrics(queryName, performance.now() - startTime, cached, false, error)
+      this.recordMetrics(queryName, (typeof window !== 'undefined' && typeof performance !== 'undefined' ? performance.now() : 0) - startTime, cached, false, error)
       throw err
     }
   }

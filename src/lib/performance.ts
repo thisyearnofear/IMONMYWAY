@@ -12,6 +12,18 @@ export class PerformanceMonitor {
   private observers: PerformanceObserver[] = [];
 
   static getInstance(): PerformanceMonitor {
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      // Return a mock object on the server
+      const mockInstance = new PerformanceMonitor();
+      // Override methods to be no-ops on server
+      mockInstance.recordMetric = () => {};
+      mockInstance.getMetric = () => ({ avg: 0, latest: 0, trend: 'stable' as const });
+      mockInstance.getPerformanceScore = () => 100;
+      mockInstance.cleanup = () => {};
+      mockInstance.initializeObservers = () => {};
+      return mockInstance;
+    }
+    
     if (!PerformanceMonitor.instance) {
       PerformanceMonitor.instance = new PerformanceMonitor();
     }
@@ -19,10 +31,16 @@ export class PerformanceMonitor {
   }
 
   constructor() {
-    this.initializeObservers();
+    // Only initialize observers on the client side
+    if (typeof window !== 'undefined') {
+      this.initializeObservers();
+    }
   }
 
   private initializeObservers() {
+    // Only initialize on client side
+    if (typeof window === 'undefined') return;
+
     // Observe paint metrics
     if ('PerformanceObserver' in window) {
       const paintObserver = new PerformanceObserver((list) => {
@@ -50,7 +68,7 @@ export class PerformanceMonitor {
     }
     const values = this.metrics.get(name)!;
     values.push(value);
-    
+
     // Keep only last 100 measurements
     if (values.length > 100) {
       values.shift();
@@ -63,13 +81,13 @@ export class PerformanceMonitor {
 
     const avg = values.reduce((sum, val) => sum + val, 0) / values.length;
     const latest = values[values.length - 1];
-    
+
     // Calculate trend from last 10 values
     const recent = values.slice(-10);
     const older = values.slice(-20, -10);
     const recentAvg = recent.reduce((sum, val) => sum + val, 0) / recent.length;
     const olderAvg = older.reduce((sum, val) => sum + val, 0) / older.length;
-    
+
     let trend: 'improving' | 'degrading' | 'stable' = 'stable';
     if (recentAvg < olderAvg * 0.9) trend = 'improving';
     else if (recentAvg > olderAvg * 1.1) trend = 'degrading';
@@ -80,16 +98,16 @@ export class PerformanceMonitor {
   getPerformanceScore(): number {
     const fcp = this.getMetric('first-contentful-paint');
     const cls = this.getMetric('cumulative-layout-shift');
-    
+
     // Simple scoring algorithm (0-100)
     let score = 100;
-    
+
     // Penalize slow FCP (> 2s)
     if (fcp.latest > 2000) score -= Math.min(30, (fcp.latest - 2000) / 100);
-    
+
     // Penalize high CLS (> 0.1)
     if (cls.latest > 0.1) score -= Math.min(20, cls.latest * 200);
-    
+
     return Math.max(0, Math.round(score));
   }
 
@@ -109,14 +127,25 @@ export interface DeviceCapabilities {
 }
 
 export function getDeviceCapabilities(): DeviceCapabilities {
+  // Return defaults for server-side rendering
+  if (typeof window === 'undefined' || typeof navigator === 'undefined') {
+    return {
+      memory: 4,
+      cores: 4,
+      connection: 'medium',
+      battery: 'unknown',
+      deviceType: 'desktop'
+    };
+  }
+
   const nav = navigator as any;
-  
+
   // Memory detection
   const memory = nav.deviceMemory || 4; // Default to 4GB
-  
+
   // CPU cores
   const cores = nav.hardwareConcurrency || 4;
-  
+
   // Connection speed
   let connection: DeviceCapabilities['connection'] = 'medium';
   if (nav.connection) {
@@ -127,7 +156,7 @@ export function getDeviceCapabilities(): DeviceCapabilities {
       connection = 'fast';
     }
   }
-  
+
   // Battery level
   let battery: DeviceCapabilities['battery'] = 'unknown';
   if (nav.getBattery) {
@@ -135,17 +164,21 @@ export function getDeviceCapabilities(): DeviceCapabilities {
       if (batteryManager.level < 0.2) battery = 'low';
       else if (batteryManager.level < 0.5) battery = 'medium';
       else battery = 'high';
+    }).catch(() => {
+      // Handle case where battery API is not available or fails
+      battery = 'unknown';
     });
   }
-  
+
   // Device type detection
   let deviceType: DeviceCapabilities['deviceType'] = 'desktop';
-  if (/Mobi|Android/i.test(navigator.userAgent)) {
+  const userAgent = navigator.userAgent || '';
+  if (/Mobi|Android/i.test(userAgent)) {
     deviceType = 'mobile';
-  } else if (/Tablet|iPad/i.test(navigator.userAgent)) {
+  } else if (/Tablet|iPad/i.test(userAgent)) {
     deviceType = 'tablet';
   }
-  
+
   return { memory, cores, connection, battery, deviceType };
 }
 
@@ -157,6 +190,17 @@ export class AdaptiveLoader {
   private capabilities: DeviceCapabilities;
 
   static getInstance(): AdaptiveLoader {
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      // Return a mock object on the server
+      const mockInstance = new AdaptiveLoader();
+      // Override methods to be no-ops on server
+      mockInstance.loadResource = (key: string, loader: () => Promise<any>) => loader();
+      mockInstance.preload = () => {};
+      mockInstance.clearCache = () => {};
+      mockInstance.getCacheStats = () => ({ size: 0, loading: 0, capabilities: { memory: 4, cores: 4, connection: 'fast' as const, battery: 'high' as const, deviceType: 'desktop' as const }});
+      return mockInstance;
+    }
+    
     if (!AdaptiveLoader.instance) {
       AdaptiveLoader.instance = new AdaptiveLoader();
     }
@@ -164,19 +208,32 @@ export class AdaptiveLoader {
   }
 
   constructor() {
-    this.capabilities = getDeviceCapabilities();
-    this.startCacheCleanup();
+    if (typeof window !== 'undefined') {
+      this.capabilities = getDeviceCapabilities();
+      this.startCacheCleanup();
+    } else {
+      // Set default capabilities for server-side
+      this.capabilities = {
+        memory: 4,
+        cores: 4,
+        connection: 'fast',
+        battery: 'unknown',
+        deviceType: 'desktop'
+      };
+    }
   }
 
   private startCacheCleanup() {
-    setInterval(() => {
-      const now = Date.now();
-      for (const [key, item] of this.cache.entries()) {
-        if (now - item.timestamp > item.ttl) {
-          this.cache.delete(key);
+    if (typeof window !== 'undefined') {
+      setInterval(() => {
+        const now = Date.now();
+        for (const [key, item] of this.cache.entries()) {
+          if (now - item.timestamp > item.ttl) {
+            this.cache.delete(key);
+          }
         }
-      }
-    }, 60000); // Cleanup every minute
+      }, 60000); // Cleanup every minute
+    }
   }
 
   async loadResource<T>(
@@ -203,7 +260,7 @@ export class AdaptiveLoader {
 
     // Adaptive loading based on device capabilities
     const shouldDefer = this.shouldDeferLoading(priority);
-    
+
     if (shouldDefer && fallback !== undefined) {
       // Return fallback immediately, load in background
       this.loadInBackground(key, loader, ttl);
@@ -227,23 +284,23 @@ export class AdaptiveLoader {
 
   private shouldDeferLoading(priority: 'low' | 'medium' | 'high'): boolean {
     const { memory, connection, battery } = this.capabilities;
-    
+
     // Always load high priority
     if (priority === 'high') return false;
-    
+
     // Defer on low-end devices
     if (memory < 2 || connection === 'slow' || battery === 'low') {
       return priority === 'low';
     }
-    
+
     return false;
   }
 
   private async loadInBackground<T>(key: string, loader: () => Promise<T>, ttl: number) {
     // Use requestIdleCallback if available
     const loadFn = () => this.executeLoad(key, loader, ttl);
-    
-    if ('requestIdleCallback' in window) {
+
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
       (window as any).requestIdleCallback(loadFn);
     } else {
       setTimeout(loadFn, 100);
@@ -303,7 +360,7 @@ export function createDynamicImport<T>(
 ): () => Promise<T> {
   const loader = AdaptiveLoader.getInstance();
   const key = importFn.toString(); // Use function string as key
-  
+
   return () => loader.loadResource(
     key,
     async () => {
@@ -346,31 +403,32 @@ export function optimizeImageLoading(
 ): string {
   const { width, height, quality = 80, format = 'auto', lazy = true } = options;
   const capabilities = getDeviceCapabilities();
-  
+
   // Adjust quality based on device capabilities
   let adjustedQuality = quality;
   if (capabilities.connection === 'slow') adjustedQuality = Math.min(quality, 60);
   if (capabilities.memory < 2) adjustedQuality = Math.min(adjustedQuality, 70);
-  
+
   // Build optimized URL (assuming you have an image optimization service)
   const params = new URLSearchParams();
   if (width) params.set('w', width.toString());
   if (height) params.set('h', height.toString());
   params.set('q', adjustedQuality.toString());
-  
+
   if (format === 'auto') {
-    // Choose format based on browser support
-    if (CSS.supports('image-rendering', 'pixelated')) {
+    // Choose format based on browser support (only on client side)
+    if (typeof window !== 'undefined' && CSS.supports('image-rendering', 'pixelated')) {
       params.set('f', 'webp');
     }
   } else {
     params.set('f', format);
   }
-  
+
   return `${src}?${params.toString()}`;
 }
 
 // Export singleton instances
+// Export singleton instances, but make them server-safe
 export const performanceMonitor = PerformanceMonitor.getInstance();
 export const adaptiveLoader = AdaptiveLoader.getInstance();
 
@@ -380,18 +438,21 @@ import React from 'react';
 export function usePerformanceOptimization() {
   const [capabilities] = React.useState(() => getDeviceCapabilities());
   const [performanceScore, setPerformanceScore] = React.useState(100);
-  
+
   React.useEffect(() => {
+    // Only run performance monitoring on client side
+    if (typeof window === 'undefined') return;
+
     const monitor = PerformanceMonitor.getInstance();
-    
+
     const updateScore = () => {
       setPerformanceScore(monitor.getPerformanceScore());
     };
-    
+
     const interval = setInterval(updateScore, 5000);
     return () => clearInterval(interval);
   }, []);
-  
+
   return {
     capabilities,
     performanceScore,
