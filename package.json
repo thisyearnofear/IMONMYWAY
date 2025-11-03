@@ -3,13 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "node server.js",
     "build": "next build",
     "start": "NODE_ENV=production node server.js",
     "lint": "next lint",
     "docs": "echo 'Documentation available in /docs directory'",
     "compile": "npx hardhat compile",
-    "deploy": "npx hardhat run scripts/deploy.cjs"
+    "deploy": "npx hardhat run scripts/deploy.cjs",
+    "db:deploy": "npx prisma db push",
+    "db:generate-migration": "npx prisma migrate dev",
+    "db:reset": "npx prisma migrate reset"
   },
   "dependencies": {
     "@coordinationlabs/megapot-ui-kit": "^0.0.50",

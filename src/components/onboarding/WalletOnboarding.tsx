@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/PremiumButton'
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { LoadingSpinner } from '@/components/ui/PremiumButton';
 import { useWallet } from '@/hooks/useWallet';
 import { useUIStore } from '@/stores/uiStore';
 import { getNetworkConfig } from '@/contracts/addresses';
@@ -95,9 +95,8 @@ export function WalletOnboarding({
       if (retryCount < maxRetries) {
         addToast({
           type: 'warning',
-          message: `${errorMessage} Retrying... (${
-            retryCount + 1
-          }/${maxRetries})`,
+          message: `${errorMessage} Retrying... (${retryCount + 1
+            }/${maxRetries})`,
         });
         setTimeout(() => {
           setRetryCount((prev) => prev + 1);
@@ -143,9 +142,8 @@ export function WalletOnboarding({
       if (retryCount < maxRetries) {
         addToast({
           type: 'warning',
-          message: `${errorMessage} Retrying... (${
-            retryCount + 1
-          }/${maxRetries})`,
+          message: `${errorMessage} Retrying... (${retryCount + 1
+            }/${maxRetries})`,
         });
         setTimeout(() => {
           setRetryCount((prev) => prev + 1);
@@ -190,9 +188,8 @@ export function WalletOnboarding({
         <div className='p-8'>
           {/* Icon */}
           <div
-            className={`text-center mb-6 transition-all duration-300 ${
-              isAnimating ? 'scale-75 opacity-50' : 'scale-100 opacity-100'
-            }`}
+            className={`text-center mb-6 transition-all duration-300 ${isAnimating ? 'scale-75 opacity-50' : 'scale-100 opacity-100'
+              }`}
           >
             <div className='text-6xl mb-4 animate-bounce-gentle'>
               {currentStep.icon}
@@ -229,11 +226,13 @@ export function WalletOnboarding({
                 className='w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-200'
               >
                 {isConnecting ? (
-                  <LoadingSpinner
-                    size='sm'
-                    color='white'
-                    message='Connecting...'
-                  />
+                  <>
+                    <LoadingSpinner
+                      size='sm'
+                      color='white'
+                    />
+                    <span className="ml-2">Connecting...</span>
+                  </>
                 ) : (
                   'Connect MetaMask'
                 )}
@@ -283,9 +282,8 @@ export function WalletOnboarding({
             {steps.map((_, index) => (
               <div
                 key={index}
-                className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                  index <= step ? 'bg-blue-600' : 'bg-gray-300'
-                }`}
+                className={`w-2 h-2 rounded-full transition-all duration-300 ${index <= step ? 'bg-blue-600' : 'bg-gray-300'
+                  }`}
               />
             ))}
           </div>

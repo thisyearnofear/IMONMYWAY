@@ -1,17 +1,55 @@
-import { ButtonHTMLAttributes, forwardRef, ReactNode } from "react";
+import { ButtonHTMLAttributes, forwardRef, ReactNode, useState } from "react";
 import { cn } from "@/lib/utils";
-import { LoadingSpinner } from "./LoadingSpinner";
+
+// Consolidated LoadingSpinner (AGGRESSIVE CONSOLIDATION)
+interface LoadingSpinnerProps {
+  size?: 'sm' | 'md' | 'lg'
+  color?: 'blue' | 'green' | 'purple' | 'white' | 'current'
+  className?: string
+}
+
+export function LoadingSpinner({
+  size = 'md',
+  color = 'current',
+  className = ''
+}: LoadingSpinnerProps) {
+  const sizeClasses = {
+    sm: 'w-4 h-4',
+    md: 'w-8 h-8',
+    lg: 'w-12 h-12'
+  }
+
+  const colorClasses = {
+    blue: 'border-blue-600 border-t-transparent',
+    green: 'border-green-600 border-t-transparent',
+    purple: 'border-purple-600 border-t-transparent',
+    white: 'border-white border-t-transparent',
+    current: 'border-current border-t-transparent'
+  }
+
+  return (
+    <div className={`relative ${className}`}>
+      <div
+        className={`
+          ${sizeClasses[size]} 
+          ${colorClasses[color]}
+          border-2 rounded-full animate-spin
+        `}
+      />
+    </div>
+  )
+}
 
 interface PremiumButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?:
-    | "primary"
-    | "secondary"
-    | "glass"
-    | "outline"
-    | "ghost"
-    | "danger"
-    | "success"
-    | "gradient";
+  | "primary"
+  | "secondary"
+  | "glass"
+  | "outline"
+  | "ghost"
+  | "danger"
+  | "success"
+  | "gradient";
   size?: "sm" | "md" | "lg" | "xl";
   isLoading?: boolean;
   loadingText?: string;
@@ -21,11 +59,18 @@ interface PremiumButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   pulse?: boolean;
   gradient?: boolean;
   glass?: boolean;
+  // NEW: Delightful interactions (ENHANCEMENT FIRST)
+  emoji?: string;
+  hoverEmoji?: string;
+  successEmoji?: string;
+  onDelightfulClick?: () => void;
+  context?: 'first_time' | 'returning' | 'achievement' | 'streak' | 'social';
   "aria-label"?: string;
   "aria-describedby"?: string;
 }
 
-// Single source of truth for all buttons - replaces Button, EnhancedButton, MobileOptimizedButton
+// CONSOLIDATED: Single source of truth for ALL buttons (AGGRESSIVE CONSOLIDATION)
+// Replaces: Button, EnhancedButton, MobileOptimizedButton, DelightfulButton
 export const Button = forwardRef<HTMLButtonElement, PremiumButtonProps>(
   (
     {
@@ -41,11 +86,21 @@ export const Button = forwardRef<HTMLButtonElement, PremiumButtonProps>(
       pulse = false,
       gradient = false,
       glass = false,
+      // NEW: Delightful features
+      emoji,
+      hoverEmoji,
+      successEmoji = "🎉",
+      onDelightfulClick,
+      context,
       disabled,
+      onClick,
       ...props
     },
     ref
   ) => {
+    // Delightful interaction state
+    const [isClicked, setIsClicked] = useState(false);
+    const [currentEmoji, setCurrentEmoji] = useState(emoji);
     const baseClasses = cn(
       "relative inline-flex items-center justify-center",
       "font-bold tracking-wide transition-all duration-300",
@@ -70,7 +125,7 @@ export const Button = forwardRef<HTMLButtonElement, PremiumButtonProps>(
         "focus:ring-blue-500"
       ),
       secondary: cn(
-        "btn-secondary", 
+        "btn-secondary",
         "focus:ring-gray-500"
       ),
       glass: cn(
@@ -108,23 +163,61 @@ export const Button = forwardRef<HTMLButtonElement, PremiumButtonProps>(
 
     const glowClasses = glow
       ? {
-          primary: "shadow-blue-500/25 hover:shadow-blue-500/40",
-          secondary: "shadow-gray-500/25 hover:shadow-gray-500/40",
-          glass: "shadow-white/10 hover:shadow-white/20",
-          outline: "shadow-white/10 hover:shadow-white/20",
-          ghost: "shadow-white/5 hover:shadow-white/10",
-          danger: "shadow-red-500/25 hover:shadow-red-500/40",
-          success: "shadow-green-500/25 hover:shadow-green-500/40",
-          gradient: "shadow-violet-500/25 hover:shadow-violet-500/40",
-        }[variant]
+        primary: "shadow-blue-500/25 hover:shadow-blue-500/40",
+        secondary: "shadow-gray-500/25 hover:shadow-gray-500/40",
+        glass: "shadow-white/10 hover:shadow-white/20",
+        outline: "shadow-white/10 hover:shadow-white/20",
+        ghost: "shadow-white/5 hover:shadow-white/10",
+        danger: "shadow-red-500/25 hover:shadow-red-500/40",
+        success: "shadow-green-500/25 hover:shadow-green-500/40",
+        gradient: "shadow-violet-500/25 hover:shadow-violet-500/40",
+      }[variant]
       : "";
+
+    // Contextual delightful responses
+    const getContextualResponses = (ctx?: string) => {
+      const responses = {
+        first_time: ["🎉", "🌟", "✨", "🚀"],
+        returning: ["👋", "💫", "🎊", "🏠"],
+        achievement: ["🏆", "🎯", "💎", "⭐"],
+        streak: ["🔥", "⚡", "💥", "🌟"],
+        social: ["👥", "💫", "🎈", "🤝"]
+      };
+      return responses[ctx as keyof typeof responses] || ["🎉", "✨", "💫"];
+    };
+
+    const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+      // Delightful interactions
+      if (emoji || onDelightfulClick) {
+        setIsClicked(true);
+
+        // Use contextual responses
+        if (context) {
+          const contextualEmojis = getContextualResponses(context);
+          const randomEmoji = contextualEmojis[Math.floor(Math.random() * contextualEmojis.length)];
+          setCurrentEmoji(randomEmoji);
+        }
+
+        // Call delightful callback
+        onDelightfulClick?.();
+
+        // Reset after animation
+        setTimeout(() => {
+          setIsClicked(false);
+          setCurrentEmoji(emoji);
+        }, 600);
+      }
+
+      // Call original onClick
+      onClick?.(e);
+    };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
       // Handle keyboard activation
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
-        if (!isDisabled && props.onClick) {
-          props.onClick(e as any);
+        if (!isDisabled && handleClick) {
+          handleClick(e as any);
         }
       }
       // Call original onKeyDown if provided
@@ -149,10 +242,15 @@ export const Button = forwardRef<HTMLButtonElement, PremiumButtonProps>(
             !isDisabled && "hover:scale-105 hover:-translate-y-1",
             !isDisabled && "active:scale-95 active:translate-y-0",
             isDisabled && "opacity-50 cursor-not-allowed",
+            // Delightful animations
+            isClicked && "animate-bounce",
             className
           )}
           disabled={isDisabled}
+          onClick={handleClick}
           onKeyDown={handleKeyDown}
+          onMouseEnter={() => hoverEmoji && setCurrentEmoji(hoverEmoji)}
+          onMouseLeave={() => !isClicked && setCurrentEmoji(emoji)}
           aria-disabled={isDisabled}
           aria-busy={isLoading}
           tabIndex={isDisabled ? -1 : 0}
@@ -167,6 +265,21 @@ export const Button = forwardRef<HTMLButtonElement, PremiumButtonProps>(
             <div className="absolute bottom-1/3 left-1/2 w-1 h-1 bg-white rounded-full opacity-0 group-hover:opacity-100 group-hover:animate-ping transition-all duration-300 delay-150" />
           </div>
 
+          {/* Delightful floating elements */}
+          {isClicked && (
+            <>
+              <div className="absolute -top-2 left-1/4 text-red-400 animate-ping opacity-75">
+                💖
+              </div>
+              <div className="absolute -top-3 right-1/4 text-yellow-400 animate-ping opacity-75 animation-delay-100">
+                ⭐
+              </div>
+              <div className="absolute -top-2 left-3/4 text-green-400 animate-ping opacity-75 animation-delay-200">
+                ✨
+              </div>
+            </>
+          )}
+
           {/* Content */}
           <div className="relative flex items-center justify-center gap-inherit">
             {isLoading ? (
@@ -179,12 +292,32 @@ export const Button = forwardRef<HTMLButtonElement, PremiumButtonProps>(
                 {icon && iconPosition === "left" && (
                   <span className="flex-shrink-0">{icon}</span>
                 )}
+                {currentEmoji && (
+                  <span
+                    className={cn(
+                      "transition-transform duration-200",
+                      isClicked && "scale-125 rotate-12"
+                    )}
+                  >
+                    {currentEmoji}
+                  </span>
+                )}
                 {children && <span>{children}</span>}
                 {icon && iconPosition === "right" && (
                   <span className="flex-shrink-0">{icon}</span>
                 )}
               </>
             )}
+          </div>
+
+          {/* Ripple effect for delightful interactions */}
+          <div className="absolute inset-0 overflow-hidden rounded-inherit">
+            <div
+              className={cn(
+                "absolute inset-0 bg-white/20 rounded-full scale-0 transition-transform duration-500",
+                isClicked && "scale-150 opacity-0"
+              )}
+            />
           </div>
 
           {/* Glow Effect */}

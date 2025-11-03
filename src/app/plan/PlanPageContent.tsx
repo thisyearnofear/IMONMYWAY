@@ -1,19 +1,20 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { PremiumNavigation } from "@/components/layout/PremiumNavigation";
 import { ToastContainer } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/PremiumButton";
 import { Input } from "@/components/ui/Input";
 import { SpeedPicker } from "@/components/ui/SpeedPicker";
 import { MobilePlanControls } from "@/components/mobile/MobilePlanControls";
+import { StatusIndicator, GPSStatusIndicator } from "@/components/ui/StatusIndicator";
 import {
   MapSkeleton,
   RouteCardSkeleton,
 } from "@/components/ui/LoadingSkeleton";
 import { useUIStore } from "@/stores/uiStore";
 import { useLocationStore } from "@/stores/locationStore";
-import { useDeviceDetection } from "@/hooks/useDeviceDetection";
+import { useMobileExperience } from "@/hooks/useMobileExperience";
 import { calculateDistance, calculateETA } from "@/lib/distance";
 import { formatTime, formatDistance } from "@/lib/utils";
 import { getConfidenceScore } from "@/lib/speed";
@@ -22,6 +23,7 @@ import ParallaxSection from "@/components/three/ParallaxSection";
 import WebGLParticleSystem from "@/components/three/ParticleSystem";
 import { motion } from "framer-motion";
 import { createStartMarker, createDestinationMarker, createPolyline, fitBoundsToMarkers } from "@/lib/map-utils";
+import { realtimeService } from "@/lib/realtime-service";
 
 // We'll use OpenStreetMap's Nominatim service for geocoding
 const geocodeAddress = async (
@@ -63,10 +65,56 @@ export default function PlanPageContent() {
     endCoords: [number, number];
   } | null>(null);
   const [isPlanning, setIsPlanning] = useState(false);
+  const [currentLocation, setCurrentLocation] = useState<{
+    lat: number;
+    lng: number;
+    accuracy: number;
+  } | null>(null);
+  const [gpsEnabled, setGpsEnabled] = useState(false);
 
   const { addToast } = useUIStore();
   const { selectedPace } = useLocationStore();
-  const deviceInfo = useDeviceDetection();
+  const { isMobile, triggerHaptic, supportsGeolocation } = useMobileExperience();
+
+  // GPS location tracking
+  useEffect(() => {
+    if (supportsGeolocation) {
+      getCurrentLocation();
+    }
+  }, [supportsGeolocation]);
+
+  const getCurrentLocation = useCallback(async () => {
+    if (!supportsGeolocation) {
+      addToast({
+        message: "Geolocation not supported by this browser",
+        type: "error",
+      });
+      return;
+    }
+
+    try {
+      const position = await realtimeService.getCurrentPosition();
+      setCurrentLocation({
+        lat: position.latitude,
+        lng: position.longitude,
+        accuracy: position.accuracy,
+      });
+      setGpsEnabled(true);
+      triggerHaptic('success');
+
+      addToast({
+        message: `Location found with ${position.accuracy}m accuracy`,
+        type: "success",
+      });
+    } catch (error) {
+      console.error('GPS error:', error);
+      setGpsEnabled(false);
+      addToast({
+        message: error instanceof Error ? error.message : "Failed to get location",
+        type: "error",
+      });
+    }
+  }, [supportsGeolocation, addToast, triggerHaptic]);
 
   const planRoute = useCallback(async () => {
     if (!startAddress.trim() || !endAddress.trim()) {
@@ -74,10 +122,12 @@ export default function PlanPageContent() {
         message: "Please enter both start and end addresses",
         type: "warning",
       });
+      triggerHaptic('warning');
       return;
     }
 
     setIsPlanning(true);
+    triggerHaptic('light');
 
     try {
       const startCoords = await geocodeAddress(startAddress);
@@ -88,6 +138,7 @@ export default function PlanPageContent() {
           message: "Could not find one or more addresses",
           type: "error",
         });
+        triggerHaptic('error');
         return;
       }
 
@@ -108,13 +159,15 @@ export default function PlanPageContent() {
         endCoords,
       });
 
+      triggerHaptic('success');
       addToast({ message: "Route planned successfully!", type: "success" });
     } catch (error) {
+      triggerHaptic('error');
       addToast({ message: "Failed to plan route", type: "error" });
     } finally {
       setIsPlanning(false);
     }
-  }, [startAddress, endAddress, selectedPace, addToast]);
+  }, [startAddress, endAddress, selectedPace, addToast, triggerHaptic]);
 
   const shareRoute = useCallback(() => {
     if (typeof window === "undefined" || !planData) return;
@@ -138,8 +191,8 @@ export default function PlanPageContent() {
     }
   }, [planData, selectedPace, addToast]);
 
-  // Mobile-first rendering with modern design
-  if (deviceInfo.isMobile) {
+  // Mobile-first rendering with enhanced GPS integration
+  if (isMobile) {
     return (
       <div className="min-h-screen relative">
         {/* Enhanced 3D Background with WebGL Particles */}
@@ -149,12 +202,56 @@ export default function PlanPageContent() {
         <div className="fixed inset-0 bg-gradient-to-br from-indigo-950/50 via-purple-950/30 to-pink-950/15" />
         <div className="fixed inset-0 bg-[radial-gradient(circle_at_30%_40%,rgba(59,130,246,0.1),transparent_70%)]" />
 
+        {/* GPS Status Bar */}
+        <div className="fixed top-0 left-0 right-0 z-20 bg-black/20 backdrop-blur-sm border-b border-white/10">
+          <div className="flex items-center justify-between p-4">
+            <GPSStatusIndicator
+              isEnabled={gpsEnabled}
+              accuracy={currentLocation?.accuracy}
+              className="text-white"
+            />
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={getCurrentLocation}
+              emoji="📍"
+              className="text-white"
+            >
+              Refresh GPS
+            </Button>
+          </div>
+        </div>
+
         {/* Full-screen map on mobile */}
         <div className="fixed inset-0 z-0">
           <MapContainer
             className="h-full"
-            center={planData ? planData.startCoords : [40.7128, -74.006]}
+            center={
+              planData ? planData.startCoords :
+                currentLocation ? [currentLocation.lat, currentLocation.lng] :
+                  [40.7128, -74.006]
+            }
             onMapReady={async (map) => {
+              // Add current location marker if available
+              if (currentLocation && typeof window !== "undefined") {
+                try {
+                  const L = await import("leaflet");
+                  const currentLocationMarker = L.default.marker([currentLocation.lat, currentLocation.lng], {
+                    icon: L.default.divIcon({
+                      className: 'current-location-marker',
+                      html: '<div class="w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-lg animate-pulse"></div>',
+                      iconSize: [16, 16],
+                      iconAnchor: [8, 8]
+                    })
+                  }).bindPopup(`Current Location (±${currentLocation.accuracy}m)`);
+
+                  currentLocationMarker.addTo(map);
+                } catch (error) {
+                  console.error("Error adding current location marker:", error);
+                }
+              }
+
+              // Add route markers if available
               if (planData && typeof window !== "undefined") {
                 try {
                   const L = await import("leaflet");
@@ -342,10 +439,9 @@ export default function PlanPageContent() {
                   <div className="text-white/70 text-sm">Estimated Time</div>
                 </div>
                 <div>
-                  <div className={`text-3xl font-bold mb-1 ${
-                    planData.confidence >= 80 ? 'text-green-400' :
+                  <div className={`text-3xl font-bold mb-1 ${planData.confidence >= 80 ? 'text-green-400' :
                     planData.confidence >= 60 ? 'text-yellow-400' : 'text-red-400'
-                  }`}>
+                    }`}>
                     {planData.confidence}%
                   </div>
                   <div className="text-white/70 text-sm">Confidence</div>

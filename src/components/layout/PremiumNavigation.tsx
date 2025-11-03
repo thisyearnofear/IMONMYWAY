@@ -11,7 +11,7 @@ import { motion } from "framer-motion";
 const NAV_ITEMS = [
   { href: "/plan", label: "Plan", icon: "🗺️" },
   { href: "/share", label: "Challenge", icon: "🎯" },
-  { href: "/watch", label: "Watch", icon: "📍" },
+  { href: "/watch", label: "Watch", icon: "👀" },
   { href: "/leaderboard", label: "Leaderboard", icon: "🏆" }
 ];
 
@@ -20,7 +20,7 @@ export function PremiumNavigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { address, isConnected, connect } = useWallet();
   const { setWalletAddress, setWalletConnected } = useLocationStore();
-  
+
   // Truncate wallet address for display
   const truncatedAddress = address ? `${address.slice(0, 4)}...${address.slice(-4)}` : "";
 
@@ -47,7 +47,7 @@ export function PremiumNavigation() {
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3 group">
           <div className="relative">
-            <motion.div 
+            <motion.div
               className="w-10 h-10 bg-gradient-to-br from-gold-500 to-violet-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
               whileHover={{ rotate: [0, 5, -5, 0] }}
               transition={{ duration: 0.5 }}
@@ -137,9 +137,9 @@ export function PremiumNavigation() {
         >
           <nav className="container mx-auto px-4 py-4 space-y-2">
             {NAV_ITEMS.map((item) => (
-              <Link 
-                key={item.href} 
-                href={item.href} 
+              <Link
+                key={item.href}
+                href={item.href}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 <div className="flex items-center gap-3 text-gray-300 hover:text-white py-3 px-4 rounded-lg hover:bg-violet-500/10 transition-colors">
@@ -148,7 +148,7 @@ export function PremiumNavigation() {
                 </div>
               </Link>
             ))}
-            
+
             <div className="pt-4">
               {isConnected ? (
                 <Button
