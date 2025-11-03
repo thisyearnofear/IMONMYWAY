@@ -55,7 +55,7 @@ class LeaderboardDataService {
           )
           
           const successfulSessions = sessionEvents.filter(event => 
-            event.metadata?.success === true
+            (event.eventData as any)?.success === true
           ).length
           
           const totalSessions = sessionEvents.length
@@ -63,16 +63,16 @@ class LeaderboardDataService {
           
           // Calculate pace and distance from analytics
           const paceEvents = analytics.filter(event => 
-            event.metadata?.averagePace && event.metadata.averagePace > 0
+            (event.eventData as any)?.averagePace && (event.eventData as any).averagePace > 0
           )
           const averagePace = paceEvents.length > 0 
-            ? paceEvents.reduce((sum, event) => sum + (event.metadata.averagePace || 0), 0) / paceEvents.length
+            ? paceEvents.reduce((sum, event) => sum + ((event.eventData as any).averagePace || 0), 0) / paceEvents.length
             : 0
             
           const distanceEvents = analytics.filter(event => 
-            event.metadata?.distance && event.metadata.distance > 0
+            (event.eventData as any)?.distance && (event.eventData as any).distance > 0
           )
-          const totalDistance = distanceEvents.reduce((sum, event) => sum + (event.metadata.distance || 0), 0)
+          const totalDistance = distanceEvents.reduce((sum, event) => sum + ((event.eventData as any).distance || 0), 0)
 
           // Only include users with actual activity (no empty profiles)
           if (totalSessions === 0 && user.reputationScore === 750.0) {

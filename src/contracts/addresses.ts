@@ -21,7 +21,7 @@ export const SOMNIA_MAINNET_CONTRACT_ADDRESSES: ContractAddresses = {
 
 // 🚨 DEVELOPMENT: Somnia Testnet Contract Addresses (replace with actual testnet addresses)
 export const SOMNIA_TESTNET_CONTRACT_ADDRESSES: ContractAddresses = {
-  PunctualityCore: '0x0000000000000000000000000000000000000000', // Placeholder
+  PunctualityCore: '0x3c6c19C5803876AdA934c92e53cCad6f3c8CA746', // Deployed on Somnia Testnet
   LocationVerifier: '',
   ImmediateBets: '',
   ProgressiveGoals: '',

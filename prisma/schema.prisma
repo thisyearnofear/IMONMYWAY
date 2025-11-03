@@ -28,6 +28,8 @@ model User {
   notificationsEnabled Boolean @default(true)
   theme               String   @default("system") // light, dark, system
   language            String   @default("en")
+  smartDefaults       Json?    // AI-generated smart defaults
+  lastDefaultsUpdate  Int?     // Timestamp of last defaults update
 
   // On-chain references (cached)
   reputationScore      Float    @default(750.0)

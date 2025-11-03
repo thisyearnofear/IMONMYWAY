@@ -216,7 +216,7 @@ export function useSmartDefaults() {
       if (walletAddress) {
         const { dbService } = await import('@/lib/db-service');
         await dbService.updateUser(walletAddress, { 
-          smartDefaults: defaults,
+          smartDefaults: JSON.parse(JSON.stringify(defaults)),
           lastDefaultsUpdate: Date.now()
         });
       }
@@ -235,7 +235,8 @@ export function useSmartDefaults() {
         if (user?.smartDefaults) {
           // Update localStorage with database data
           localStorage.setItem('smartDefaults', JSON.stringify(user.smartDefaults));
-          return user.smartDefaults;
+          // Parse the JSON data back to SmartDefaults type
+          return JSON.parse(JSON.stringify(user.smartDefaults)) as SmartDefaults;
         }
       }
       

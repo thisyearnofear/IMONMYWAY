@@ -160,6 +160,9 @@ export function UnifiedBettingInterface({
     setIsLoading(true);
     
     try {
+      // Use the contract service to place the bet
+      const { useContractService } = await import('@/hooks/useContractService');
+      
       // In a real implementation, this would call the smart contract
       console.log(`Placing ${betType} bet of ${betAmount} STT on commitment ${commitmentId}`);
       

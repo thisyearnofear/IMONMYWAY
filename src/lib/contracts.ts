@@ -4,7 +4,7 @@
 import { ethers } from 'ethers';
 import { getContractAddresses, getNetworkConfig } from '@/contracts/addresses';
 
-// Contract ABI (simplified)
+// Full Contract ABI
 const CONTRACT_ABI = [
   // Functions
   "function createCommitment(tuple(int256,int256,uint256,uint256) startLocation, tuple(int256,int256,uint256,uint256) targetLocation, uint256 arrivalDeadline, uint256 estimatedPace) payable returns (bytes32)",

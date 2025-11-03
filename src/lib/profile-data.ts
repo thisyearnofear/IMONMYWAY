@@ -87,7 +87,7 @@ class ProfileDataService {
 
       const profile: UserProfile = {
         walletAddress: user.walletAddress,
-        displayName: user.displayName,
+        displayName: user.displayName || undefined,
         reputationScore: user.reputationScore,
         tier: this.calculateTier(user.reputationScore, sessionStats.totalSessions, sessionStats.successRate),
         
@@ -134,7 +134,7 @@ class ProfileDataService {
     )
     
     const successfulSessions = sessionEvents.filter(event => 
-      event.metadata?.success === true
+      (event.eventData as any)?.success === true
     ).length
     
     const totalSessions = sessionEvents.length
@@ -142,17 +142,17 @@ class ProfileDataService {
     
     // Calculate pace metrics
     const paceEvents = analytics.filter(event => 
-      event.metadata?.averagePace && event.metadata.averagePace > 0
+      (event.eventData as any)?.averagePace && (event.eventData as any).averagePace > 0
     )
-    const paces = paceEvents.map(event => event.metadata.averagePace)
+    const paces = paceEvents.map(event => (event.eventData as any).averagePace)
     const averagePace = paces.length > 0 ? paces.reduce((sum, pace) => sum + pace, 0) / paces.length : 0
     const bestPace = paces.length > 0 ? Math.min(...paces) : 0
     
     // Calculate distance metrics
     const distanceEvents = analytics.filter(event => 
-      event.metadata?.distance && event.metadata.distance > 0
+      (event.eventData as any)?.distance && (event.eventData as any).distance > 0
     )
-    const distances = distanceEvents.map(event => event.metadata.distance)
+    const distances = distanceEvents.map(event => (event.eventData as any).distance)
     const totalDistance = distances.reduce((sum, distance) => sum + distance, 0)
     const longestDistance = distances.length > 0 ? Math.max(...distances) : 0
     
@@ -166,7 +166,7 @@ class ProfileDataService {
       .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
     
     for (const session of sortedSessions) {
-      if (session.metadata?.success) {
+      if ((session.eventData as any)?.success) {
         tempStreak++
         longestStreak = Math.max(longestStreak, tempStreak)
       } else {
@@ -176,7 +176,7 @@ class ProfileDataService {
     
     // Current streak is from the end
     for (let i = sortedSessions.length - 1; i >= 0; i--) {
-      if (sortedSessions[i].metadata?.success) {
+      if ((sortedSessions[i].eventData as any)?.success) {
         currentStreak++
       } else {
         break

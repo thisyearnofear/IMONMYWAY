@@ -262,7 +262,7 @@ export default function JourneyDashboard({
             value={searchTerm}
             onChange={(e) => handleSearchChange(e.target.value)}
             className="w-full"
-            size={isMobile ? "sm" : "md"}
+            size={isMobile ? 12 : 16}
             aria-label="Search journeys"
           />
         </div>
@@ -333,7 +333,7 @@ export default function JourneyDashboard({
               {searchTerm && (
                 <Button 
                   variant="outline" 
-                  size={isMobile ? "sm" : "default"}
+                  size={isMobile ? "sm" : "md"}
                   className="mt-4"
                   onClick={() => handleSearchChange('')}
                   aria-label="Clear search"
@@ -440,7 +440,7 @@ export default function JourneyDashboard({
             <h3 className={`text-xl font-bold text-white ${isMobile ? 'text-lg' : ''}`}>Journey Details</h3>
             <Button 
               variant="ghost" 
-              size={isMobile ? "sm" : "default"}
+              size={isMobile ? "sm" : "md"}
               onClick={() => handleJourneySelect('')}
               className="text-white/70 hover:text-white"
               aria-label="Close journey details"
@@ -519,7 +519,7 @@ export default function JourneyDashboard({
           <div className="mt-6 pt-4 border-t border-white/10">
             <Button 
               variant="primary" 
-              size={isMobile ? "sm" : "default"}
+              size={isMobile ? "sm" : "md"}
               className="w-full"
               onClick={() => {
                 addToast({

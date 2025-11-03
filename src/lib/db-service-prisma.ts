@@ -2,84 +2,15 @@
 // Real database implementation using Prisma ORM
 import { PrismaClient, Prisma } from '@prisma/client';
 
+// ============================================================================
+// DATABASE SERVICE (PostgreSQL Implementation)
+// ============================================================================
+
 export class DatabaseService {
   private prisma: PrismaClient;
-  private isConnected: boolean = false;
 
   constructor() {
-    this.prisma = new PrismaClient({
-      // Configure connection pooling
-      datasources: {
-        db: {
-          url: process.env.DATABASE_URL,
-        },
-      },
-      // Add logging for debugging
-      log: [
-        {
-          emit: 'event',
-          level: 'query',
-        },
-        {
-          emit: 'event',
-          level: 'error',
-        },
-        {
-          emit: 'event',
-          level: 'info',
-        },
-        {
-          emit: 'event',
-          level: 'warn',
-        },
-      ],
-    });
-    
-    // Set up event listeners for logging
-    // Commenting out for now due to type issues
-    /*
-    this.prisma.$on('query' as any, (e: any) => {
-      console.log('🔍 Query executed:', e.query, e.params);
-    });
-    
-    this.prisma.$on('error' as any, (e: any) => {
-      console.error('❌ Database error:', e.message, e.target);
-    });
-    
-    this.prisma.$on('info' as any, (e: any) => {
-      console.log('ℹ️ Database info:', e.message);
-    });
-    
-    this.prisma.$on('warn' as any, (e: any) => {
-      console.warn('⚠️ Database warning:', e.message);
-    });
-    */
-  }
-
-  // Utility method for retrying operations
-  private async withRetry<T>(operation: () => Promise<T>, maxRetries: number = 3, delay: number = 1000): Promise<T> {
-    let lastError: Error | undefined;
-    
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        return await operation();
-      } catch (error) {
-        lastError = error as Error;
-        
-        // If it's the last attempt, throw the error
-        if (attempt === maxRetries) {
-          throw error;
-        }
-        
-        // Log retry attempt
-        console.warn(`⚠️ Database operation failed (attempt ${attempt}/${maxRetries}):`, error instanceof Error ? error.message : 'Unknown error');
-        
-        // Wait before retrying
-        await new Promise(resolve => setTimeout(resolve, delay * attempt));
-      }
-    }
-    
-    throw lastError;
+    this.prisma = new PrismaClient();
   }
 
   // ============================================================================
@@ -88,46 +19,32 @@ export class DatabaseService {
 
   async healthCheck() {
     try {
-      // Test database connectivity
       await this.prisma.$queryRaw`SELECT 1`;
       console.log('✅ PostgreSQL database healthy');
-      return { postgresql: true, redis: true, connected: this.isConnected };
+      return { postgresql: true, redis: true };
     } catch (error) {
       console.error('❌ PostgreSQL database connection error:', error);
-      return { postgresql: false, redis: false, connected: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      return { postgresql: false, redis: false };
     }
-  }
-
-  isConnectedStatus(): boolean {
-    return this.isConnected;
   }
 
   async connect() {
     try {
-      // Check if already connected
-      if (this.isConnected) {
-        console.log('✅ PostgreSQL database already connected');
-        return;
-      }
-      
       await this.prisma.$connect();
-      this.isConnected = true;
       console.log('✅ PostgreSQL database connected successfully');
     } catch (error) {
-      this.isConnected = false;
       console.error('❌ Failed to connect to PostgreSQL database:', error);
-      throw new Error(`Database connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw error;
     }
   }
 
   async disconnect() {
     try {
       await this.prisma.$disconnect();
-      this.isConnected = false;
       console.log('✅ PostgreSQL database disconnected successfully');
     } catch (error) {
       console.error('❌ Error disconnecting from PostgreSQL database:', error);
-      throw new Error(`Database disconnection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw error;
     }
   }
 
@@ -162,30 +79,21 @@ export class DatabaseService {
           // Unique constraint violation
           console.log(`⚠️ User already exists: ${walletAddress}`);
           return await this.getUserByWallet(walletAddress);
-        } else if (error.code === 'P2003') {
-          // Foreign key constraint violation
-          throw new Error(`Invalid user data: ${error.message}`);
         }
-      } else if (error instanceof Prisma.PrismaClientInitializationError) {
-        throw new Error(`Database initialization error: ${error.message}`);
-      } else if (error instanceof Prisma.PrismaClientRustPanicError) {
-        throw new Error(`Database panic error: ${error.message}`);
       }
       console.error('❌ Error creating user:', error);
-      throw new Error(`Failed to create user: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw error;
     }
   }
 
   async getUserByWallet(walletAddress: string) {
     try {
-      return await this.withRetry(async () => {
-        return await this.prisma.user.findUnique({
-          where: { walletAddress }
-        });
+      return await this.prisma.user.findUnique({
+        where: { walletAddress }
       });
     } catch (error) {
       console.error('❌ Error fetching user:', error);
-      throw new Error(`Failed to fetch user: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw error;
     }
   }
 

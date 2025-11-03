@@ -95,3 +95,30 @@ Thumbs.db
 tmp_*
 *.tmp
 /generated/prisma
+
+# ===============
+# Deployment files
+# ===============
+deployment-*.json
+
+# ===============
+# Prisma migrations
+# ===============
+/prisma/migrations/**/*.sql
+
+# ===============
+# Qoder/Qodo
+# ===============
+/.qoder/
+/.qodo/
+
+# ===============
+# Artifacts/Cache
+# ===============
+/artifacts/
+/cache/
+
+# ===============
+# Backend
+# ===============
+/backend/

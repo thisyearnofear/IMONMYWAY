@@ -6,6 +6,7 @@ import JourneyPathVisualization from '@/components/visualization/JourneyPathVisu
 import { Button } from '@/components/ui/PremiumButton';
 import { useUIStore } from '@/stores/uiStore';
 import { useRouter } from 'next/navigation';
+import { fulfillCommitmentAction, getCommitmentDetailsAction } from './actions';
 
 export default function JourneyTrackingPage({ params }: any) {
   const [journey, setJourney] = useState<any>(null);
@@ -37,6 +38,49 @@ export default function JourneyTrackingPage({ params }: any) {
       setIsLoading(false);
     }, 1000);
   }, [params.id]);
+  
+  const handleFulfillCommitment = async () => {
+    if (!journey) return;
+    
+    try {
+      // In a real implementation, we would get the actual arrival location
+      const arrivalLocation = {
+        lat: journey.end.lat,
+        lng: journey.end.lng
+      };
+      
+      const result = await fulfillCommitmentAction(
+        journey.id,
+        journey.userId,
+        arrivalLocation
+      );
+      
+      if (result.success) {
+        addToast({
+          type: 'success',
+          message: 'Commitment fulfilled successfully!'
+        });
+        
+        // Update local state
+        setJourney({
+          ...journey,
+          status: 'completed',
+          progress: 1.0
+        });
+      } else {
+        addToast({
+          type: 'error',
+          message: result.message
+        });
+      }
+    } catch (error) {
+      console.error('Error fulfilling commitment:', error);
+      addToast({
+        type: 'error',
+        message: 'Failed to fulfill commitment'
+      });
+    }
+  };
   
   if (isLoading) {
     return (
@@ -176,9 +220,18 @@ export default function JourneyTrackingPage({ params }: any) {
               <div className="flex justify-between">
                 <span className="text-white/70">Status</span>
                 <span className="px-2 py-1 bg-blue-500/20 text-blue-400 text-xs rounded-full">
-                  In Progress
+                  {journey.status === 'completed' ? 'Completed' : 'In Progress'}
                 </span>
               </div>
+              {journey.status !== 'completed' && (
+                <Button 
+                  variant="primary" 
+                  className="w-full mt-4"
+                  onClick={handleFulfillCommitment}
+                >
+                  Mark as Arrived
+                </Button>
+              )}
             </div>
           </div>
           

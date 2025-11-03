@@ -427,7 +427,7 @@ export class AIService {
 
       // Calculate odds based on user's reputation, commitment difficulty, and historical performance
       const reputationFactor = (user.reputationScore || 750) / 1000; // Normalize to 0-1
-      const timeFactor = Math.max(0.5, Math.min(1.5, commitment.estimatedTime / 3600)); // Factor in time estimate
+      const timeFactor = Math.max(0.5, Math.min(1.5, commitment.estimatedPace / 60)); // Factor in pace estimate (convert to hours)
       const commitmentDifficulty = timeFactor * (1 - reputationFactor); // Higher difficulty for longer time/low rep
 
       // Calculate base odds

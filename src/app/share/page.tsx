@@ -49,7 +49,7 @@ export default function Share() {
   // Real commitment creation using contracts and database
   const createCommitment = async (start: any, end: any, deadline: number, pace: number, amount: string) => {
     const { dbService } = await import('@/lib/db-service');
-    const { getContract } = await import('@/lib/contracts');
+    const { useContractService } = await import('@/hooks/useContractService');
     
     if (!address) throw new Error('Wallet not connected');
     
@@ -76,28 +76,31 @@ export default function Share() {
         const { BrowserProvider, parseEther } = await import('ethers');
         const provider = new BrowserProvider(window.ethereum);
         const signer = await provider.getSigner();
-        const contract = getContract(chainId, signer);
         
         // Convert coordinates to contract format (scaled integers)
-        const startLoc = [
-          Math.round(start.lat * 1e6), 
-          Math.round(start.lng * 1e6), 
-          Math.round(Date.now() / 1000), 
-          100 // accuracy
+        const startLoc: [bigint, bigint, bigint, bigint] = [
+          BigInt(Math.round(start.lat * 1e6)), 
+          BigInt(Math.round(start.lng * 1e6)), 
+          BigInt(Math.round(Date.now() / 1000)), 
+          BigInt(100) // accuracy
         ];
-        const endLoc = [
-          Math.round(end.lat * 1e6), 
-          Math.round(end.lng * 1e6), 
-          deadline, 
-          100 // accuracy
+        const endLoc: [bigint, bigint, bigint, bigint] = [
+          BigInt(Math.round(end.lat * 1e6)), 
+          BigInt(Math.round(end.lng * 1e6)), 
+          BigInt(deadline), 
+          BigInt(100) // accuracy
         ];
         
-        const tx = await contract.createCommitment(
+        // Use the contract service to create the commitment
+        const { ContractService } = await import('@/services/contractService');
+        const contractService = new ContractService(signer);
+        
+        await contractService.createCommitment(
           startLoc, 
           endLoc, 
-          deadline, 
-          pace, 
-          { value: parseEther(amount) }
+          BigInt(deadline), 
+          BigInt(pace), 
+          amount
         );
         
         // Update commitment status to pending
