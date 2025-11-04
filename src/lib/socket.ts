@@ -14,8 +14,12 @@ class SocketManager {
 
   connect(): Socket {
     if (!this.socket) {
-      this.socket = io('http://157.180.36.156', {
-        transports: ['websocket', 'polling']
+      // Use environment variable or fallback to SSL domain
+      const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'https://imonmywayapi.persidian.com:3001'
+      this.socket = io(socketUrl, {
+        transports: ['websocket', 'polling'],
+        secure: true,
+        rejectUnauthorized: false // May need this for self-signed certs
       })
     }
     return this.socket

@@ -86,7 +86,7 @@ npm run db:generate-migration  # Generate new migration
 ### Current Deployment Status
 
 - **Frontend**: Deployed at `https://imonmyway.netlify.app`
-- **Backend**: Deployed at `http://157.180.36.156`
+- **Backend**: Deployed at `https://imonmywayapi.persidian.com:3001`
 - **Database**: PostgreSQL with Prisma ORM
 - **WebSocket**: Socket.IO for real-time communication
 
@@ -112,7 +112,7 @@ pm2 status
 pm2 logs imonmyway-backend --lines 20
 
 # Test health endpoint
-curl http://157.180.36.156/health
+curl https://imonmywayapi.persidian.com:3001/health
 ```
 
 **Database Issues**:

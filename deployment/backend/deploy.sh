@@ -52,7 +52,7 @@ ssh $SERVER_USER@$SERVER_IP << 'EOF'
 EOF
 
 echo "✅ Deployment complete!"
-echo "🔗 Backend running at: http://$SERVER_IP:3001"
+echo "🔗 Backend running at: https://imonmywayapi.persidian.com:3001"
 echo "📊 Monitor with: ssh $SERVER_USER@$SERVER_IP 'pm2 logs imonmyway-backend'"
 
 rm deploy.tar.gz

@@ -168,7 +168,7 @@ NEXT_PUBLIC_BASE_URL=http://localhost:3000    # Frontend URL
 NODE_ENV=production
 PORT=3001
 DATABASE_URL=postgresql://user:pass@host:5432/imonmyway_prod
-ALLOWED_ORIGINS=https://your-netlify-app.netlify.app
+ALLOWED_ORIGINS=https://imonmyway.netlify.app
 ```
 
 ### Browser Compatibility

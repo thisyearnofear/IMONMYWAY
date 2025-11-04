@@ -330,8 +330,8 @@ NEXT_PUBLIC_SOCKET_URL="http://localhost:3001"
 DATABASE_URL="postgresql://prod_user:prod_pass@prod-db:5432/punctuality_prod"
 REDIS_URL="redis://prod-redis:6379"
 SOMNIA_RPC_URL="https://rpc.somnia.network"
-SOCKET_URL="https://api.imonmyway.com"
-NEXT_PUBLIC_SOCKET_URL="https://api.imonmyway.com"
+SOCKET_URL="https://imonmywayapi.persidian.com:3001"
+NEXT_PUBLIC_SOCKET_URL="https://imonmywayapi.persidian.com:3001"
 ```
 
 ## Deployment Requirements

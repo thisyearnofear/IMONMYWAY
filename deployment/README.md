@@ -49,7 +49,7 @@ Netlify (Frontend)  ←→  Hetzner VPS (Backend)  ←→  Blockchain (Somnia)
 
 ### Frontend (.env.production)
 ```
-NEXT_PUBLIC_SOCKET_URL=https://api.imonmyway.com
+NEXT_PUBLIC_SOCKET_URL=https://imonmywayapi.persidian.com:3001
 NEXT_PUBLIC_BASE_URL=https://imonmyway.netlify.app
 ```
 
