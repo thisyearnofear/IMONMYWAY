@@ -61,14 +61,29 @@ export function useWallet(): UseWalletReturn {
     if (!isMetaMaskInstalled() || !provider) return
 
     try {
-      const accounts = await provider.request({ method: 'eth_accounts' })
-      const chainId = await provider.request({ method: 'eth_chainId' })
+      // Add timeout to prevent hanging on provider calls
+      const timeout = (ms: number) => new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Provider request timeout')), ms)
+      )
+
+      const accounts = await Promise.race([
+        provider.request({ method: 'eth_accounts' }),
+        timeout(5000)
+      ]) as string[]
+
+      const chainId = await Promise.race([
+        provider.request({ method: 'eth_chainId' }),
+        timeout(5000)
+      ]) as string
 
       if (accounts.length > 0) {
-        const balance = await provider.request({
-          method: 'eth_getBalance',
-          params: [accounts[0], 'latest'],
-        })
+        const balance = await Promise.race([
+          provider.request({
+            method: 'eth_getBalance',
+            params: [accounts[0], 'latest'],
+          }),
+          timeout(5000)
+        ]) as string
 
         setWalletState(prev => ({
           ...prev,
@@ -88,7 +103,8 @@ export function useWallet(): UseWalletReturn {
         }))
       }
     } catch (error) {
-      console.error('Error updating wallet state:', error)
+      console.warn('Wallet provider timeout or error:', error)
+      // Don't show error toast for timeout, just log it
       setWalletState(prev => ({
         ...prev,
         isConnecting: false,

@@ -71,6 +71,9 @@ export interface BettingOdds {
 // ============================================================================
 
 export class AIService {
+  private isInitialized = false;
+  private initializationPromise: Promise<void> | null = null;
+
   // ============================================================================
   // HEALTH CHECKS & CONNECTION MANAGEMENT
   // ============================================================================
@@ -90,9 +93,30 @@ export class AIService {
   }
 
   async initialize() {
-    console.log('🤖 AI Service initialized successfully');
-    // Initialize AI models and cache warmup
-    await this.warmupModels();
+    // Prevent multiple simultaneous initializations
+    if (this.isInitialized) {
+      return;
+    }
+
+    if (this.initializationPromise) {
+      return this.initializationPromise;
+    }
+
+    this.initializationPromise = this._doInitialize();
+    return this.initializationPromise;
+  }
+
+  private async _doInitialize() {
+    try {
+      console.log('🤖 AI Service initialized successfully');
+      // Initialize AI models and cache warmup
+      await this.warmupModels();
+      this.isInitialized = true;
+    } catch (error) {
+      console.error('❌ AI Service initialization failed:', error);
+      this.initializationPromise = null;
+      throw error;
+    }
   }
 
   // ============================================================================
