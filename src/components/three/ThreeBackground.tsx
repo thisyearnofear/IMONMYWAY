@@ -69,9 +69,14 @@ function FloatingGeometry({ prefersReducedMotion }: { prefersReducedMotion: bool
 export default function ThreeBackground() {
   const { isLowEnd, isMobile, supportsWebGL, prefersReducedMotion } = useDevicePerformance();
 
-  // Don't render 3D background only if WebGL is not supported
-  // Allow on low-end devices but reduce quality
-  if (!supportsWebGL) {
+  // Smart defaults: Disable WebGL by default, only enable for high-end desktop users who opt-in
+  const shouldDisableWebGL = !supportsWebGL ||
+    isMobile ||
+    isLowEnd ||
+    (typeof window !== 'undefined' && !localStorage.getItem('enable-webgl'));
+
+  // Always use CSS fallback - it's more reliable
+  if (shouldDisableWebGL) {
     return null;
   }
 

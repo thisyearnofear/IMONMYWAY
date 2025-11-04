@@ -7,6 +7,7 @@ import { ClientOnly } from './ClientOnly';
 interface SafeThreeCanvasProps extends CanvasProps {
     fallback?: React.ReactNode;
     onWebGLError?: (error: Event) => void;
+    disabled?: boolean;
 }
 
 /**
@@ -16,6 +17,7 @@ export function SafeThreeCanvas({
     children,
     fallback = null,
     onWebGLError,
+    disabled = false,
     ...canvasProps
 }: SafeThreeCanvasProps) {
     const [hasWebGLError, setHasWebGLError] = useState(false);
@@ -62,7 +64,7 @@ export function SafeThreeCanvas({
             onWebGLError?.(event);
         };
 
-        const handleContextRestored = (event: Event) => {
+        const handleContextRestored = () => {
             console.log('WebGL context restored');
             setHasWebGLError(false);
         };
@@ -76,20 +78,22 @@ export function SafeThreeCanvas({
         };
     }, [onWebGLError]);
 
-    // Show fallback if WebGL is not supported or has errors
-    if (!isWebGLSupported || hasWebGLError) {
+    // Show fallback if WebGL is disabled, not supported, or has errors
+    if (disabled || !isWebGLSupported || hasWebGLError) {
         return (
             <div className="flex items-center justify-center w-full h-full bg-graphite-800/50 rounded-lg">
                 {fallback || (
                     <div className="text-center text-gray-400">
                         <div className="text-2xl mb-2">🎨</div>
                         <p className="text-sm">
-                            {!isWebGLSupported
-                                ? 'WebGL not supported'
-                                : 'Graphics temporarily unavailable'
+                            {disabled
+                                ? 'Graphics disabled'
+                                : !isWebGLSupported
+                                    ? 'WebGL not supported'
+                                    : 'Graphics temporarily unavailable'
                             }
                         </p>
-                        {hasWebGLError && (
+                        {hasWebGLError && !disabled && (
                             <button
                                 onClick={() => setHasWebGLError(false)}
                                 className="mt-2 text-xs text-violet-400 hover:text-violet-300"
@@ -117,18 +121,23 @@ export function SafeThreeCanvas({
                     ...canvasProps.gl
                 }}
                 onCreated={(state) => {
-                    // Add error handling to the WebGL context
-                    const gl = state.gl.getContext();
+                    try {
+                        // Add error handling to the WebGL context
+                        const gl = state.gl.getContext();
 
-                    // Handle context loss gracefully
-                    gl.canvas.addEventListener('webglcontextlost', (event) => {
-                        console.warn('WebGL context lost during render');
-                        event.preventDefault();
+                        // Handle context loss gracefully
+                        gl.canvas.addEventListener('webglcontextlost', (event) => {
+                            console.warn('WebGL context lost during render');
+                            event.preventDefault();
+                            setHasWebGLError(true);
+                        }, false);
+
+                        // Call original onCreated if provided
+                        canvasProps.onCreated?.(state);
+                    } catch (error) {
+                        console.warn('Error setting up WebGL context:', error);
                         setHasWebGLError(true);
-                    }, false);
-
-                    // Call original onCreated if provided
-                    canvasProps.onCreated?.(state);
+                    }
                 }}
             >
                 {children}

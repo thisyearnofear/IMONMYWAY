@@ -10,6 +10,7 @@ import { useWallet } from "@/hooks/useWallet";
 import { useLocationStore } from "@/stores/locationStore";
 import { useUIStore } from "@/stores/uiStore";
 import { Suspense } from "react";
+import { VisualSettings } from "@/components/ui/VisualSettings";
 
 // Dynamic imports for components that might cause SSR issues with loading fallbacks
 const WebGLParticleSystem = dynamic(() => import("@/components/three/ParticleSystem"), {
@@ -53,17 +54,17 @@ export default function Share() {
     const R = 6371; // Earth's radius in kilometers
     const dLat = (end.lat - start.lat) * Math.PI / 180;
     const dLng = (end.lng - start.lng) * Math.PI / 180;
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-              Math.cos(start.lat * Math.PI / 180) * Math.cos(end.lat * Math.PI / 180) *
-              Math.sin(dLng/2) * Math.sin(dLng/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(start.lat * Math.PI / 180) * Math.cos(end.lat * Math.PI / 180) *
+      Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c; // Distance in kilometers
   };
 
   // Real commitment creation using contracts and database
   const createCommitment = async (start: any, end: any, deadline: number, pace: number, amount: string) => {
     if (!address) throw new Error('Wallet not connected');
-    
+
     try {
       // Create commitment in database first
       const commitmentId = `commitment_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -79,7 +80,7 @@ export default function Share() {
         estimatedDistance: calculateDistance(start, end),
         estimatedPace: pace
       };
-      
+
       // Try to create in database, but don't fail if it's not available
       try {
         const { dbService } = await import('@/lib/db-service');
@@ -87,40 +88,40 @@ export default function Share() {
       } catch (dbError) {
         console.warn('Database not available, creating commitment in memory:', dbError);
       }
-      
+
       // If blockchain is available, create on-chain commitment
       if (typeof window !== 'undefined' && window.ethereum && chainId) {
         try {
           const { BrowserProvider } = await import('ethers');
           const provider = new BrowserProvider(window.ethereum);
           const signer = await provider.getSigner();
-          
+
           // Convert coordinates to contract format (scaled integers)
           const startLoc: [bigint, bigint, bigint, bigint] = [
-            BigInt(Math.round(start.lat * 1e6)), 
-            BigInt(Math.round(start.lng * 1e6)), 
-            BigInt(Math.round(Date.now() / 1000)), 
+            BigInt(Math.round(start.lat * 1e6)),
+            BigInt(Math.round(start.lng * 1e6)),
+            BigInt(Math.round(Date.now() / 1000)),
             BigInt(100) // accuracy
           ];
           const endLoc: [bigint, bigint, bigint, bigint] = [
-            BigInt(Math.round(end.lat * 1e6)), 
-            BigInt(Math.round(end.lng * 1e6)), 
-            BigInt(deadline), 
+            BigInt(Math.round(end.lat * 1e6)),
+            BigInt(Math.round(end.lng * 1e6)),
+            BigInt(deadline),
             BigInt(100) // accuracy
           ];
-          
+
           // Use the contract service to create the commitment
           const { ContractService } = await import('@/services/contractService');
           const contractService = new ContractService(signer);
-          
+
           await contractService.createCommitment(
-            startLoc, 
-            endLoc, 
-            BigInt(deadline), 
-            BigInt(pace), 
+            startLoc,
+            endLoc,
+            BigInt(deadline),
+            BigInt(pace),
             amount
           );
-          
+
           // Update commitment status to pending if database is available
           try {
             const { dbService } = await import('@/lib/db-service');
@@ -132,7 +133,7 @@ export default function Share() {
           console.warn('Blockchain interaction failed, continuing with off-chain commitment:', contractError);
         }
       }
-      
+
       return commitmentId;
     } catch (error) {
       console.error('Error creating commitment:', error);
@@ -197,14 +198,26 @@ export default function Share() {
 
   const { connect } = useWallet();
 
+  // Render background elements once to avoid WebGL context conflicts
+  // WebGL is now opt-in by default for better reliability
+  const backgroundElements = (
+    <>
+      <Suspense fallback={<div />}>
+        <WebGLParticleSystem
+          count={1500}
+          color="#60a5fa"
+          size={0.02}
+        />
+      </Suspense>
+      <div className="fixed inset-0 bg-gradient-to-br from-indigo-950/40 via-purple-950/20 to-pink-950/10" />
+      <div className="fixed inset-0 bg-[radial-gradient(circle_at_30%_40%,rgba(59,130,246,0.08),transparent_70%)]" />
+    </>
+  );
+
   if (!isConnected) {
     return (
       <div className="min-h-screen relative">
-        <Suspense fallback={<div />}>
-          <WebGLParticleSystem count={1500} color="#60a5fa" size={0.02} />
-        </Suspense>
-        <div className="fixed inset-0 bg-gradient-to-br from-indigo-950/40 via-purple-950/20 to-pink-950/10" />
-        <div className="fixed inset-0 bg-[radial-gradient(circle_at_30%_40%,rgba(59,130,246,0.08),transparent_70%)]" />
+        {backgroundElements}
         <motion.div
           className="flex items-center justify-center min-h-screen relative z-10"
           initial={{ opacity: 0, y: 20 }}
@@ -222,7 +235,7 @@ export default function Share() {
               Connect your wallet to create staked commitments and start betting
               on punctuality.
             </p>
-            <Button 
+            <Button
               onClick={connect}
               className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
             >
@@ -236,11 +249,7 @@ export default function Share() {
 
   return (
     <div className="min-h-screen relative">
-      <Suspense fallback={<div />}>
-        <WebGLParticleSystem count={1500} color="#60a5fa" size={0.02} />
-      </Suspense>
-      <div className="fixed inset-0 bg-gradient-to-br from-indigo-950/40 via-purple-950/20 to-pink-950/10" />
-      <div className="fixed inset-0 bg-[radial-gradient(circle_at_30%_40%,rgba(59,130,246,0.08),transparent_70%)]" />
+      {backgroundElements}
 
 
       {/* Minimal Header */}
@@ -296,11 +305,11 @@ export default function Share() {
               context={{
                 distance: destination && currentLocation
                   ? Math.round(
-                      Math.sqrt(
-                        Math.pow((destination[0] - currentLocation.latitude) * 111000, 2) +
-                        Math.pow((destination[1] - currentLocation.longitude) * 111000, 2)
-                      )
+                    Math.sqrt(
+                      Math.pow((destination[0] - currentLocation.latitude) * 111000, 2) +
+                      Math.pow((destination[1] - currentLocation.longitude) * 111000, 2)
                     )
+                  )
                   : undefined,
                 timeAvailable: 30,
                 destination: destination ? `${destination[0].toFixed(4)}, ${destination[1].toFixed(4)}` : undefined
@@ -348,6 +357,7 @@ export default function Share() {
         </div>
       </div>
 
+      <VisualSettings />
       <ToastContainer />
     </div>
   );

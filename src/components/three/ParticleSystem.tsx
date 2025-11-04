@@ -11,6 +11,7 @@ interface ParticleSystemProps {
   count?: number;
   color?: string;
   size?: number;
+  disabled?: boolean;
 }
 
 function Particles({ count = 2000, color = "#60a5fa", size = 0.02 }: ParticleSystemProps) {
@@ -62,19 +63,30 @@ function Particles({ count = 2000, color = "#60a5fa", size = 0.02 }: ParticleSys
 export default function WebGLParticleSystem(props: ParticleSystemProps) {
   const { isLowEnd, isMobile, supportsWebGL } = useDevicePerformance();
 
-  // Don't render particle system only if WebGL is not supported
-  // Allow on low-end devices but reduce quality
-  if (!supportsWebGL) {
-    return null;
+  // Smart defaults: Disable WebGL by default, only enable for high-end desktop users who opt-in
+  const shouldDisableWebGL = props.disabled ||
+    !supportsWebGL ||
+    isMobile ||
+    isLowEnd ||
+    (typeof window !== 'undefined' && !localStorage.getItem('enable-webgl'));
+
+  // Always use CSS fallback - it's more reliable and looks nearly as good
+  if (shouldDisableWebGL) {
+    return (
+      <div className="fixed inset-0 bg-gradient-to-br from-violet-900/10 to-gold-900/5 pointer-events-none" style={{ zIndex: -10 }} />
+    );
   }
 
   return (
     <SafeThreeCanvas
+      disabled={props.disabled}
       camera={{ position: [0, 0, 15], fov: 75 }}
       gl={{
         antialias: false,
         alpha: true,
-        powerPreference: isMobile ? "low-power" : "high-performance"
+        powerPreference: isMobile ? "low-power" : "high-performance",
+        failIfMajorPerformanceCaveat: false,
+        preserveDrawingBuffer: false
       }}
       style={{
         background: 'transparent',
@@ -88,6 +100,9 @@ export default function WebGLParticleSystem(props: ParticleSystemProps) {
       }}
       dpr={isMobile ? 1 : [1, 2]}
       fallback={<div className="fixed inset-0 bg-gradient-to-br from-violet-900/10 to-gold-900/5 pointer-events-none" style={{ zIndex: -10 }} />}
+      onWebGLError={() => {
+        console.warn('WebGL error in ParticleSystem, falling back to CSS background');
+      }}
     >
       <Suspense fallback={null}>
         <Particles {...props} count={isMobile ? Math.floor(props.count! * 0.5) : props.count} size={0.08} />
