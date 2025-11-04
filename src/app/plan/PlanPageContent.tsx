@@ -17,7 +17,7 @@ import { useLocationStore } from "@/stores/locationStore";
 import { useMobileExperience } from "@/hooks/useMobileExperience";
 import { calculateDistance, calculateETA } from "@/lib/distance";
 import { formatTime, formatDistance } from "@/lib/utils";
-import { getConfidenceScore } from "@/lib/speed";
+import { getConfidenceScore, SPEED_PRESETS, findPresetByPace } from "@/lib/speed";
 import { MapContainer } from "@/components/map/MapContainer";
 import ParallaxSection from "@/components/three/ParallaxSection";
 import WebGLParticleSystem from "@/components/three/ParticleSystem";
@@ -71,10 +71,28 @@ export default function PlanPageContent() {
     accuracy: number;
   } | null>(null);
   const [gpsEnabled, setGpsEnabled] = useState(false);
+  const [showCustomInput, setShowCustomInput] = useState(false);
+  const [customPace, setCustomPace] = useState("12");
 
   const { addToast } = useUIStore();
-  const { selectedPace } = useLocationStore();
+  const { selectedPace, setSelectedPace } = useLocationStore();
   const { isMobile, triggerHaptic, supportsGeolocation } = useMobileExperience();
+
+  // Speed picker functions
+  const currentPreset = findPresetByPace(selectedPace);
+  
+  const handlePresetSelect = (pace: number) => {
+    setSelectedPace(pace);
+    setShowCustomInput(false);
+  };
+
+  const handleCustomSubmit = () => {
+    const pace = parseFloat(customPace);
+    if (pace > 0 && pace <= 30) {
+      setSelectedPace(pace);
+      setShowCustomInput(false);
+    }
+  };
 
   // GPS location tracking
   useEffect(() => {
@@ -304,72 +322,80 @@ export default function PlanPageContent() {
 
       <PremiumNavigation />
 
-      <main className="relative z-10 container mx-auto px-4 py-8 max-w-6xl">
-        <ParallaxSection offset={20} className="text-center mb-12">
+      <main className="relative z-10 container mx-auto px-4 pt-20 pb-8 max-w-6xl">
+        <ParallaxSection offset={20} className="text-center mb-6">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <h1 className="text-4xl font-bold mb-4">
+            <h1 className="text-3xl font-bold mb-2">
               <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
                 🗺️ Plan Your Route
               </span>
             </h1>
-            <p className="text-white/80 text-lg max-w-2xl mx-auto">
-              Drop pins on the interactive map or enter addresses to plan your punctuality challenge
+            <p className="text-white/70 text-base max-w-2xl mx-auto">
+              Enter addresses or click on the map to plan your punctuality challenge
             </p>
           </motion.div>
         </ParallaxSection>
 
-        {/* Modern Map Section */}
-        <ParallaxSection offset={-10} className="mb-8">
+        {/* Compact Layout - Side by Side */}
+        <div className="grid lg:grid-cols-2 gap-6 mb-6">
+          {/* Map Section */}
           <motion.div
-            className="rounded-2xl overflow-hidden shadow-2xl border border-gold/20 bg-gradient-to-br from-gold/10 to-violet/10"
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
+            className="rounded-xl overflow-hidden shadow-xl border border-white/20 bg-gradient-to-br from-white/10 to-white/5"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6 }}
           >
-            <div className="p-6 border-b border-white/10">
-              <h2 className="text-2xl font-bold text-white mb-2">
-                📍 Interactive Route Planning
+            <div className="p-4 border-b border-white/10">
+              <h2 className="text-lg font-bold text-white mb-1">
+                📍 Interactive Map
               </h2>
-              <p className="text-white/70">
-                Click on the map to set your start and end points, or use the form below
+              <p className="text-white/60 text-sm">
+                Click to set points or use form
               </p>
             </div>
-            {!planData ? (
-              <div className="relative">
-                <MapSkeleton className="h-96" />
-                <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm rounded-b-2xl">
-                  <div className="text-center">
-                    <div className="text-5xl mb-4">🗺️</div>
-                    <p className="text-white font-semibold text-lg">Plan your route on the map</p>
-                    <p className="text-white/70">Enter addresses below or click directly on the map</p>
-                  </div>
-                </div>
-              </div>
-            ) : (
+            <div className="relative">
               <MapContainer
-                className="h-96"
-                center={planData ? planData.startCoords : [40.7128, -74.006]}
+                className="h-80"
+                center={
+                  planData ? planData.startCoords :
+                  currentLocation ? [currentLocation.lat, currentLocation.lng] :
+                  [40.7128, -74.006]
+                }
                 onMapReady={async (map) => {
+                  // Add current location marker if available
+                  if (currentLocation && typeof window !== "undefined") {
+                    try {
+                      const L = await import("leaflet");
+                      const currentLocationMarker = L.default.marker([currentLocation.lat, currentLocation.lng], {
+                        icon: L.default.divIcon({
+                          className: 'current-location-marker',
+                          html: '<div class="w-3 h-3 bg-blue-500 rounded-full border-2 border-white shadow-lg animate-pulse"></div>',
+                          iconSize: [12, 12],
+                          iconAnchor: [6, 6]
+                        })
+                      }).bindPopup(`Current Location (±${currentLocation.accuracy}m)`);
+                      currentLocationMarker.addTo(map);
+                    } catch (error) {
+                      console.error("Error adding current location marker:", error);
+                    }
+                  }
+
+                  // Add route markers if available
                   if (planData && typeof window !== "undefined") {
                     try {
                       const L = await import("leaflet");
-                      // Add markers for start and end
                       const startMarker = await createStartMarker(planData.startCoords);
                       const endMarker = await createDestinationMarker(planData.endCoords);
-
-                      // Add line between points
                       const polyline = await createPolyline([planData.startCoords, planData.endCoords], true);
 
                       startMarker.addTo(map);
                       endMarker.addTo(map);
                       polyline.addTo(map);
 
-                      // Fit map to show both points
                       const group = L.default.featureGroup([startMarker, endMarker, polyline]);
                       fitBoundsToMarkers(map, group);
                     } catch (error) {
@@ -378,85 +404,170 @@ export default function PlanPageContent() {
                   }
                 }}
               />
-            )}
+              {!planData && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+                  <div className="text-center">
+                    <div className="text-3xl mb-2">🗺️</div>
+                    <p className="text-white text-sm">Enter addresses to see route</p>
+                  </div>
+                </div>
+              )}
+            </div>
           </motion.div>
-        </ParallaxSection>
 
-        {/* Desktop Controls - Full Featured */}
-        <div className="max-w-4xl mx-auto mb-8 space-y-6">
-          {/* Address Inputs */}
-          <div className="grid md:grid-cols-3 gap-4">
-            <Input
-              label="Start Location"
-              value={startAddress}
-              onChange={(e) => setStartAddress(e.target.value)}
-              placeholder="From..."
-              className="md:col-span-1"
-              variant="dark"
-            />
-            <Input
-              label="Destination"
-              value={endAddress}
-              onChange={(e) => setEndAddress(e.target.value)}
-              placeholder="To..."
-              className="md:col-span-1"
-              variant="dark"
-            />
-            <SpeedPicker className="md:col-span-1" />
-          </div>
-
-          <Button
-            onClick={planRoute}
-            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold py-4 text-xl rounded-xl shadow-2xl hover:from-blue-700 hover:to-purple-700"
-            isLoading={isPlanning}
-            disabled={isPlanning || !startAddress.trim() || !endAddress.trim()}
+          {/* Controls Section */}
+          <motion.div
+            className="space-y-4"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
           >
-            {isPlanning ? "Planning Route..." : "📍 Calculate Route"}
-          </Button>
+            {/* Address Inputs */}
+            <div className="space-y-3">
+              <Input
+                label="Start Location"
+                value={startAddress}
+                onChange={(e) => setStartAddress(e.target.value)}
+                placeholder="From..."
+                variant="dark"
+                className="text-sm"
+              />
+              <Input
+                label="Destination"
+                value={endAddress}
+                onChange={(e) => setEndAddress(e.target.value)}
+                placeholder="To..."
+                variant="dark"
+                className="text-sm"
+              />
+            </div>
+
+            {/* Compact Speed Picker */}
+            <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+              <h3 className="text-white font-medium mb-2 text-sm">How fast will you move?</h3>
+              <p className="text-white/60 text-xs mb-3">This helps calculate arrival times</p>
+              
+              {/* Current Selection Display */}
+              <div className="bg-white/10 rounded-lg p-3 mb-3 text-center">
+                <div className="text-lg mb-1">{currentPreset?.icon || '⚡'}</div>
+                <div className="text-white font-medium text-sm">{currentPreset?.label || 'Custom'}</div>
+                <div className="text-white/70 text-xs">{selectedPace} min/mile</div>
+              </div>
+
+              {/* Speed Options Grid */}
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                {SPEED_PRESETS.slice(0, 6).map((preset) => (
+                  <Button
+                    key={preset.id}
+                    variant={currentPreset?.id === preset.id ? "primary" : "ghost"}
+                    size="sm"
+                    onClick={() => handlePresetSelect(preset.pace)}
+                    className="text-xs h-auto py-2 px-2"
+                  >
+                    <div className="text-center">
+                      <div className="text-sm">{preset.icon}</div>
+                      <div className="text-xs font-medium">{preset.label}</div>
+                      <div className="text-xs opacity-70">{preset.pace} min/mile</div>
+                    </div>
+                  </Button>
+                ))}
+              </div>
+
+              {/* Custom Speed Toggle */}
+              {!showCustomInput ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowCustomInput(true)}
+                  className="w-full text-xs border border-dashed border-white/30"
+                >
+                  ⚙️ Custom Speed
+                </Button>
+              ) : (
+                <div className="space-y-2">
+                  <Input
+                    type="number"
+                    value={customPace}
+                    onChange={(e) => setCustomPace(e.target.value)}
+                    placeholder="Minutes per mile"
+                    step="0.1"
+                    min="1"
+                    max="30"
+                    className="text-sm"
+                  />
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={handleCustomSubmit} className="flex-1 text-xs">
+                      Apply
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="ghost" 
+                      onClick={() => setShowCustomInput(false)}
+                      className="flex-1 text-xs"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Calculate Button */}
+            <Button
+              onClick={planRoute}
+              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold py-3 rounded-xl shadow-xl hover:from-blue-700 hover:to-purple-700"
+              isLoading={isPlanning}
+              disabled={isPlanning || !startAddress.trim() || !endAddress.trim()}
+            >
+              {isPlanning ? "Planning..." : "📍 Calculate Route"}
+            </Button>
+          </motion.div>
         </div>
 
-        {/* Results Display */}
+        {/* Compact Results Display */}
         {planData && (
           <motion.div
-            className="max-w-4xl mx-auto mb-8 p-6 bg-white/10 rounded-2xl backdrop-blur-sm border border-white/20"
+            className="mb-6 p-4 bg-white/10 rounded-xl backdrop-blur-sm border border-white/20"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
           >
             <div className="text-center">
-              <h3 className="text-2xl font-bold text-white mb-4">Route Summary</h3>
-              <div className="grid md:grid-cols-3 gap-6 text-center">
+              <h3 className="text-lg font-bold text-white mb-3">Route Summary</h3>
+              <div className="grid grid-cols-3 gap-4 text-center mb-4">
                 <div>
-                  <div className="text-3xl font-bold text-blue-400 mb-1">
+                  <div className="text-xl font-bold text-blue-400 mb-1">
                     {formatDistance(planData.distance)}
                   </div>
-                  <div className="text-white/70 text-sm">Distance</div>
+                  <div className="text-white/70 text-xs">Distance</div>
                 </div>
                 <div>
-                  <div className="text-3xl font-bold text-purple-400 mb-1">
+                  <div className="text-xl font-bold text-purple-400 mb-1">
                     {formatTime(planData.eta)}
                   </div>
-                  <div className="text-white/70 text-sm">Estimated Time</div>
+                  <div className="text-white/70 text-xs">Est. Time</div>
                 </div>
                 <div>
-                  <div className={`text-3xl font-bold mb-1 ${planData.confidence >= 80 ? 'text-green-400' :
+                  <div className={`text-xl font-bold mb-1 ${planData.confidence >= 80 ? 'text-green-400' :
                     planData.confidence >= 60 ? 'text-yellow-400' : 'text-red-400'
                     }`}>
                     {planData.confidence}%
                   </div>
-                  <div className="text-white/70 text-sm">Confidence</div>
+                  <div className="text-white/70 text-xs">Confidence</div>
                 </div>
               </div>
-              <div className="flex space-x-4 mt-6">
+              <div className="flex space-x-3">
                 <Button
                   onClick={shareRoute}
                   variant="outline"
-                  className="flex-1 border-white/30 text-white py-3"
+                  size="sm"
+                  className="flex-1 border-white/30 text-white py-2"
                 >
-                  📤 Share Route
+                  📤 Share
                 </Button>
                 <Button
-                  className="flex-1 bg-green-600 text-white py-3 hover:bg-green-700"
+                  size="sm"
+                  className="flex-1 bg-green-600 text-white py-2 hover:bg-green-700"
                   onClick={() => window.location.href = '/share'}
                 >
                   🚀 Start Challenge

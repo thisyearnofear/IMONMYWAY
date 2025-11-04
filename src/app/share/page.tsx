@@ -10,18 +10,33 @@ import { Button } from "@/components/ui/PremiumButton";
 import { useWallet } from "@/hooks/useWallet";
 import { useLocationStore } from "@/stores/locationStore";
 import { useUIStore } from "@/stores/uiStore";
+import { Suspense } from "react";
 
-// Dynamic imports for components that might cause SSR issues
+// Dynamic imports for components that might cause SSR issues with loading fallbacks
 const WebGLParticleSystem = dynamic(() => import("@/components/three/ParticleSystem"), {
-  ssr: false
+  ssr: false,
+  loading: () => <div />
 });
 
 const SmartStakeInput = dynamic(() => import("@/components/smart/SmartStakeInput").then(mod => ({ default: mod.SmartStakeInput })), {
-  ssr: false
+  ssr: false,
+  loading: () => (
+    <div className="p-4 bg-white/10 rounded-xl backdrop-blur-sm animate-pulse">
+      <div className="h-16 bg-white/20 rounded-lg"></div>
+    </div>
+  )
 });
 
 const MapContainer = dynamic(() => import("@/components/map/MapContainer").then(mod => ({ default: mod.MapContainer })), {
-  ssr: false
+  ssr: false,
+  loading: () => (
+    <div className="h-full bg-gray-200 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+        <p className="text-gray-600">Loading map...</p>
+      </div>
+    </div>
+  )
 });
 
 export default function Share() {
@@ -48,9 +63,6 @@ export default function Share() {
 
   // Real commitment creation using contracts and database
   const createCommitment = async (start: any, end: any, deadline: number, pace: number, amount: string) => {
-    const { dbService } = await import('@/lib/db-service');
-    const { useContractService } = await import('@/hooks/useContractService');
-    
     if (!address) throw new Error('Wallet not connected');
     
     try {
@@ -69,42 +81,57 @@ export default function Share() {
         estimatedPace: pace
       };
       
-      await dbService.createCommitment(commitmentData);
+      // Try to create in database, but don't fail if it's not available
+      try {
+        const { dbService } = await import('@/lib/db-service');
+        await dbService.createCommitment(commitmentData);
+      } catch (dbError) {
+        console.warn('Database not available, creating commitment in memory:', dbError);
+      }
       
       // If blockchain is available, create on-chain commitment
-      if (window.ethereum && chainId) {
-        const { BrowserProvider, parseEther } = await import('ethers');
-        const provider = new BrowserProvider(window.ethereum);
-        const signer = await provider.getSigner();
-        
-        // Convert coordinates to contract format (scaled integers)
-        const startLoc: [bigint, bigint, bigint, bigint] = [
-          BigInt(Math.round(start.lat * 1e6)), 
-          BigInt(Math.round(start.lng * 1e6)), 
-          BigInt(Math.round(Date.now() / 1000)), 
-          BigInt(100) // accuracy
-        ];
-        const endLoc: [bigint, bigint, bigint, bigint] = [
-          BigInt(Math.round(end.lat * 1e6)), 
-          BigInt(Math.round(end.lng * 1e6)), 
-          BigInt(deadline), 
-          BigInt(100) // accuracy
-        ];
-        
-        // Use the contract service to create the commitment
-        const { ContractService } = await import('@/services/contractService');
-        const contractService = new ContractService(signer);
-        
-        await contractService.createCommitment(
-          startLoc, 
-          endLoc, 
-          BigInt(deadline), 
-          BigInt(pace), 
-          amount
-        );
-        
-        // Update commitment status to pending
-        await dbService.updateCommitmentStatus(commitmentId, 'pending');
+      if (typeof window !== 'undefined' && window.ethereum && chainId) {
+        try {
+          const { BrowserProvider } = await import('ethers');
+          const provider = new BrowserProvider(window.ethereum);
+          const signer = await provider.getSigner();
+          
+          // Convert coordinates to contract format (scaled integers)
+          const startLoc: [bigint, bigint, bigint, bigint] = [
+            BigInt(Math.round(start.lat * 1e6)), 
+            BigInt(Math.round(start.lng * 1e6)), 
+            BigInt(Math.round(Date.now() / 1000)), 
+            BigInt(100) // accuracy
+          ];
+          const endLoc: [bigint, bigint, bigint, bigint] = [
+            BigInt(Math.round(end.lat * 1e6)), 
+            BigInt(Math.round(end.lng * 1e6)), 
+            BigInt(deadline), 
+            BigInt(100) // accuracy
+          ];
+          
+          // Use the contract service to create the commitment
+          const { ContractService } = await import('@/services/contractService');
+          const contractService = new ContractService(signer);
+          
+          await contractService.createCommitment(
+            startLoc, 
+            endLoc, 
+            BigInt(deadline), 
+            BigInt(pace), 
+            amount
+          );
+          
+          // Update commitment status to pending if database is available
+          try {
+            const { dbService } = await import('@/lib/db-service');
+            await dbService.updateCommitmentStatus(commitmentId, 'pending');
+          } catch (dbError) {
+            console.warn('Could not update commitment status in database:', dbError);
+          }
+        } catch (contractError) {
+          console.warn('Blockchain interaction failed, continuing with off-chain commitment:', contractError);
+        }
       }
       
       return commitmentId;
@@ -169,10 +196,14 @@ export default function Share() {
     setDestination(latlng);
   };
 
+  const { connect } = useWallet();
+
   if (!isConnected) {
     return (
       <div className="min-h-screen relative">
-        <WebGLParticleSystem count={1500} color="#60a5fa" size={0.02} />
+        <Suspense fallback={<div />}>
+          <WebGLParticleSystem count={1500} color="#60a5fa" size={0.02} />
+        </Suspense>
         <div className="fixed inset-0 bg-gradient-to-br from-indigo-950/40 via-purple-950/20 to-pink-950/10" />
         <div className="fixed inset-0 bg-[radial-gradient(circle_at_30%_40%,rgba(59,130,246,0.08),transparent_70%)]" />
         <motion.div
@@ -192,7 +223,12 @@ export default function Share() {
               Connect your wallet to create staked commitments and start betting
               on punctuality.
             </p>
-            <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">Connect Wallet</Button>
+            <Button 
+              onClick={connect}
+              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+            >
+              Connect Wallet
+            </Button>
           </div>
         </motion.div>
       </div>
@@ -201,7 +237,9 @@ export default function Share() {
 
   return (
     <div className="min-h-screen relative">
-      <WebGLParticleSystem count={1500} color="#60a5fa" size={0.02} />
+      <Suspense fallback={<div />}>
+        <WebGLParticleSystem count={1500} color="#60a5fa" size={0.02} />
+      </Suspense>
       <div className="fixed inset-0 bg-gradient-to-br from-indigo-950/40 via-purple-950/20 to-pink-950/10" />
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_30%_40%,rgba(59,130,246,0.08),transparent_70%)]" />
 
@@ -209,26 +247,35 @@ export default function Share() {
 
       {/* Minimal Header */}
       <div className="relative z-10 p-4 text-center">
-        <h1 className="text-2xl font-bold text-gray-900 mb-1">
+        <h1 className="text-2xl font-bold text-white mb-1">
           Create Bet
         </h1>
-        <p className="text-gray-700 text-sm">Tap map for destination, set stake</p>
+        <p className="text-white/70 text-sm">Tap map for destination, set stake</p>
       </div>
 
       {/* Full-screen map */}
       <div className="fixed inset-0 z-0">
-        <MapContainer
-          className="h-full"
-          center={
-            currentLocation
-              ? [currentLocation.latitude, currentLocation.longitude]
-              : [40.7128, -74.006]
-          }
-          onClick={handleMapClick}
-        />
+        <Suspense fallback={
+          <div className="h-full bg-gray-900 flex items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+              <p className="text-white">Loading map...</p>
+            </div>
+          </div>
+        }>
+          <MapContainer
+            className="h-full"
+            center={
+              currentLocation
+                ? [currentLocation.latitude, currentLocation.longitude]
+                : [40.7128, -74.006]
+            }
+            onClick={handleMapClick}
+          />
+        </Suspense>
         {!destination && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm">
-            <div className="text-center text-gray-900">
+            <div className="text-center text-white">
               <div className="text-6xl mb-2">📍</div>
               <p className="text-lg font-medium">Tap to set destination</p>
             </div>
@@ -239,23 +286,29 @@ export default function Share() {
       {/* Compact bottom controls bar */}
       <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-4 z-10">
         <div className="space-y-4 max-w-4xl mx-auto">
-          <SmartStakeInput
-            onStakeSet={handleStakeSet}
-            isLoading={isCreating}
-            userBalance={balance || "0.0"}
-            context={{
-              distance: destination && currentLocation
-                ? Math.round(
-                    Math.sqrt(
-                      Math.pow((destination[0] - currentLocation.latitude) * 111000, 2) +
-                      Math.pow((destination[1] - currentLocation.longitude) * 111000, 2)
+          <Suspense fallback={
+            <div className="p-4 bg-white/10 rounded-xl backdrop-blur-sm animate-pulse">
+              <div className="h-16 bg-white/20 rounded-lg"></div>
+            </div>
+          }>
+            <SmartStakeInput
+              onStakeSet={handleStakeSet}
+              isLoading={isCreating}
+              userBalance={balance || "0.0"}
+              context={{
+                distance: destination && currentLocation
+                  ? Math.round(
+                      Math.sqrt(
+                        Math.pow((destination[0] - currentLocation.latitude) * 111000, 2) +
+                        Math.pow((destination[1] - currentLocation.longitude) * 111000, 2)
+                      )
                     )
-                  )
-                : undefined,
-              timeAvailable: 30,
-              destination: destination ? `${destination[0].toFixed(4)}, ${destination[1].toFixed(4)}` : undefined
-            }}
-          />
+                  : undefined,
+                timeAvailable: 30,
+                destination: destination ? `${destination[0].toFixed(4)}, ${destination[1].toFixed(4)}` : undefined
+              }}
+            />
+          </Suspense>
           {destination && (
             <motion.div
               className="p-4 bg-white/10 rounded-xl text-center backdrop-blur-sm"
@@ -263,10 +316,10 @@ export default function Share() {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5 }}
             >
-              <p className="text-gray-900 font-bold text-lg mb-2">
+              <p className="text-white font-bold text-lg mb-2">
                 Destination set: {destination[0].toFixed(4)}, {destination[1].toFixed(4)}
               </p>
-              <p className="text-gray-700 text-sm mb-3">
+              <p className="text-white/70 text-sm mb-3">
                 30 min limit • {destination && currentLocation ? (Math.sqrt(
                   Math.pow((destination[0] - currentLocation.latitude) * 111000, 2) +
                   Math.pow((destination[1] - currentLocation.longitude) * 111000, 2)

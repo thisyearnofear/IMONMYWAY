@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { useWallet } from "@/hooks/useWallet";
 import { useLocationStore } from "@/stores/locationStore";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/PremiumButton";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { ClientOnly } from "@/components/core/ClientOnly";
 
 // Navigation items - single source of truth
@@ -19,8 +19,10 @@ const NAV_ITEMS = [
 export function PremiumNavigation() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { address, isConnected, connect } = useWallet();
+  const [isWalletDropdownOpen, setIsWalletDropdownOpen] = useState(false);
+  const { address, isConnected, connect, disconnect, balance, chainId, networkMetrics } = useWallet();
   const { setWalletAddress, setWalletConnected } = useLocationStore();
+  const walletDropdownRef = useRef<HTMLDivElement>(null);
 
   // Truncate wallet address for display
   const truncatedAddress = address ? `${address.slice(0, 4)}...${address.slice(-4)}` : "";
@@ -39,6 +41,33 @@ export function PremiumNavigation() {
     setWalletAddress(address);
     setWalletConnected(isConnected);
   }, [address, isConnected, setWalletAddress, setWalletConnected]);
+
+  // Handle click outside wallet dropdown
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (walletDropdownRef.current && !walletDropdownRef.current.contains(event.target as Node)) {
+        setIsWalletDropdownOpen(false);
+      }
+    }
+
+    if (isWalletDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isWalletDropdownOpen]);
+
+  const handleDisconnect = () => {
+    disconnect();
+    setIsWalletDropdownOpen(false);
+  };
+
+  const getNetworkName = () => {
+    if (networkMetrics?.isOnSomnia) return "Somnia";
+    if (chainId === 1) return "Ethereum";
+    if (chainId === 137) return "Polygon";
+    if (chainId === 56) return "BSC";
+    return `Chain ${chainId}`;
+  };
 
   return (
     <header
@@ -91,14 +120,94 @@ export function PremiumNavigation() {
             </Button>
           }>
             {isConnected ? (
-              <Button
-                variant="outline"
-                size="sm"
-                className="hidden sm:flex items-center gap-2 border-violet-500/50 hover:bg-violet-500/10 rounded-lg"
-              >
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span className="text-sm">{truncatedAddress}</span>
-              </Button>
+              <div className="hidden sm:block relative" ref={walletDropdownRef}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="items-center gap-2 border-violet-500/50 hover:bg-violet-500/10 rounded-lg"
+                  onClick={() => setIsWalletDropdownOpen(!isWalletDropdownOpen)}
+                >
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <span className="text-sm">{truncatedAddress}</span>
+                  <svg
+                    className={`w-4 h-4 transition-transform ${isWalletDropdownOpen ? 'rotate-180' : ''}`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </Button>
+
+                <AnimatePresence>
+                  {isWalletDropdownOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute right-0 mt-2 w-80 bg-graphite-800/95 backdrop-blur-xl border border-violet-500/20 rounded-xl shadow-2xl z-50"
+                    >
+                      <div className="p-4 space-y-4">
+                        {/* Wallet Info Header */}
+                        <div className="flex items-center gap-3 pb-3 border-b border-violet-500/20">
+                          <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                          <div>
+                            <p className="text-white font-medium">Wallet Connected</p>
+                            <p className="text-gray-400 text-sm">{truncatedAddress}</p>
+                          </div>
+                        </div>
+
+                        {/* Balance and Network Info */}
+                        <div className="space-y-3">
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-400">Balance:</span>
+                            <span className="text-white font-mono">{balance || '0.0000'} ETH</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-400">Network:</span>
+                            <span className={`text-sm px-2 py-1 rounded-full ${
+                              networkMetrics?.isOnSomnia 
+                                ? 'bg-green-500/20 text-green-400' 
+                                : 'bg-yellow-500/20 text-yellow-400'
+                            }`}>
+                              {getNetworkName()}
+                            </span>
+                          </div>
+                          {networkMetrics?.lastTxSpeed && (
+                            <div className="flex justify-between items-center">
+                              <span className="text-gray-400">Last Tx Speed:</span>
+                              <span className="text-green-400 font-mono">{networkMetrics.lastTxSpeed.toFixed(1)}s</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="pt-3 border-t border-violet-500/20 space-y-2">
+                          <Link href="/profile">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full justify-start border-violet-500/30 hover:bg-violet-500/10"
+                              onClick={() => setIsWalletDropdownOpen(false)}
+                            >
+                              👤 View Profile
+                            </Button>
+                          </Link>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full justify-start border-red-500/30 hover:bg-red-500/10 text-red-400 hover:text-red-300"
+                            onClick={handleDisconnect}
+                          >
+                            🔌 Disconnect Wallet
+                          </Button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             ) : (
               <Button
                 size="sm"
@@ -161,7 +270,7 @@ export function PremiumNavigation() {
               </Link>
             ))}
 
-            <div className="pt-4">
+            <div className="pt-4 space-y-3">
               <ClientOnly fallback={
                 <Button
                   variant="outline"
@@ -172,13 +281,54 @@ export function PremiumNavigation() {
                 </Button>
               }>
                 {isConnected ? (
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start border-violet-500/50 hover:bg-violet-500/10"
-                  >
-                    <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                    <span>{truncatedAddress}</span>
-                  </Button>
+                  <>
+                    <div className="p-4 bg-graphite-700/50 rounded-lg border border-violet-500/20">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                        <div>
+                          <p className="text-white font-medium text-sm">Wallet Connected</p>
+                          <p className="text-gray-400 text-xs">{truncatedAddress}</p>
+                        </div>
+                      </div>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Balance:</span>
+                          <span className="text-white font-mono">{balance || '0.0000'} ETH</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Network:</span>
+                          <span className={`text-xs px-2 py-1 rounded-full ${
+                            networkMetrics?.isOnSomnia 
+                              ? 'bg-green-500/20 text-green-400' 
+                              : 'bg-yellow-500/20 text-yellow-400'
+                          }`}>
+                            {getNetworkName()}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Link href="/profile">
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start border-violet-500/30 hover:bg-violet-500/10"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          👤 View Profile
+                        </Button>
+                      </Link>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start border-red-500/30 hover:bg-red-500/10 text-red-400 hover:text-red-300"
+                        onClick={() => {
+                          handleDisconnect();
+                          setIsMobileMenuOpen(false);
+                        }}
+                      >
+                        🔌 Disconnect Wallet
+                      </Button>
+                    </div>
+                  </>
                 ) : (
                   <Button
                     variant="gradient"
