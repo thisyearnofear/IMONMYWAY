@@ -1,11 +1,11 @@
 "use client";
 
-import { Canvas } from '@react-three/fiber';
 import { Suspense, useRef, useMemo } from 'react';
 import { Points, PointMaterial } from '@react-three/drei';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
 import { useDevicePerformance } from '@/hooks/useDevicePerformance';
+import { SafeThreeCanvas } from '@/components/core/SafeThreeCanvas';
 
 function Stars({ count = 5000, size = 0.05 }: { count?: number; size?: number }) {
   const ref = useRef<THREE.Points>(null!);
@@ -76,7 +76,7 @@ export default function ThreeBackground() {
   }
 
   return (
-    <Canvas
+    <SafeThreeCanvas
       camera={{ position: [0, 0, 5], fov: 75 }}
       gl={{
         antialias: !isMobile,
@@ -94,11 +94,12 @@ export default function ThreeBackground() {
         zIndex: -20
       }}
       dpr={isMobile ? 1 : [1, 2]}
+      fallback={<div className="fixed inset-0 bg-gradient-to-br from-graphite-900 via-violet-900/20 to-gold-900/10 pointer-events-none" style={{ zIndex: -20 }} />}
     >
       <Suspense fallback={null}>
         <Scene isMobile={isMobile} prefersReducedMotion={prefersReducedMotion} />
       </Suspense>
-    </Canvas>
+    </SafeThreeCanvas>
   );
 }
 

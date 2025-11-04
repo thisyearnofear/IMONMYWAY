@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useUIStore } from '@/stores/uiStore'
 import { cacheService } from '@/lib/cache-service'
 import { getNetworkConfig } from '@/contracts/addresses'
+import { useMetaMaskProvider } from './useMetaMaskProvider'
 
 const activeNetwork = getNetworkConfig()
 
@@ -48,24 +49,23 @@ export function useWallet(): UseWalletReturn {
   })
 
   const { addToast, updateNetworkMetrics } = useUIStore()
+  const { provider, isInstalled, isLoading } = useMetaMaskProvider()
 
   // Check if MetaMask is installed
   const isMetaMaskInstalled = useCallback(() => {
-    return typeof window !== 'undefined' && typeof window.ethereum !== 'undefined'
-  }, [])
+    return isInstalled && provider !== null
+  }, [isInstalled, provider])
 
   // Get current account and chain
   const updateWalletState = useCallback(async () => {
-    if (!isMetaMaskInstalled()) return
+    if (!isMetaMaskInstalled() || !provider) return
 
     try {
-      if (!window.ethereum) return
-
-      const accounts = await window.ethereum.request({ method: 'eth_accounts' })
-      const chainId = await window.ethereum.request({ method: 'eth_chainId' })
+      const accounts = await provider.request({ method: 'eth_accounts' })
+      const chainId = await provider.request({ method: 'eth_chainId' })
 
       if (accounts.length > 0) {
-        const balance = await window.ethereum.request({
+        const balance = await provider.request({
           method: 'eth_getBalance',
           params: [accounts[0], 'latest'],
         })
@@ -94,7 +94,7 @@ export function useWallet(): UseWalletReturn {
         isConnecting: false,
       }))
     }
-  }, [isMetaMaskInstalled])
+  }, [isMetaMaskInstalled, provider])
 
   // Connect wallet
   const connect = useCallback(async () => {
@@ -109,18 +109,18 @@ export function useWallet(): UseWalletReturn {
     setWalletState(prev => ({ ...prev, isConnecting: true }))
 
     try {
-      if (!window.ethereum) throw new Error('MetaMask not available')
+      if (!provider) throw new Error('MetaMask not available')
 
-      await window.ethereum.request({ method: 'eth_requestAccounts' })
+      await provider.request({ method: 'eth_requestAccounts' })
       await updateWalletState()
 
       // Auto-add Somnia network if not already added
-      const currentChainId = await window.ethereum.request({ method: 'eth_chainId' })
+      const currentChainId = await provider.request({ method: 'eth_chainId' })
       const isOnSomnia = parseInt(currentChainId, 16) === activeNetwork.chainId
 
       if (!isOnSomnia) {
         try {
-          await window.ethereum.request({
+          await provider.request({
             method: 'wallet_addEthereumChain',
             params: [SOMNIA_NETWORK_PARAMS_FOR_WALLET],
           })
@@ -167,7 +167,7 @@ export function useWallet(): UseWalletReturn {
       })
       setWalletState(prev => ({ ...prev, isConnecting: false }))
     }
-  }, [isMetaMaskInstalled, updateWalletState, addToast, walletState.address])
+  }, [isMetaMaskInstalled, updateWalletState, addToast, walletState.address, provider])
 
   // Disconnect wallet
   const disconnect = useCallback(() => {
@@ -187,7 +187,7 @@ export function useWallet(): UseWalletReturn {
 
   // Switch to Somnia Network
   const switchToSomnia = useCallback(async () => {
-    if (!window.ethereum) {
+    if (!provider) {
       updateNetworkMetrics({ isOnSomnia: false })
       addToast({
         message: 'MetaMask not detected. Please install MetaMask to continue.',
@@ -198,7 +198,7 @@ export function useWallet(): UseWalletReturn {
 
     try {
       // Try to switch to Somnia network
-      await window.ethereum.request({
+      await provider.request({
         method: 'wallet_switchEthereumChain',
         params: [{ chainId: SOMNIA_NETWORK_PARAMS_FOR_WALLET.chainId }],
       })
@@ -218,7 +218,7 @@ export function useWallet(): UseWalletReturn {
             type: 'info',
           })
 
-          await window.ethereum.request({
+          await provider.request({
             method: 'wallet_addEthereumChain',
             params: [SOMNIA_NETWORK_PARAMS_FOR_WALLET],
           })
@@ -270,11 +270,11 @@ export function useWallet(): UseWalletReturn {
         return false
       }
     }
-  }, [addToast, updateNetworkMetrics])
+  }, [addToast, updateNetworkMetrics, provider])
 
   // Listen for account and chain changes
   useEffect(() => {
-    if (!isMetaMaskInstalled() || !window.ethereum) return
+    if (!isMetaMaskInstalled() || !provider || isLoading) return
 
     const handleAccountsChanged = (accounts: string[]) => {
       if (accounts.length === 0) {
@@ -288,29 +288,29 @@ export function useWallet(): UseWalletReturn {
       updateWalletState()
     }
 
-    window.ethereum.on('accountsChanged', handleAccountsChanged)
-    window.ethereum.on('chainChanged', handleChainChanged)
+    provider.on('accountsChanged', handleAccountsChanged)
+    provider.on('chainChanged', handleChainChanged)
 
     // Initial state check
     updateWalletState()
 
     return () => {
-      if (window.ethereum) {
-        window.ethereum.removeListener('accountsChanged', handleAccountsChanged)
-        window.ethereum.removeListener('chainChanged', handleChainChanged)
+      if (provider) {
+        provider.removeListener('accountsChanged', handleAccountsChanged)
+        provider.removeListener('chainChanged', handleChainChanged)
       }
     }
-  }, [isMetaMaskInstalled, updateWalletState, disconnect])
+  }, [isMetaMaskInstalled, updateWalletState, disconnect, provider, isLoading])
 
   // Track transaction speed for Somnia showcase
   const trackTransactionSpeed = useCallback(async (txHash: string) => {
-    if (!window.ethereum) return
+    if (!provider) return
 
     const startTime = Date.now()
-    const provider = new (await import('ethers')).BrowserProvider(window.ethereum)
+    const ethersProvider = new (await import('ethers')).BrowserProvider(provider)
 
     try {
-      await provider.waitForTransaction(txHash)
+      await ethersProvider.waitForTransaction(txHash)
       const endTime = Date.now()
       const speed = (endTime - startTime) / 1000
 
@@ -329,7 +329,7 @@ export function useWallet(): UseWalletReturn {
     } catch (error) {
       console.error('Transaction tracking failed:', error)
     }
-  }, [addToast])
+  }, [addToast, provider])
 
   return {
     ...walletState,

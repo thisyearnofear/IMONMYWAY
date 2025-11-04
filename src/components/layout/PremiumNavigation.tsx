@@ -6,6 +6,7 @@ import { useLocationStore } from "@/stores/locationStore";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/PremiumButton";
 import { motion } from "framer-motion";
+import { ClientOnly } from "@/components/core/ClientOnly";
 
 // Navigation items - single source of truth
 const NAV_ITEMS = [
@@ -79,25 +80,36 @@ export function PremiumNavigation() {
 
         {/* Wallet Connection */}
         <div className="flex items-center gap-3">
-          {isConnected ? (
+          <ClientOnly fallback={
             <Button
+              size="sm"
               variant="outline"
-              size="sm"
-              className="hidden sm:flex items-center gap-2 border-violet-500/50 hover:bg-violet-500/10 rounded-lg"
+              className="hidden sm:flex rounded-lg opacity-50"
+              disabled
             >
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span className="text-sm">{truncatedAddress}</span>
+              Loading...
             </Button>
-          ) : (
-            <Button
-              size="sm"
-              variant="gradient"
-              className="hidden sm:flex rounded-lg"
-              onClick={connect}
-            >
-              Connect Wallet
-            </Button>
-          )}
+          }>
+            {isConnected ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="hidden sm:flex items-center gap-2 border-violet-500/50 hover:bg-violet-500/10 rounded-lg"
+              >
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span className="text-sm">{truncatedAddress}</span>
+              </Button>
+            ) : (
+              <Button
+                size="sm"
+                variant="gradient"
+                className="hidden sm:flex rounded-lg"
+                onClick={connect}
+              >
+                Connect Wallet
+              </Button>
+            )}
+          </ClientOnly>
 
           {/* Mobile Menu Button */}
           <div className="md:hidden">
@@ -150,26 +162,36 @@ export function PremiumNavigation() {
             ))}
 
             <div className="pt-4">
-              {isConnected ? (
+              <ClientOnly fallback={
                 <Button
                   variant="outline"
-                  className="w-full justify-start border-violet-500/50 hover:bg-violet-500/10"
+                  className="w-full opacity-50"
+                  disabled
                 >
-                  <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                  <span>{truncatedAddress}</span>
+                  Loading...
                 </Button>
-              ) : (
-                <Button
-                  variant="gradient"
-                  className="w-full"
-                  onClick={() => {
-                    connect();
-                    setIsMobileMenuOpen(false);
-                  }}
-                >
-                  Connect Wallet
-                </Button>
-              )}
+              }>
+                {isConnected ? (
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start border-violet-500/50 hover:bg-violet-500/10"
+                  >
+                    <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                    <span>{truncatedAddress}</span>
+                  </Button>
+                ) : (
+                  <Button
+                    variant="gradient"
+                    className="w-full"
+                    onClick={() => {
+                      connect();
+                      setIsMobileMenuOpen(false);
+                    }}
+                  >
+                    Connect Wallet
+                  </Button>
+                )}
+              </ClientOnly>
             </div>
           </nav>
         </motion.div>

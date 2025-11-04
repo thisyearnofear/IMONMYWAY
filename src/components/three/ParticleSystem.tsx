@@ -1,11 +1,11 @@
 "use client";
 
-import { Canvas } from '@react-three/fiber';
 import { Suspense, useRef, useMemo } from 'react';
 import { Points, PointMaterial } from '@react-three/drei';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
 import { useDevicePerformance } from '@/hooks/useDevicePerformance';
+import { SafeThreeCanvas } from '@/components/core/SafeThreeCanvas';
 
 interface ParticleSystemProps {
   count?: number;
@@ -69,7 +69,7 @@ export default function WebGLParticleSystem(props: ParticleSystemProps) {
   }
 
   return (
-    <Canvas
+    <SafeThreeCanvas
       camera={{ position: [0, 0, 15], fov: 75 }}
       gl={{
         antialias: false,
@@ -87,10 +87,11 @@ export default function WebGLParticleSystem(props: ParticleSystemProps) {
         zIndex: -10
       }}
       dpr={isMobile ? 1 : [1, 2]}
+      fallback={<div className="fixed inset-0 bg-gradient-to-br from-violet-900/10 to-gold-900/5 pointer-events-none" style={{ zIndex: -10 }} />}
     >
       <Suspense fallback={null}>
         <Particles {...props} count={isMobile ? Math.floor(props.count! * 0.5) : props.count} size={0.08} />
       </Suspense>
-    </Canvas>
+    </SafeThreeCanvas>
   );
 }
