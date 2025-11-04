@@ -216,9 +216,9 @@ export function useSmartDefaults() {
       if (walletAddress) {
         const { dbService } = await import('@/lib/db-service');
         await dbService.updateUser(walletAddress, { 
-          smartDefaults: JSON.parse(JSON.stringify(defaults)),
+          smartDefaults: JSON.parse(JSON.stringify(defaults)) as any,
           lastDefaultsUpdate: Date.now()
-        });
+        } as any);
       }
     } catch (err) {
       console.error('Error saving defaults:', err);
