@@ -12,6 +12,6 @@
 # Redirect all API calls to your Hetzner backend
 [[redirects]]
   from = "/api/*"
-  to = "https://imonmywayapi.persidian.com:3001/api/:splat"
+  to = "https://imonmywayapi.persidian.com/api/:splat"
   status = 200
   force = true

@@ -15,7 +15,7 @@ class SocketManager {
   connect(): Socket {
     if (!this.socket) {
       // Use environment variable or fallback to SSL domain
-      const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'https://imonmywayapi.persidian.com:3001'
+      const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'https://imonmywayapi.persidian.com'
       this.socket = io(socketUrl, {
         transports: ['websocket', 'polling'],
         secure: true,
