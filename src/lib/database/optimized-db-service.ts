@@ -5,8 +5,14 @@
  * and performance monitoring for database operations.
  */
 
-import { dbService } from '@/lib/db-service'
+// Dynamic import of dbService to avoid build-time initialization
 import { cacheService } from '@/lib/cache-service'
+
+// Helper to get database service dynamically
+const getDbService = async () => {
+  const { dbService } = await import('@/lib/db-service');
+  return dbService;
+};
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -124,7 +130,7 @@ export class QueryOptimizer {
         ])
       } catch (error) {
         lastError = error as Error
-        
+
         if (attempt < retries) {
           // Exponential backoff
           const delay = Math.min(1000 * Math.pow(2, attempt), 5000)
@@ -204,9 +210,18 @@ export class QueryOptimizer {
 export class OptimizedDatabaseService {
   private connectionPool: any // In a real implementation, this would be a proper connection pool
   private queryOptimizer = QueryOptimizer
+  private dbService: any = null
 
   constructor() {
     this.initializeConnectionPool()
+  }
+
+  private async getDbService() {
+    if (!this.dbService) {
+      const { dbService } = await import('@/lib/db-service');
+      this.dbService = dbService;
+    }
+    return this.dbService;
   }
 
   private initializeConnectionPool(): void {
@@ -221,7 +236,10 @@ export class OptimizedDatabaseService {
 
   async getUserByWallet(walletAddress: string, options: QueryOptions = {}): Promise<any> {
     return this.queryOptimizer.executeOptimizedQuery(
-      () => dbService.getUserByWallet(walletAddress),
+      async () => {
+        const dbService = await this.getDbService();
+        return dbService.getUserByWallet(walletAddress);
+      },
       'getUserByWallet',
       {
         cache: true,
@@ -234,27 +252,33 @@ export class OptimizedDatabaseService {
 
   async createUser(walletAddress: string, userData?: any, options: QueryOptions = {}): Promise<any> {
     const result = await this.queryOptimizer.executeOptimizedQuery(
-      () => dbService.createUser(walletAddress, userData),
+      async () => {
+        const dbService = await this.getDbService();
+        return dbService.createUser(walletAddress, userData);
+      },
       'createUser',
       options
     )
 
     // Invalidate cache after creation
     await cacheService.invalidateUserProfile(walletAddress)
-    
+
     return result
   }
 
   async updateUser(walletAddress: string, updates: any, options: QueryOptions = {}): Promise<any> {
     const result = await this.queryOptimizer.executeOptimizedQuery(
-      () => dbService.updateUser(walletAddress, updates),
+      async () => {
+        const dbService = await this.getDbService();
+        return dbService.updateUser(walletAddress, updates);
+      },
       'updateUser',
       options
     )
 
     // Invalidate cache after update
     await cacheService.invalidateUserProfile(walletAddress)
-    
+
     return result
   }
 
@@ -264,7 +288,10 @@ export class OptimizedDatabaseService {
 
   async getCommitment(commitmentId: string, options: QueryOptions = {}): Promise<any> {
     return this.queryOptimizer.executeOptimizedQuery(
-      () => dbService.getCommitment(commitmentId),
+      async () => {
+        const dbService = await this.getDbService();
+        return dbService.getCommitment(commitmentId);
+      },
       'getCommitment',
       {
         cache: true,
@@ -277,32 +304,38 @@ export class OptimizedDatabaseService {
 
   async createCommitment(commitmentData: any, options: QueryOptions = {}): Promise<any> {
     const result = await this.queryOptimizer.executeOptimizedQuery(
-      () => dbService.createCommitment(commitmentData),
+      async () => {
+        const dbService = await this.getDbService();
+        return dbService.createCommitment(commitmentData);
+      },
       'createCommitment',
       options
     )
 
     // Invalidate related caches
     await cacheService.invalidateCommitment(commitmentData.commitmentId)
-    
+
     return result
   }
 
   async updateCommitmentStatus(
-    commitmentId: string, 
-    status: string, 
+    commitmentId: string,
+    status: string,
     resultData?: any,
     options: QueryOptions = {}
   ): Promise<any> {
     const result = await this.queryOptimizer.executeOptimizedQuery(
-      () => dbService.updateCommitmentStatus(commitmentId, status, resultData),
+      async () => {
+        const dbService = await this.getDbService();
+        return dbService.updateCommitmentStatus(commitmentId, status, resultData);
+      },
       'updateCommitmentStatus',
       options
     )
 
     // Invalidate cache after update
     await cacheService.invalidateCommitment(commitmentId)
-    
+
     return result
   }
 
@@ -312,7 +345,10 @@ export class OptimizedDatabaseService {
 
   async createBet(betData: any, options: QueryOptions = {}): Promise<any> {
     return this.queryOptimizer.executeOptimizedQuery(
-      () => dbService.createBet(betData),
+      async () => {
+        const dbService = await this.getDbService();
+        return dbService.createBet(betData);
+      },
       'createBet',
       options
     )
@@ -320,7 +356,10 @@ export class OptimizedDatabaseService {
 
   async getUserBets(userId: string, limit = 50, options: QueryOptions = {}): Promise<any[]> {
     return this.queryOptimizer.executeOptimizedQuery(
-      () => dbService.getUserBets(userId, limit),
+      async () => {
+        const dbService = await this.getDbService();
+        return dbService.getUserBets(userId, limit);
+      },
       'getUserBets',
       {
         cache: true,
@@ -353,7 +392,7 @@ export class OptimizedDatabaseService {
     // Batch fetch uncached users
     if (uncachedAddresses.length > 0) {
       const uncachedUsers = await Promise.all(
-        uncachedAddresses.map(address => 
+        uncachedAddresses.map(address =>
           this.getUserByWallet(address, { cache: false })
         )
       )
@@ -390,7 +429,10 @@ export class OptimizedDatabaseService {
 
   async getAnalyticsSummary(timeframe = '7d', options: QueryOptions = {}): Promise<any> {
     return this.queryOptimizer.executeOptimizedQuery(
-      () => dbService.getAnalyticsSummary(timeframe),
+      async () => {
+        const dbService = await this.getDbService();
+        return dbService.getAnalyticsSummary(timeframe);
+      },
       'getAnalyticsSummary',
       {
         cache: true,
@@ -403,7 +445,10 @@ export class OptimizedDatabaseService {
 
   async getUserAchievements(userId: string, options: QueryOptions = {}): Promise<any[]> {
     return this.queryOptimizer.executeOptimizedQuery(
-      () => dbService.getUserAchievements(userId),
+      async () => {
+        const dbService = await this.getDbService();
+        return dbService.getUserAchievements(userId);
+      },
       'getUserAchievements',
       {
         cache: true,
@@ -428,6 +473,7 @@ export class OptimizedDatabaseService {
     performance: PerformanceStats
   }> {
     try {
+      const dbService = await this.getDbService();
       const dbHealth = await dbService.healthCheck()
       const cacheStats = await cacheService.getCacheStats()
       const performance = this.getPerformanceStats()
@@ -456,6 +502,7 @@ export class OptimizedDatabaseService {
 
     try {
       // Warmup popular data
+      const dbService = await this.getDbService();
       const activeCommitments = await dbService.getActiveCommitmentsForCache()
       await cacheService.cacheActiveCommitments(activeCommitments)
 
@@ -485,10 +532,10 @@ export class OptimizedDatabaseService {
     try {
       // In a real implementation, this would run database optimization commands
       // such as VACUUM, ANALYZE, index rebuilding, etc.
-      
+
       // Simulate optimization
       await new Promise(resolve => setTimeout(resolve, 1000))
-      
+
       console.log('✅ Database optimization completed')
     } catch (error) {
       console.error('❌ Database optimization failed:', error)

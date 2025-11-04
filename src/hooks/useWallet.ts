@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useUIStore } from '@/stores/uiStore'
-import { dbService } from '@/lib/db-service'
 import { cacheService } from '@/lib/cache-service'
 import { getNetworkConfig } from '@/contracts/addresses'
 
@@ -146,6 +145,7 @@ export function useWallet(): UseWalletReturn {
       // Create or update user in database
       if (walletState.address) {
         try {
+          const { dbService } = await import('@/lib/db-service')
           await dbService.createUser(walletState.address)
           await cacheService.invalidateUserProfile(walletState.address)
           console.log(`✅ User profile created/updated for ${walletState.address}`)

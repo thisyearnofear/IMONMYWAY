@@ -3,9 +3,18 @@
 // Implements lazy initialization, performance monitoring, and adaptive processing
 
 import { aiConfig, isFeatureEnabled, getPerformanceConfig } from '@/config/ai-config';
-import { dbService } from '@/lib/db-service';
 import { cacheService } from '@/lib/cache-service';
 import { performanceMonitor, adaptiveLoader, getDeviceCapabilities } from '@/lib/performance';
+
+// ============================================================================
+// DATABASE SERVICE HELPER
+// ============================================================================
+
+// Helper to get database service dynamically to avoid build-time initialization
+const getDbService = async () => {
+  const { dbService } = await import('@/lib/db-service');
+  return dbService;
+};
 
 // ============================================================================
 // AI DATA STRUCTURES
@@ -112,6 +121,7 @@ export class AIService {
       }
 
       // Get user's historical data with timeout protection
+      const dbService = await getDbService();
       const userPromise = dbService.getUserByWallet(userId);
       const userBetsPromise = dbService.getUserBets(userId, 20);
 
@@ -161,6 +171,7 @@ export class AIService {
     commitmentData: any
   ): Promise<StakeRecommendation> {
     // Rule-based fallback for stake recommendation
+    const dbService = await getDbService();
     const user = await dbService.getUserByWallet(userId);
     const baseStake = user?.reputationScore && user.reputationScore > 800 ? 2.0 : 1.0;
 
@@ -208,6 +219,7 @@ export class AIService {
     }
 
     try {
+      const dbService = await getDbService();
       const user = await dbService.getUserByWallet(userId);
       if (!user) {
         throw new Error('User not found');
@@ -265,6 +277,7 @@ export class AIService {
     userId: string,
     timeframe: number
   ): Promise<ReputationPrediction> {
+    const dbService = await getDbService();
     const user = await dbService.getUserByWallet(userId);
     return {
       predictedScore: user?.reputationScore || 750,
@@ -357,6 +370,7 @@ export class AIService {
     }
 
     try {
+      const dbService = await getDbService();
       const user = await dbService.getUserByWallet(userId);
       const userAchievements = await dbService.getUserAchievements(userId);
 
@@ -417,6 +431,7 @@ export class AIService {
     }
 
     try {
+      const dbService = await getDbService();
       const user = await dbService.getUserByWallet(userId);
       const commitment = await dbService.getCommitment(commitmentId);
       const userBets = await dbService.getUserBets(userId, 20);
@@ -497,6 +512,7 @@ export class AIService {
       console.log(`🔄 Updating AI model for user: ${userId}`);
 
       // Get user's latest data
+      const dbService = await getDbService();
       const user = await dbService.getUserByWallet(userId);
       const userBets = await dbService.getUserBets(userId, 50);
 

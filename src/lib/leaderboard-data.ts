@@ -1,8 +1,6 @@
 // Leaderboard Data Service - Uses existing off-chain infrastructure
 // Leverages: db-service, analytics, cache-service
 
-import { dbService } from './db-service'
-
 export interface LeaderboardEntry {
   walletAddress: string
   displayName?: string
@@ -31,45 +29,46 @@ class LeaderboardDataService {
   ): Promise<LeaderboardEntry[]> {
     try {
       console.log('📊 Loading leaderboard data...')
-      
+
       // Get all users from existing db-service
+      const { dbService } = await import('./db-service')
       const users = await dbService.getAllUsers()
-      
+
       if (!users || users.length === 0) {
         console.log('⚠️ No users found in database')
         return []
       }
 
       console.log(`📋 Processing ${users.length} users for leaderboard`)
-      
+
       const entries: Omit<LeaderboardEntry, 'rank'>[] = []
 
       for (const user of users) {
         try {
           // Get user analytics from existing service
           const analytics = await dbService.getAnalytics(user.walletAddress)
-          
+
           // Calculate session metrics from real analytics data
-          const sessionEvents = analytics.filter(event => 
+          const sessionEvents = analytics.filter(event =>
             event.eventType === 'session_completed'
           )
-          
-          const successfulSessions = sessionEvents.filter(event => 
+
+          const successfulSessions = sessionEvents.filter(event =>
             (event.eventData as any)?.success === true
           ).length
-          
+
           const totalSessions = sessionEvents.length
           const successRate = totalSessions > 0 ? (successfulSessions / totalSessions) * 100 : 0
-          
+
           // Calculate pace and distance from analytics
-          const paceEvents = analytics.filter(event => 
+          const paceEvents = analytics.filter(event =>
             (event.eventData as any)?.averagePace && (event.eventData as any).averagePace > 0
           )
-          const averagePace = paceEvents.length > 0 
+          const averagePace = paceEvents.length > 0
             ? paceEvents.reduce((sum, event) => sum + ((event.eventData as any).averagePace || 0), 0) / paceEvents.length
             : 0
-            
-          const distanceEvents = analytics.filter(event => 
+
+          const distanceEvents = analytics.filter(event =>
             (event.eventData as any)?.distance && (event.eventData as any).distance > 0
           )
           const totalDistance = distanceEvents.reduce((sum, event) => sum + ((event.eventData as any).distance || 0), 0)
@@ -92,7 +91,7 @@ class LeaderboardDataService {
           }
 
           entries.push(entry)
-          
+
         } catch (error) {
           console.error(`❌ Error processing user ${user.walletAddress}:`, error)
           // Continue with other users
@@ -107,7 +106,7 @@ class LeaderboardDataService {
 
       // Mark current user
       return this.markCurrentUser(rankedEntries, currentUserAddress)
-      
+
     } catch (error) {
       console.error('❌ Error fetching leaderboard:', error)
       throw new Error('Failed to load leaderboard data')
@@ -120,10 +119,10 @@ class LeaderboardDataService {
   async getUserRank(walletAddress: string): Promise<{ rank: number; total: number } | null> {
     try {
       const leaderboard = await this.getLeaderboard({ category: 'overall', limit: 1000 })
-      const userEntry = leaderboard.find(entry => 
+      const userEntry = leaderboard.find(entry =>
         entry.walletAddress.toLowerCase() === walletAddress.toLowerCase()
       )
-      
+
       if (!userEntry) {
         return null
       }
@@ -142,7 +141,7 @@ class LeaderboardDataService {
    * Sort entries and assign ranks based on category
    */
   private sortAndRankEntries(
-    entries: Omit<LeaderboardEntry, 'rank'>[], 
+    entries: Omit<LeaderboardEntry, 'rank'>[],
     category: string
   ): LeaderboardEntry[] {
     let sortedEntries: Omit<LeaderboardEntry, 'rank'>[]
@@ -179,8 +178,8 @@ class LeaderboardDataService {
    * Calculate user tier based on reputation, sessions, and success rate
    */
   private calculateTier(
-    reputationScore: number, 
-    totalSessions: number, 
+    reputationScore: number,
+    totalSessions: number,
     successRate: number
   ): LeaderboardEntry['tier'] {
     if (reputationScore >= 9000 && totalSessions >= 20 && successRate >= 80) return 'legendary'
@@ -194,7 +193,7 @@ class LeaderboardDataService {
    * Mark current user in leaderboard
    */
   private markCurrentUser(
-    entries: LeaderboardEntry[], 
+    entries: LeaderboardEntry[],
     currentUserAddress?: string
   ): LeaderboardEntry[] {
     if (!currentUserAddress) return entries

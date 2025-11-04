@@ -1,7 +1,6 @@
 // Profile Service - Real user profile data aggregation
 // Leverages existing infrastructure: db-service, analytics, leaderboard-service
 
-import { dbService } from './db-service'
 import { leaderboardData } from './leaderboard-data'
 import { cacheService } from './cache-service'
 
@@ -12,13 +11,13 @@ export interface UserProfile {
   email?: string
   bio?: string
   joinedAt: Date
-  
+
   // Reputation & Rankings
   reputationScore: number
   rank?: number
   totalUsers?: number
   tier: 'legendary' | 'expert' | 'skilled' | 'developing' | 'newcomer'
-  
+
   // Performance Metrics
   totalSessions: number
   successfulSessions: number
@@ -27,23 +26,23 @@ export interface UserProfile {
   totalDistance: number
   bestPace?: number
   longestDistance?: number
-  
+
   // Financial Metrics
   totalStaked: bigint
   totalWinnings: bigint
   netProfit: bigint
   winRate: number
-  
+
   // Social Metrics
   betsOnUser: number
   betsPlaced: number
   socialWinnings: bigint
-  
+
   // Achievements
   achievements: Achievement[]
   currentStreak: number
   longestStreak: number
-  
+
   // Recent Activity
   recentSessions: SessionSummary[]
   recentBets: BetSummary[]
@@ -97,6 +96,7 @@ class ProfileService {
       }
 
       // Get user from database
+      const { dbService } = await import('./db-service')
       const user = await dbService.getUserByWallet(walletAddress)
       if (!user) {
         throw new Error('User not found')
@@ -107,10 +107,10 @@ class ProfileService {
 
       // Aggregate all user data
       const profile = await this.aggregateProfileData(user, rankData)
-      
+
       // Cache the result
       await this.cacheProfile(cacheKey, profile)
-      
+
       return profile
     } catch (error) {
       console.error('❌ Error fetching user profile:', error)
@@ -122,22 +122,23 @@ class ProfileService {
    * Update user profile information
    */
   async updateProfile(
-    walletAddress: string, 
+    walletAddress: string,
     updates: { displayName?: string; bio?: string; email?: string }
   ): Promise<UserProfile> {
     try {
       // Update user in database
+      const { dbService } = await import('./db-service')
       await dbService.updateUser(walletAddress, updates)
-      
+
       // Invalidate cache
       await this.invalidateProfileCache(walletAddress)
-      
+
       // Return updated profile
       const updatedProfile = await this.getUserProfile(walletAddress)
       if (!updatedProfile) {
         throw new Error('Failed to retrieve updated profile')
       }
-      
+
       return updatedProfile
     } catch (error) {
       console.error('❌ Error updating profile:', error)
@@ -149,32 +150,33 @@ class ProfileService {
    * Aggregate all profile data from existing services
    */
   private async aggregateProfileData(
-    user: any, 
+    user: any,
     rankData: { rank: number; total: number } | null
   ): Promise<UserProfile> {
     // Get analytics data
+    const { dbService } = await import('./db-service')
     const analytics = await dbService.getAnalytics(user.walletAddress)
-    
+
     // Get betting data
     const userBets = await dbService.getUserBets(user.walletAddress)
     const betsOnUser = await this.getBetsOnUser(user.walletAddress)
-    
+
     // Get achievements
     const achievements = await this.getUserAchievements(user.walletAddress, analytics, userBets)
-    
+
     // Calculate session metrics
     const sessionMetrics = this.calculateSessionMetrics(analytics)
-    
+
     // Calculate financial metrics
     const financialMetrics = this.calculateFinancialMetrics(userBets)
-    
+
     // Calculate social metrics
     const socialMetrics = this.calculateSocialMetrics(userBets, betsOnUser)
-    
+
     // Get recent activity
     const recentSessions = this.getRecentSessions(analytics)
     const recentBets = this.getRecentBets(userBets)
-    
+
     // Calculate streaks
     const streakData = this.calculateStreaks(analytics)
 
@@ -185,27 +187,27 @@ class ProfileService {
       email: user.email,
       bio: user.bio,
       joinedAt: user.createdAt,
-      
+
       // Reputation & Rankings
       reputationScore: user.reputationScore,
       rank: rankData?.rank,
       totalUsers: rankData?.total,
       tier: this.calculateTier(user.reputationScore, sessionMetrics.totalSessions),
-      
+
       // Performance Metrics
       ...sessionMetrics,
-      
+
       // Financial Metrics
       ...financialMetrics,
-      
+
       // Social Metrics
       ...socialMetrics,
-      
+
       // Achievements
       achievements,
       currentStreak: streakData.current,
       longestStreak: streakData.longest,
-      
+
       // Recent Activity
       recentSessions,
       recentBets
@@ -218,11 +220,11 @@ class ProfileService {
   private calculateSessionMetrics(analytics: any[]) {
     const sessionEvents = analytics.filter(event => event.eventType === 'session_completed')
     const successfulSessions = sessionEvents.filter(event => event.metadata?.success === true)
-    
+
     const paceData = analytics
       .filter(event => event.metadata?.averagePace)
       .map(event => event.metadata.averagePace)
-    
+
     const distanceData = analytics
       .filter(event => event.metadata?.distance)
       .map(event => event.metadata.distance)
@@ -246,7 +248,7 @@ class ProfileService {
     const totalWinnings = userBets
       .filter(bet => bet.status === 'won')
       .reduce((sum, bet) => sum + BigInt(bet.potentialWinnings || '0'), BigInt(0))
-    
+
     const wonBets = userBets.filter(bet => bet.status === 'won').length
     const totalBets = userBets.filter(bet => bet.status !== 'pending').length
 

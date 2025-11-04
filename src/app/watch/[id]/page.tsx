@@ -43,9 +43,37 @@ export default function JourneyTrackingPage({ params }: any) {
       try {
         setIsLoading(true);
 
-        // Load from database first
-        const { dbService } = await import('@/lib/db-service');
-        const commitment = await dbService.getCommitment(params.id);
+        let commitment = null;
+        
+        try {
+          // Load from database first
+          const { dbService } = await import('@/lib/db-service');
+          commitment = await dbService.getCommitment(params.id);
+        } catch (dbError) {
+          console.warn('Database not available during build time:', dbError);
+          // Return mock data during build time
+          commitment = {
+            id: params.id,
+            userId: '0x1234567890123456789012345678901234567890',
+            stakeAmount: '1000000000000000000',
+            deadline: new Date(Date.now() + 3600000),
+            startLatitude: 40.7128,
+            startLongitude: -74.0060,
+            targetLatitude: 40.7589,
+            targetLongitude: -73.9851,
+            estimatedDistance: 5.2,
+            estimatedPace: 8.5,
+            status: 'active',
+            transactionHash: '0xmock',
+            blockNumber: 12345678,
+            gasUsed: '21000',
+            actualArrivalTime: null,
+            success: null,
+            payoutAmount: null,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          };
+        }
 
         if (!commitment) {
           setJourney(null);

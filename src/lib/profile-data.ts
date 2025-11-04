@@ -1,33 +1,31 @@
 // Profile Data Service - Personal analytics and user data
 // Leverages: db-service, analytics, existing infrastructure
 
-import { dbService } from './db-service'
-
 export interface UserProfile {
   walletAddress: string
   displayName?: string
   reputationScore: number
   tier: 'legendary' | 'expert' | 'skilled' | 'developing' | 'newcomer'
-  
+
   // Session Statistics
   totalSessions: number
   successfulSessions: number
   successRate: number
   averagePace: number
   totalDistance: number
-  
+
   // Performance Metrics
   bestPace: number
   longestDistance: number
   currentStreak: number
   longestStreak: number
-  
+
   // Achievements
   achievements: Achievement[]
-  
+
   // Recent Activity
   recentSessions: SessionSummary[]
-  
+
   // Betting Performance
   totalBets: number
   successfulBets: number
@@ -60,8 +58,9 @@ class ProfileDataService {
   async getUserProfile(walletAddress: string): Promise<UserProfile | null> {
     try {
       console.log(`📊 Loading profile for ${walletAddress}...`)
-      
+
       // Get user from database
+      const { dbService } = await import('./db-service')
       const user = await dbService.getUserByWallet(walletAddress)
       if (!user) {
         console.log('⚠️ User not found in database')
@@ -75,13 +74,13 @@ class ProfileDataService {
 
       // Calculate session statistics
       const sessionStats = this.calculateSessionStats(analytics)
-      
+
       // Calculate betting performance
       const bettingStats = this.calculateBettingStats(userBets)
-      
+
       // Get achievements with metadata
       const processedAchievements = this.processAchievements(achievements, sessionStats)
-      
+
       // Get recent sessions
       const recentSessions = this.getRecentSessions(analytics, 10)
 
@@ -90,26 +89,26 @@ class ProfileDataService {
         displayName: user.displayName || undefined,
         reputationScore: user.reputationScore,
         tier: this.calculateTier(user.reputationScore, sessionStats.totalSessions, sessionStats.successRate),
-        
+
         // Session Statistics
         totalSessions: sessionStats.totalSessions,
         successfulSessions: sessionStats.successfulSessions,
         successRate: sessionStats.successRate,
         averagePace: sessionStats.averagePace,
         totalDistance: sessionStats.totalDistance,
-        
+
         // Performance Metrics
         bestPace: sessionStats.bestPace,
         longestDistance: sessionStats.longestDistance,
         currentStreak: sessionStats.currentStreak,
         longestStreak: sessionStats.longestStreak,
-        
+
         // Achievements
         achievements: processedAchievements,
-        
+
         // Recent Activity
         recentSessions,
-        
+
         // Betting Performance
         totalBets: bettingStats.totalBets,
         successfulBets: bettingStats.successfulBets,
@@ -129,42 +128,42 @@ class ProfileDataService {
    * Calculate session statistics from analytics data
    */
   private calculateSessionStats(analytics: any[]) {
-    const sessionEvents = analytics.filter(event => 
+    const sessionEvents = analytics.filter(event =>
       event.eventType === 'session_completed'
     )
-    
-    const successfulSessions = sessionEvents.filter(event => 
+
+    const successfulSessions = sessionEvents.filter(event =>
       (event.eventData as any)?.success === true
     ).length
-    
+
     const totalSessions = sessionEvents.length
     const successRate = totalSessions > 0 ? (successfulSessions / totalSessions) * 100 : 0
-    
+
     // Calculate pace metrics
-    const paceEvents = analytics.filter(event => 
+    const paceEvents = analytics.filter(event =>
       (event.eventData as any)?.averagePace && (event.eventData as any).averagePace > 0
     )
     const paces = paceEvents.map(event => (event.eventData as any).averagePace)
     const averagePace = paces.length > 0 ? paces.reduce((sum, pace) => sum + pace, 0) / paces.length : 0
     const bestPace = paces.length > 0 ? Math.min(...paces) : 0
-    
+
     // Calculate distance metrics
-    const distanceEvents = analytics.filter(event => 
+    const distanceEvents = analytics.filter(event =>
       (event.eventData as any)?.distance && (event.eventData as any).distance > 0
     )
     const distances = distanceEvents.map(event => (event.eventData as any).distance)
     const totalDistance = distances.reduce((sum, distance) => sum + distance, 0)
     const longestDistance = distances.length > 0 ? Math.max(...distances) : 0
-    
+
     // Calculate streaks (simplified - based on consecutive successful sessions)
     let currentStreak = 0
     let longestStreak = 0
     let tempStreak = 0
-    
+
     // Sort sessions by date and calculate streaks
     const sortedSessions = sessionEvents
       .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-    
+
     for (const session of sortedSessions) {
       if ((session.eventData as any)?.success) {
         tempStreak++
@@ -173,7 +172,7 @@ class ProfileDataService {
         tempStreak = 0
       }
     }
-    
+
     // Current streak is from the end
     for (let i = sortedSessions.length - 1; i >= 0; i--) {
       if ((sortedSessions[i].eventData as any)?.success) {
@@ -216,7 +215,7 @@ class ProfileDataService {
    */
   private processAchievements(achievements: any[], sessionStats: any): Achievement[] {
     const processedAchievements: Achievement[] = []
-    
+
     // Add existing achievements from database
     for (const achievement of achievements) {
       processedAchievements.push({
@@ -228,7 +227,7 @@ class ProfileDataService {
         category: this.getAchievementCategory(achievement.achievementId)
       })
     }
-    
+
     // Add automatic achievements based on stats
     if (sessionStats.totalSessions >= 1 && !processedAchievements.find(a => a.id === 'first_session')) {
       processedAchievements.push({
@@ -240,7 +239,7 @@ class ProfileDataService {
         category: 'punctuality'
       })
     }
-    
+
     if (sessionStats.successRate >= 80 && sessionStats.totalSessions >= 5 && !processedAchievements.find(a => a.id === 'reliable')) {
       processedAchievements.push({
         id: 'reliable',
@@ -251,7 +250,7 @@ class ProfileDataService {
         category: 'consistency'
       })
     }
-    
+
     if (sessionStats.currentStreak >= 5 && !processedAchievements.find(a => a.id === 'streak_5')) {
       processedAchievements.push({
         id: 'streak_5',
@@ -290,8 +289,8 @@ class ProfileDataService {
    * Calculate user tier
    */
   private calculateTier(
-    reputationScore: number, 
-    totalSessions: number, 
+    reputationScore: number,
+    totalSessions: number,
     successRate: number
   ): UserProfile['tier'] {
     if (reputationScore >= 9000 && totalSessions >= 20 && successRate >= 80) return 'legendary'
