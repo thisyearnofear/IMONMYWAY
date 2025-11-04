@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/PremiumButton";
 import { Card } from "@/components/ui/PremiumCard";
 import { useWallet } from "@/hooks/useWallet";
 import { motion } from "framer-motion";
+import { ViralChallenges } from "@/components/challenges/ViralChallenges";
+import { CHALLENGE_TEMPLATES } from "@/lib/challenge-templates";
 
 // Feature data - single source of truth
 const FEATURES = [
@@ -35,6 +37,11 @@ const FEATURES = [
     description: "Get smart recommendations for optimal routes, arrival times, and challenge stakes based on your history."
   },
   {
+    icon: "🎮",
+    title: "Interactive Experience",
+    description: "Engaging UI with real-time tracking, progress visualization, and delightful animations throughout your journey."
+  },
+  {
     icon: "⚡",
     title: "Instant Settlements",
     description: "Win or lose, tokens are automatically distributed. No waiting, no disputes - just instant results."
@@ -50,32 +57,32 @@ const STATS = [
 
 // Steps data - single source of truth
 const STEPS = [
-  { 
-    step: "01", 
-    title: "Create", 
-    description: "Set up a punctuality challenge with your destination, arrival time, and stake amount." 
+  {
+    step: "01",
+    title: "Create",
+    description: "Set up a punctuality challenge with your destination, arrival time, and stake amount."
   },
-  { 
-    step: "02", 
-    title: "Challenge", 
-    description: "Invite friends to bet on your arrival or let others take the bet against you." 
+  {
+    step: "02",
+    title: "Challenge",
+    description: "Invite friends to bet on your arrival or let others take the bet against you."
   },
-  { 
-    step: "03", 
-    title: "Track", 
-    description: "Share your live location as you travel to your destination." 
+  {
+    step: "03",
+    title: "Track",
+    description: "Share your live location as you travel to your destination."
   },
-  { 
-    step: "04", 
-    title: "Earn", 
-    description: "Arrive on time or early to win tokens and boost your reputation score." 
+  {
+    step: "04",
+    title: "Earn",
+    description: "Arrive on time or early to win tokens and boost your reputation score."
   }
 ];
 
 // Animated counter component
 const AnimatedCounter = ({ end, duration = 2000 }: { end: number; duration?: number }) => {
   const [count, setCount] = useState(0);
-  
+
   useEffect(() => {
     let start = 0;
     const increment = end / (duration / 16); // 60fps
@@ -88,10 +95,10 @@ const AnimatedCounter = ({ end, duration = 2000 }: { end: number; duration?: num
         setCount(Math.floor(start));
       }
     }, 16);
-    
+
     return () => clearInterval(timer);
   }, [end, duration]);
-  
+
   return <>{count.toLocaleString()}</>;
 };
 
@@ -100,7 +107,7 @@ export default function HomePage() {
 
   // Truncate wallet address for display
   const truncatedAddress = address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "";
-  
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-graphite-900 via-graphite-800 to-violet-900 text-white overflow-hidden">
       {/* Hero Section */}
@@ -117,8 +124,8 @@ export default function HomePage() {
               >
                 <span className="text-violet-400 text-sm font-medium">Live on Somnia Network</span>
               </motion.div>
-              
-              <motion.h1 
+
+              <motion.h1
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
@@ -129,18 +136,18 @@ export default function HomePage() {
                   On Your Minutes
                 </span>
               </motion.h1>
-              
-              <motion.p 
+
+              <motion.p
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.1 }}
                 className="text-xl text-gray-300 mb-8 max-w-lg"
               >
-                Stake tokens on your punctuality. Earn reputation in real-time. 
+                Stake tokens on your punctuality. Earn reputation in real-time.
                 Challenge friends and build trust through consistent arrivals.
               </motion.p>
-              
-              <motion.div 
+
+              <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
@@ -154,20 +161,20 @@ export default function HomePage() {
                 >
                   {isConnected ? `Connected: ${truncatedAddress}` : "Connect Wallet"}
                 </Button>
-                
-                <Link href="/plan">
+
+                <Link href="/challenges">
                   <Button
                     size="lg"
-                    variant="outline"
-                    className="px-8 py-4 text-lg font-semibold rounded-xl border-2 border-gold-500/50 hover:bg-gold-500/10"
+                    variant="gradient"
+                    className="px-8 py-4 text-lg font-semibold rounded-xl"
                   >
-                    Start a Challenge
+                    🎯 Browse Challenges
                   </Button>
                 </Link>
               </motion.div>
-              
+
               {/* Stats */}
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.3 }}
@@ -183,7 +190,7 @@ export default function HomePage() {
                 ))}
               </motion.div>
             </div>
-            
+
             {/* Right content - Interactive demo */}
             <motion.div
               initial={{ opacity: 0, x: 20 }}
@@ -203,7 +210,7 @@ export default function HomePage() {
                       <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
                     </div>
                   </div>
-                  
+
                   {/* App content */}
                   <div className="p-6">
                     <div className="text-center mb-6">
@@ -213,7 +220,7 @@ export default function HomePage() {
                       <h3 className="font-bold text-lg">Meeting with Alex</h3>
                       <p className="text-gray-400 text-sm">10:00 AM • Starbucks Downtown</p>
                     </div>
-                    
+
                     {/* Progress */}
                     <div className="mb-6">
                       <div className="flex justify-between text-sm mb-2">
@@ -221,7 +228,7 @@ export default function HomePage() {
                         <span>75%</span>
                       </div>
                       <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
-                        <motion.div 
+                        <motion.div
                           className="h-full bg-gradient-to-r from-gold-500 to-violet-500"
                           initial={{ width: 0 }}
                           animate={{ width: "75%" }}
@@ -229,7 +236,7 @@ export default function HomePage() {
                         />
                       </div>
                     </div>
-                    
+
                     {/* Timer */}
                     <div className="text-center mb-6">
                       <div className="text-3xl font-bold text-white drop-shadow-[0_1px_1px_rgba(110,43,242,0.3)]">
@@ -237,7 +244,7 @@ export default function HomePage() {
                       </div>
                       <div className="text-gray-400 text-sm">Time Remaining</div>
                     </div>
-                    
+
                     {/* Action buttons */}
                     <div className="grid grid-cols-2 gap-3">
                       <Button variant="ghost" className="py-3">
@@ -249,15 +256,15 @@ export default function HomePage() {
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Floating elements */}
                 <motion.div
                   className="absolute -top-4 -right-4 w-8 h-8 bg-gold-500 rounded-full"
-                  animate={{ 
+                  animate={{
                     y: [0, -10, 0],
                     scale: [1, 1.1, 1]
                   }}
-                  transition={{ 
+                  transition={{
                     duration: 3,
                     repeat: Infinity,
                     delay: 0.5
@@ -265,11 +272,11 @@ export default function HomePage() {
                 />
                 <motion.div
                   className="absolute -bottom-4 -left-4 w-6 h-6 bg-violet-500 rounded-full"
-                  animate={{ 
+                  animate={{
                     y: [0, 10, 0],
                     scale: [1, 1.2, 1]
                   }}
-                  transition={{ 
+                  transition={{
                     duration: 2.5,
                     repeat: Infinity,
                     delay: 1
@@ -280,7 +287,7 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-      
+
       {/* Features Section */}
       <section className="py-20 px-4 relative">
         <div className="max-w-7xl mx-auto">
@@ -297,7 +304,7 @@ export default function HomePage() {
               Transform punctuality from a personal virtue into a social and financial opportunity
             </p>
           </motion.div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {FEATURES.map((feature, index) => (
               <motion.div
@@ -319,7 +326,7 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-      
+
       {/* How It Works Section */}
       <section className="py-20 px-4 bg-gradient-to-r from-graphite-800/50 to-violet-900/20">
         <div className="max-w-7xl mx-auto">
@@ -336,7 +343,7 @@ export default function HomePage() {
               Simple steps to transform your punctuality into rewards
             </p>
           </motion.div>
-          
+
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
             {STEPS.map((step, index) => (
               <motion.div
@@ -354,7 +361,7 @@ export default function HomePage() {
                   <h3 className="text-xl font-bold text-white mb-3">{step.title}</h3>
                   <p className="text-gray-400">{step.description}</p>
                 </div>
-                
+
                 {/* Connector line (not for last item) */}
                 {index < 3 && (
                   <div className="hidden lg:block absolute top-1/2 -right-4 w-8 h-0.5 bg-gradient-to-r from-violet-500/50 to-gold-500/50"></div>
@@ -364,7 +371,7 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-      
+
       {/* CTA Section */}
       <section className="py-20 px-4">
         <div className="max-w-4xl mx-auto text-center">
@@ -383,7 +390,7 @@ export default function HomePage() {
             <p className="text-gray-300 text-xl mb-8 max-w-2xl mx-auto">
               Join thousands of users who are already earning rewards for being punctual
             </p>
-            
+
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button
                 size="lg"
@@ -393,7 +400,7 @@ export default function HomePage() {
               >
                 {isConnected ? `Connected: ${truncatedAddress}` : "Connect Wallet & Start"}
               </Button>
-              
+
               <Link href="/watch">
                 <Button
                   size="lg"
@@ -407,6 +414,15 @@ export default function HomePage() {
           </motion.div>
         </div>
       </section>
+
+      {/* Viral Challenges Section */}
+      <ViralChallenges
+        challenges={CHALLENGE_TEMPLATES}
+        onSelectChallenge={(challenge) => {
+          // In a real app, this would navigate to the challenge creation page
+          window.location.href = `/challenges`;
+        }}
+      />
     </div>
   );
 }

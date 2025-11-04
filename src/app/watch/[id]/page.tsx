@@ -7,6 +7,11 @@ import { Button } from '@/components/ui/PremiumButton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/PremiumCard';
 import { StatusIndicator } from '@/components/ui/StatusIndicator';
 import { LiveLocationTracker } from '@/components/tracking/LiveLocationTracker';
+import { InteractiveJourneyTracker } from '@/components/tracking/InteractiveJourneyTracker';
+import { SmartBettingInterface } from '@/components/ai/SmartBettingInterface';
+import { ProgressDashboard } from '@/components/dashboard/ProgressDashboard';
+import { SocialBettingFeed } from '@/components/social/SocialBettingFeed';
+import { AchievementShowcase } from '@/components/achievements/AchievementShowcase';
 import { useUIStore } from '@/stores/uiStore';
 import { useWallet } from '@/hooks/useWallet';
 import { useMobileExperience } from '@/hooks/useMobileExperience';
@@ -331,142 +336,164 @@ export default function JourneyTrackingPage({ params }: any) {
           </Button>
         </div>
 
-        {/* Journey Visualization */}
+        {/* Enhanced Journey Visualization */}
         <motion.div
           className="bg-white/10 rounded-xl p-4 mb-6 border border-white/20"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <div className="h-96 rounded-lg overflow-hidden">
-            <JourneyPathVisualization
-              journeys={[{
-                id: journey.id,
-                userId: journey.userId,
-                start: {
-                  lat: journey.start.lat,
-                  lng: journey.start.lng,
-                  timestamp: journey.startTime.getTime(),
-                  status: 'pending' as const
-                },
-                end: {
-                  lat: journey.end.lat,
-                  lng: journey.end.lng,
-                  timestamp: journey.estimatedArrival.getTime(),
-                  status: 'pending' as const
-                },
-                waypoints: journey.waypoints.map((wp: any) => ({
-                  lat: wp.lat,
-                  lng: wp.lng,
-                  timestamp: wp.timestamp,
-                  status: wp.status
-                })),
-                progress: journey.progress,
-                estimatedArrival: journey.estimatedArrival,
-                status: journey.status
-              }]}
-            />
-          </div>
+          <InteractiveJourneyTracker
+            commitmentId={journey.id}
+            startLocation={[journey.start.lat, journey.start.lng]}
+            endLocation={[journey.end.lat, journey.end.lng]}
+            currentLocation={journey.waypoints.length > 0 
+              ? [journey.waypoints[journey.waypoints.length - 1].lat, journey.waypoints[journey.waypoints.length - 1].lng] 
+              : undefined}
+            progress={journey.progress}
+            timeRemaining={Math.max(0, Math.floor((journey.estimatedArrival.getTime() - Date.now()) / 1000))}
+            distanceRemaining={journey.estimatedDistance * (1 - journey.progress)}
+          />
         </motion.div>
 
-        {/* Journey Details */}
+        {/* Progress Dashboard */}
         <motion.div
-          className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+          className="mb-6"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          {/* Progress Card */}
-          <div className="bg-white/10 rounded-xl p-6 border border-white/20">
-            <h3 className="text-lg font-semibold text-white mb-4">Progress</h3>
-            <div className="space-y-4">
-              <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-white/70">Overall Progress</span>
-                  <span className="text-white">{Math.round(journey.progress * 100)}%</span>
-                </div>
-                <div className="w-full bg-gray-700 rounded-full h-3">
-                  <div
-                    className="h-3 rounded-full bg-gradient-to-r from-blue-500 to-purple-500"
-                    style={{ width: `${journey.progress * 100}%` }}
-                  ></div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-white/70 text-sm">Started</p>
-                  <p className="text-white font-medium">
-                    {journey.startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-white/70 text-sm">ETA</p>
-                  <p className="text-white font-medium">
-                    {journey.estimatedArrival.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Commitment Card */}
-          <div className="bg-white/10 rounded-xl p-6 border border-white/20">
-            <h3 className="text-lg font-semibold text-white mb-4">Commitment</h3>
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-white/70">Stake Amount</span>
-                <span className="text-white font-medium">{journey.stakeAmount} STT</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-white/70">Reputation Impact</span>
-                <span className="text-green-400 font-medium">+{journey.reputationImpact}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-white/70">Status</span>
-                <span className="px-2 py-1 bg-blue-500/20 text-blue-400 text-xs rounded-full">
-                  {journey.status === 'completed' ? 'Completed' : 'In Progress'}
-                </span>
-              </div>
-              {journey.status !== 'completed' && (
-                <Button
-                  variant="primary"
-                  className="w-full mt-4"
-                  onClick={handleFulfillCommitment}
-                >
-                  Mark as Arrived
-                </Button>
-              )}
-            </div>
-          </div>
-
-          {/* Actions Card */}
-          <div className="bg-white/10 rounded-xl p-6 border border-white/20">
-            <h3 className="text-lg font-semibold text-white mb-4">Actions</h3>
-            <div className="space-y-3">
-              <Button
-                variant="primary"
-                className="w-full"
-                onClick={() => addToast({ message: 'Location updated', type: 'success' })}
-              >
-                Update Location
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => addToast({ message: 'Share link copied', type: 'success' })}
-              >
-                Share Tracking
-              </Button>
-              <Button
-                variant="secondary"
-                className="w-full"
-                onClick={() => router.push(`/watch/${journey.id}/bet`)}
-              >
-                Place a Bet
-              </Button>
-            </div>
-          </div>
+          <ProgressDashboard
+            currentProgress={journey.progress}
+            timeRemaining={Math.max(0, Math.floor((journey.estimatedArrival.getTime() - Date.now()) / 1000))}
+            distanceRemaining={journey.estimatedDistance * (1 - journey.progress)}
+            reputationScore={journey.reputationImpact}
+            streakCount={5} // Mock streak count
+            onDashboardAction={(action) => {
+              if (action === 'share') {
+                navigator.clipboard.writeText(window.location.href);
+                addToast({ message: 'Link copied to clipboard', type: 'success' });
+              }
+            }}
+          />
         </motion.div>
+
+        {/* Betting Interface */}
+        {isConnected && !isOwner && (
+          <motion.div
+            className="mb-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <SmartBettingInterface
+              commitmentId={journey.id}
+              stakeAmount={parseFloat(journey.stakeAmount)}
+              deadline={journey.estimatedArrival}
+              currentProgress={journey.progress}
+              status={journey.status}
+              destinationReached={journey.status === 'completed' ? true : false}
+              estimatedArrival={journey.estimatedArrival}
+              timeRemaining={Math.max(0, Math.floor((journey.estimatedArrival.getTime() - Date.now()) / 1000))}
+            />
+          </motion.div>
+        )}
+
+        {/* Social Betting Feed */}
+        {isConnected && (
+          <motion.div
+            className="mb-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <SocialBettingFeed
+              bets={[
+                {
+                  id: '1',
+                  user: 'Alex',
+                  amount: '0.5',
+                  type: 'for',
+                  timestamp: new Date(Date.now() - 300000), // 5 minutes ago
+                  isCurrentUser: false,
+                  likes: 2,
+                  likedByCurrentUser: false
+                },
+                {
+                  id: '2',
+                  user: 'You',
+                  amount: '1.2',
+                  type: 'against',
+                  timestamp: new Date(Date.now() - 120000), // 2 minutes ago
+                  isCurrentUser: true,
+                  likes: 0,
+                  likedByCurrentUser: false
+                },
+                {
+                  id: '3',
+                  user: 'Sam',
+                  amount: '0.8',
+                  type: 'for',
+                  timestamp: new Date(Date.now() - 60000), // 1 minute ago
+                  isCurrentUser: false,
+                  likes: 1,
+                  likedByCurrentUser: false
+                }
+              ]}
+              commitmentId={journey.id}
+              onBetAction={(betId, action) => {
+                if (action === 'like') {
+                  addToast({ message: 'Bet liked!', type: 'success' });
+                } else if (action === 'share') {
+                  addToast({ message: 'Bet shared!', type: 'success' });
+                }
+              }}
+            />
+          </motion.div>
+        )}
+
+        {/* Achievement Showcase */}
+        {isConnected && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            <AchievementShowcase
+              achievements={[
+                {
+                  id: 'punctual-1',
+                  title: 'First Commitment',
+                  description: 'Complete your first punctuality commitment',
+                  icon: '🎯',
+                  unlocked: true,
+                  unlockDate: new Date(Date.now() - 86400000), // 1 day ago
+                  rarity: 'common'
+                },
+                {
+                  id: 'punctual-2',
+                  title: 'Early Bird',
+                  description: 'Arrive 10 minutes early',
+                  icon: '🐦',
+                  unlocked: false,
+                  progress: 0.7,
+                  rarity: 'rare'
+                },
+                {
+                  id: 'punctual-3',
+                  title: 'Streak Master',
+                  description: 'Maintain 7-day streak',
+                  icon: '🔥',
+                  unlocked: false,
+                  progress: 0.4,
+                  rarity: 'epic'
+                }
+              ]}
+              onAchievementClick={(id) => {
+                addToast({ message: `Achievement ${id} clicked`, type: 'info' });
+              }}
+            />
+          </motion.div>
+        )}
       </div>
     </div>
   );

@@ -14,6 +14,11 @@ A decentralized betting protocol that combines real-time location tracking with 
 - **🎨 Enhanced UX**: Delightful animations, haptic feedback, achievement celebrations
 - **🤖 Smart Recommendations**: AI-powered stake suggestions based on context
 - **⚡ Performance Adaptive**: Smooth experience across all devices
+- **🎮 Interactive Journey Tracking**: Engaging UI with progress visualization and milestone celebrations
+- **🎯 Smart Betting Interface**: AI-enhanced betting with risk assessment and insights
+- **🏆 Achievement Showcase**: Gamified experience with unlockable achievements
+- **📊 Live Progress Dashboard**: Real-time metrics and performance tracking
+- **💬 Social Betting Feed**: Live updates and interactions with other bettors
 
 ## 🛠️ Tech Stack
 
@@ -71,6 +76,7 @@ PRIVATE_KEY="your_private_key_here"
 - **[CORE_PRINCIPLES.md](docs/CORE_PRINCIPLES.md)**: Our eight core principles and implementation guidelines  
 - **[IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md)**: Current progress analysis and plan to transform from prototype to production
 - **[TECHNICAL_DOCUMENTATION.md](docs/TECHNICAL_DOCUMENTATION.md)**: System architecture, database design, smart contracts, and deployment guide
+- **[CHALLENGE_TEMPLATES.md](docs/CHALLENGE_TEMPLATES.md)**: Documentation for challenge templates and viral campaign features
 
 ### Development
 

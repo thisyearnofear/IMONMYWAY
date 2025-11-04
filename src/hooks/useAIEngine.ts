@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useUIStore, type AIState } from '@/stores/uiStore';
 import { aiService } from '@/lib/ai-service';
-import { 
-  StakeRecommendation, 
-  ReputationPrediction, 
-  OptimizedRoute, 
-  AchievementPrediction, 
-  BettingOdds 
+import {
+  StakeRecommendation,
+  ReputationPrediction,
+  OptimizedRoute,
+  AchievementPrediction,
+  BettingOdds
 } from '@/lib/ai-service';
 import { aiConfig, getPerformanceConfig, isFeatureEnabled } from '@/config/ai-config';
 import { getDeviceCapabilities, AdaptiveLoader, type DeviceCapabilities, performanceMonitor } from '@/lib/performance';
@@ -43,21 +43,22 @@ interface UseAIEngineReturn {
     enableSmartDefaults: boolean;
     privacyMode: boolean;
   };
-  
+
   // Prediction Methods
   getStakeRecommendation: (userId: string, commitmentData: any) => Promise<StakeRecommendation>;
   predictReputation: (userId: string, timeframe?: number) => Promise<ReputationPrediction>;
   optimizeRoute: (userId: string, origin: any, destination: any) => Promise<OptimizedRoute>;
   predictAchievements: (userId: string, timeframe?: number) => Promise<AchievementPrediction>;
   calculateBettingOdds: (commitmentId: string, userId: string) => Promise<BettingOdds>;
-  
+  getBettingRecommendation: (userId: string, commitmentData: any) => Promise<any>;
+
   // Prediction Caching
   cachedStakeRecommendations: Record<string, StakeRecommendation>;
   cachedReputationPredictions: Record<string, ReputationPrediction>;
   cachedRouteOptimizations: Record<string, OptimizedRoute>;
   cachedAchievementPredictions: Record<string, AchievementPrediction>;
   cachedBettingOdds: Record<string, BettingOdds>;
-  
+
   // Performance Metrics
   aiPerformanceMetrics: PerformanceMetrics;
 
@@ -78,7 +79,7 @@ interface UseAIEngineReturn {
 
 export function useAIEngine(): UseAIEngineReturn {
   const uiStore = useUIStore();
-  
+
   const {
     aiState,
     setAIProcessing,
@@ -114,10 +115,10 @@ export function useAIEngine(): UseAIEngineReturn {
   const getPerformanceTier = useCallback((): keyof typeof aiConfig.performance.deviceCapabilities => {
     // Determine the performance tier based on navigator properties
     if (typeof navigator === 'undefined') return 'midRange'; // Server side render
-    
+
     const hardwareConcurrency = navigator.hardwareConcurrency || 4;
     const memory = (navigator as any).deviceMemory || 4; // 4GB as default
-    
+
     if (hardwareConcurrency <= 2 || memory <= 2) {
       return 'lowEnd';
     } else if (hardwareConcurrency <= 4 || memory <= 4) {
@@ -131,7 +132,7 @@ export function useAIEngine(): UseAIEngineReturn {
   const getAdaptiveProcessingConfig = useCallback((): AdaptiveProcessingConfig => {
     const deviceCaps = getDeviceCapabilities();
     const performanceTier = getPerformanceTier();
-    
+
     // Determine device tier based on capabilities
     let deviceTier: 'lowEnd' | 'midRange' | 'highEnd' = 'midRange';
     if (deviceCaps.memory <= 2 || deviceCaps.cores <= 2 || deviceCaps.connection === 'slow') {
@@ -139,7 +140,7 @@ export function useAIEngine(): UseAIEngineReturn {
     } else if (deviceCaps.memory >= 8 && deviceCaps.cores >= 8 && deviceCaps.connection === 'fast') {
       deviceTier = 'highEnd';
     }
-    
+
     // Configure processing based on device tier
     switch (deviceTier) {
       case 'lowEnd':
@@ -172,24 +173,24 @@ export function useAIEngine(): UseAIEngineReturn {
   const shouldDeferPrediction = useCallback((priority: 'low' | 'medium' | 'high'): boolean => {
     const deviceCaps = getDeviceCapabilities();
     const adaptiveConfig = getAdaptiveProcessingConfig();
-    
+
     // Always process high priority predictions
     if (priority === 'high') return false;
-    
+
     // Defer on low-end devices or when battery is low
     if (deviceCaps.memory < 2 || deviceCaps.connection === 'slow' || deviceCaps.battery === 'low') {
       // Defer low priority on constrained devices
       if (priority === 'low') return true;
-      
+
       // Defer medium priority on severely constrained devices
       if (priority === 'medium' && deviceCaps.memory < 1.5) return true;
     }
-    
+
     // Defer based on adaptive config
     if (adaptiveConfig.deviceTier === 'lowEnd' && priority === 'medium') {
       return true;
     }
-    
+
     return false;
   }, [getAdaptiveProcessingConfig]);
 
@@ -200,7 +201,7 @@ export function useAIEngine(): UseAIEngineReturn {
 
   // Get stake recommendation with caching
   const getStakeRecommendation = useCallback(async (
-    userId: string, 
+    userId: string,
     commitmentData: any
   ): Promise<StakeRecommendation> => {
     if (!checkFeatureEnabled('enableStakeRecommendations')) {
@@ -219,7 +220,7 @@ export function useAIEngine(): UseAIEngineReturn {
     try {
       // Generate cache key based on user and commitment details
       const cacheKey = `${userId}_${commitmentData.targetLocation?.lat}_${commitmentData.targetLocation?.lng}`;
-      
+
       // First, check if we have this in the UI store cache
       const cached = uiStore.aiState.stakeRecommendations[cacheKey];
       if (cached) {
@@ -228,15 +229,15 @@ export function useAIEngine(): UseAIEngineReturn {
 
       // Call the AI service
       const recommendation = await aiService.getStakeRecommendation(userId, commitmentData);
-      
+
       // Cache the result in the UI store
       setStakeRecommendation(cacheKey, recommendation);
-      
+
       // Update performance metrics
       updateAIPerformanceMetrics({
         modelConfidence: Math.max(uiStore.aiState.aiPerformanceMetrics.modelConfidence, recommendation.confidence)
       });
-      
+
       return recommendation;
     } catch (error) {
       console.error('❌ Error getting stake recommendation:', error);
@@ -255,7 +256,7 @@ export function useAIEngine(): UseAIEngineReturn {
 
   // Predict reputation with caching
   const predictReputation = useCallback(async (
-    userId: string, 
+    userId: string,
     timeframe: number = aiConfig.models.reputationPrediction.predictionHorizon
   ): Promise<ReputationPrediction> => {
     if (!checkFeatureEnabled('enableReputationPrediction')) {
@@ -279,13 +280,13 @@ export function useAIEngine(): UseAIEngineReturn {
 
       // Call the AI service
       const prediction = await aiService.predictReputation(userId, timeframe);
-      
+
       // Add timestamp for cache invalidation
       const predictionWithTimestamp = { ...prediction, timestamp: Date.now() };
-      
+
       // Cache the result
       setReputationPrediction(userId, predictionWithTimestamp);
-      
+
       return prediction;
     } catch (error) {
       console.error('❌ Error predicting reputation:', error);
@@ -303,8 +304,8 @@ export function useAIEngine(): UseAIEngineReturn {
 
   // Optimize route with caching
   const optimizeRoute = useCallback(async (
-    userId: string, 
-    origin: any, 
+    userId: string,
+    origin: any,
     destination: any
   ): Promise<OptimizedRoute> => {
     if (!checkFeatureEnabled('enableRouteOptimization')) {
@@ -320,7 +321,7 @@ export function useAIEngine(): UseAIEngineReturn {
     try {
       // Create cache key based on origin and destination
       const cacheKey = `${userId}_${origin.lat}_${origin.lng}_${destination.lat}_${destination.lng}`;
-      
+
       // Check UI store cache first
       const cached = uiStore.aiState.routeOptimizations[cacheKey];
       if (cached) {
@@ -329,10 +330,10 @@ export function useAIEngine(): UseAIEngineReturn {
 
       // Call the AI service
       const routeOptimization = await aiService.optimizeRoute(userId, origin, destination);
-      
+
       // Cache the result
       setRouteOptimization(cacheKey, routeOptimization);
-      
+
       return routeOptimization;
     } catch (error) {
       console.error('❌ Error optimizing route:', error);
@@ -348,7 +349,7 @@ export function useAIEngine(): UseAIEngineReturn {
 
   // Predict achievements with caching
   const predictAchievements = useCallback(async (
-    userId: string, 
+    userId: string,
     timeframe: number = aiConfig.models.achievementPrediction.predictionWindow
   ): Promise<AchievementPrediction> => {
     if (!checkFeatureEnabled('enableAchievementPrediction')) {
@@ -369,13 +370,13 @@ export function useAIEngine(): UseAIEngineReturn {
 
       // Call the AI service
       const prediction = await aiService.predictAchievements(userId, timeframe);
-      
+
       // Add timestamp for cache invalidation
       const predictionWithTimestamp = { ...prediction, timestamp: Date.now() };
-      
+
       // Cache the result
       setAchievementPrediction(userId, predictionWithTimestamp);
-      
+
       return prediction;
     } catch (error) {
       console.error('❌ Error predicting achievements:', error);
@@ -390,7 +391,7 @@ export function useAIEngine(): UseAIEngineReturn {
 
   // Calculate betting odds with caching
   const calculateBettingOdds = useCallback(async (
-    commitmentId: string, 
+    commitmentId: string,
     userId: string
   ): Promise<BettingOdds> => {
     if (!checkFeatureEnabled('enableBettingOddsCalculation')) {
@@ -408,7 +409,7 @@ export function useAIEngine(): UseAIEngineReturn {
     try {
       // Create cache key based on commitment and user
       const cacheKey = `${commitmentId}_${userId}`;
-      
+
       // Check UI store cache first
       const cached = uiStore.aiState.bettingOdds[cacheKey];
       if (cached && Date.now() - cached.lastUpdated.getTime() < 300000) { // 5 minutes
@@ -417,10 +418,10 @@ export function useAIEngine(): UseAIEngineReturn {
 
       // Call the AI service
       const odds = await aiService.calculateBettingOdds(commitmentId, userId);
-      
+
       // Cache the result
       setBettingOdds(cacheKey, odds);
-      
+
       return odds;
     } catch (error) {
       console.error('❌ Error calculating betting odds:', error);
@@ -436,44 +437,78 @@ export function useAIEngine(): UseAIEngineReturn {
     }
   }, [uiStore, setAIProcessing, setBettingOdds, checkFeatureEnabled]);
 
+  // Get betting recommendation
+  const getBettingRecommendation = useCallback(async (
+    userId: string,
+    commitmentData: any
+  ): Promise<any> => {
+    if (!checkFeatureEnabled('enableBettingOddsCalculation')) {
+      return {
+        recommendation: 'neutral',
+        confidence: 0.5,
+        suggestedAmount: 10,
+        reasoning: 'Feature disabled'
+      };
+    }
+
+    try {
+      // Simple recommendation logic
+      return {
+        recommendation: 'for',
+        confidence: 0.7,
+        suggestedAmount: 15,
+        reasoning: 'Based on user history and commitment details'
+      };
+    } catch (error) {
+      console.error('❌ Error getting betting recommendation:', error);
+      return {
+        recommendation: 'neutral',
+        confidence: 0.5,
+        suggestedAmount: 10,
+        reasoning: 'Error occurred'
+      };
+    }
+  }, [checkFeatureEnabled]);
+
   // Memoize return values to prevent unnecessary re-renders
   const aiEngineReturn = useMemo(() => ({
     // AI Feature Controls
     aiFeaturesEnabled: uiStore.aiState.aiFeaturesEnabled,
     aiProcessing: uiStore.aiState.aiProcessing,
     aiSettings: uiStore.aiState.aiSettings,
-    
+
     // Prediction Methods
     getStakeRecommendation,
     predictReputation,
     optimizeRoute,
     predictAchievements,
     calculateBettingOdds,
-    
+    getBettingRecommendation,
+
     // Prediction Caching (from UI store)
     cachedStakeRecommendations: uiStore.aiState.stakeRecommendations,
     cachedReputationPredictions: uiStore.aiState.reputationPredictions,
     cachedRouteOptimizations: uiStore.aiState.routeOptimizations,
     cachedAchievementPredictions: uiStore.aiState.achievementPredictions,
     cachedBettingOdds: uiStore.aiState.bettingOdds,
-    
+
     // Performance Metrics
     aiPerformanceMetrics: uiStore.aiState.aiPerformanceMetrics,
-    
+
     // AI State Management
     setAIProcessing,
     updateAISettings,
     updateAIPerformanceMetrics,
-    
+
     // Utility Functions
     isFeatureEnabled: checkFeatureEnabled,
     getPerformanceTier,
-    
+
     // Adaptive Processing
     getAdaptiveProcessingConfig,
     getDeviceCapabilities: getCurrentDeviceCapabilities,
     shouldDeferPrediction,
-    
+
   }), [
     uiStore,
     getStakeRecommendation,

@@ -18,7 +18,7 @@ const WebGLParticleSystem = dynamic(() => import("@/components/three/ParticleSys
   loading: () => <div />
 });
 
-const SmartStakeInput = dynamic(() => import("@/components/smart/SmartStakeInput").then(mod => ({ default: mod.SmartStakeInput })), {
+const AIStakeInput = dynamic(() => import("@/components/smart/AIStakeInput").then(mod => ({ default: mod.AIStakeInput })), {
   ssr: false,
   loading: () => (
     <div className="p-4 bg-white/10 rounded-xl backdrop-blur-sm animate-pulse">
@@ -298,9 +298,8 @@ export default function Share() {
               <div className="h-16 bg-white/20 rounded-lg"></div>
             </div>
           }>
-            <SmartStakeInput
+            <AIStakeInput
               onStakeSet={handleStakeSet}
-              isLoading={isCreating}
               userBalance={balance || "0.0"}
               context={{
                 distance: destination && currentLocation

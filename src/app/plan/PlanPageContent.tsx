@@ -79,7 +79,7 @@ export default function PlanPageContent() {
 
   // Speed picker functions
   const currentPreset = findPresetByPace(selectedPace);
-  
+
   const handlePresetSelect = (pace: number) => {
     setSelectedPace(pace);
     setShowCustomInput(false);
@@ -360,8 +360,8 @@ export default function PlanPageContent() {
                 className="h-80"
                 center={
                   planData ? planData.startCoords :
-                  currentLocation ? [currentLocation.lat, currentLocation.lng] :
-                  [40.7128, -74.006]
+                    currentLocation ? [currentLocation.lat, currentLocation.lng] :
+                      [40.7128, -74.006]
                 }
                 onMapReady={async (map) => {
                   // Add current location marker if available
@@ -444,7 +444,7 @@ export default function PlanPageContent() {
             <div className="bg-white/5 rounded-xl p-4 border border-white/10">
               <h3 className="text-white font-medium mb-2 text-sm">How fast will you move?</h3>
               <p className="text-white/60 text-xs mb-3">This helps calculate arrival times</p>
-              
+
               {/* Current Selection Display */}
               <div className="bg-white/10 rounded-lg p-3 mb-3 text-center">
                 <div className="text-lg mb-1">{currentPreset?.icon || '⚡'}</div>
@@ -497,9 +497,9 @@ export default function PlanPageContent() {
                     <Button size="sm" onClick={handleCustomSubmit} className="flex-1 text-xs">
                       Apply
                     </Button>
-                    <Button 
-                      size="sm" 
-                      variant="ghost" 
+                    <Button
+                      size="sm"
+                      variant="ghost"
                       onClick={() => setShowCustomInput(false)}
                       className="flex-1 text-xs"
                     >
@@ -569,6 +569,14 @@ export default function PlanPageContent() {
                   onClick={() => window.location.href = '/share'}
                 >
                   🚀 Start Challenge
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1 border-white/30 text-white py-2"
+                  onClick={() => window.location.href = '/challenges'}
+                >
+                  🎯 Challenge Templates
                 </Button>
               </div>
             </div>

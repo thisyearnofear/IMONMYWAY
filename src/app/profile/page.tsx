@@ -7,6 +7,7 @@ import { motion } from 'framer-motion'
 import { PremiumButton } from '@/components/ui/PremiumButton'
 import { profileData, type UserProfile } from '@/lib/profile-data'
 import { useProfileRealtime, useReputationRealtime } from '@/hooks/useRealtime'
+import { ChallengeHub } from '@/components/challenges/ChallengeHub'
 
 // Dynamic imports for components that might cause SSR issues
 const WebGLParticleSystem = dynamicImport(() => import('@/components/three/ParticleSystem'), {
@@ -38,13 +39,13 @@ export default function ProfilePage() {
 
   const loadProfile = useCallback(async () => {
     if (!address) return
-    
+
     try {
       setIsLoading(true)
       setError(null)
-      
+
       const userProfile = await profileData.getUserProfile(address)
-      
+
       if (!userProfile) {
         setError('Profile not found. Complete your first session to create a profile.')
       } else {
@@ -61,17 +62,17 @@ export default function ProfilePage() {
   // Real-time profile updates
   useProfileRealtime(address ?? undefined, (data) => {
     console.log('👤 Real-time profile update received:', data)
-    
+
     // Show real-time update indicator
-    const updateText = data.sessionData.success 
+    const updateText = data.sessionData.success
       ? `Session completed successfully! ${data.sessionData.pace ? `${data.sessionData.pace.toFixed(1)} min/mi` : ''}`
       : 'Session failed - better luck next time!'
-    
+
     setRealtimeUpdate(updateText)
-    
+
     // Refresh profile data
     loadProfile()
-    
+
     // Clear indicator after 5 seconds
     setTimeout(() => setRealtimeUpdate(null), 5000)
   })
@@ -79,13 +80,13 @@ export default function ProfilePage() {
   // Real-time reputation changes
   useReputationRealtime(address ?? undefined, (data) => {
     console.log('⭐ Real-time reputation change received:', data)
-    
+
     // Show reputation change notification
     setReputationChange(data)
-    
+
     // Refresh profile data
     loadProfile()
-    
+
     // Clear notification after 8 seconds
     setTimeout(() => setReputationChange(null), 8000)
   })
@@ -125,7 +126,7 @@ export default function ProfilePage() {
       <div className="min-h-screen relative">
         <WebGLParticleSystem count={800} color="#60a5fa" size={0.015} />
         <div className="fixed inset-0 bg-gradient-to-br from-indigo-950/50 via-purple-950/30 to-pink-950/15" />
-        
+
         <main className="relative z-10 min-h-screen flex items-center justify-center px-4">
           <motion.div
             className="bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 p-8 rounded-xl text-center max-w-md"
@@ -152,7 +153,7 @@ export default function ProfilePage() {
       <div className="min-h-screen relative">
         <WebGLParticleSystem count={800} color="#60a5fa" size={0.015} />
         <div className="fixed inset-0 bg-gradient-to-br from-indigo-950/50 via-purple-950/30 to-pink-950/15" />
-        
+
         <main className="relative z-10 container mx-auto px-4 py-8">
           <div className="space-y-6">
             <div className="p-8 rounded-xl animate-pulse bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10">
@@ -184,7 +185,7 @@ export default function ProfilePage() {
       <div className="min-h-screen relative">
         <WebGLParticleSystem count={800} color="#60a5fa" size={0.015} />
         <div className="fixed inset-0 bg-gradient-to-br from-indigo-950/50 via-purple-950/30 to-pink-950/15" />
-        
+
         <main className="relative z-10 min-h-screen flex items-center justify-center px-4">
           <motion.div
             className="bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 p-8 rounded-xl text-center max-w-md border border-red-500/30"
@@ -232,11 +233,10 @@ export default function ProfilePage() {
 
         {reputationChange && (
           <motion.div
-            className={`p-4 rounded-xl mb-6 border bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 ${
-              reputationChange.newScore > reputationChange.oldScore 
-                ? 'border-green-400/30 bg-green-500/10' 
-                : 'border-red-400/30 bg-red-500/10'
-            }`}
+            className={`p-4 rounded-xl mb-6 border bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 ${reputationChange.newScore > reputationChange.oldScore
+              ? 'border-green-400/30 bg-green-500/10'
+              : 'border-red-400/30 bg-red-500/10'
+              }`}
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
@@ -246,9 +246,8 @@ export default function ProfilePage() {
                 {reputationChange.newScore > reputationChange.oldScore ? '⭐' : '📉'}
               </span>
               <div>
-                <div className={`font-semibold ${
-                  reputationChange.newScore > reputationChange.oldScore ? 'text-green-400' : 'text-red-400'
-                }`}>
+                <div className={`font-semibold ${reputationChange.newScore > reputationChange.oldScore ? 'text-green-400' : 'text-red-400'
+                  }`}>
                   Reputation {reputationChange.newScore > reputationChange.oldScore ? 'Increased' : 'Decreased'}!
                 </div>
                 <div className="text-sm text-white/70">
@@ -355,6 +354,16 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
+
+        {/* Challenge Hub */}
+        <motion.div
+          className="mb-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+          <ChallengeHub userId={address || ''} />
+        </motion.div>
 
         {/* AI-Enhanced Performance Dashboard */}
         {profile && (
