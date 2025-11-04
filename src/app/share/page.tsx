@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import dynamic from "next/dynamic";
-import { PremiumNavigation } from "@/components/layout/PremiumNavigation";
 import { ToastContainer } from "@/components/ui/Toast";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -243,7 +242,6 @@ export default function Share() {
       <div className="fixed inset-0 bg-gradient-to-br from-indigo-950/40 via-purple-950/20 to-pink-950/10" />
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_30%_40%,rgba(59,130,246,0.08),transparent_70%)]" />
 
-      <PremiumNavigation />
 
       {/* Minimal Header */}
       <div className="relative z-10 p-4 text-center">

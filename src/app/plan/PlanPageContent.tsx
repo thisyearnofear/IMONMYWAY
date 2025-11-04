@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { PremiumNavigation } from "@/components/layout/PremiumNavigation";
 import { ToastContainer } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/PremiumButton";
 import { Input } from "@/components/ui/Input";
@@ -320,7 +319,6 @@ export default function PlanPageContent() {
       <div className="fixed inset-0 bg-gradient-to-br from-indigo-950/40 via-purple-950/20 to-pink-950/10" />
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_30%_40%,rgba(59,130,246,0.08),transparent_70%)]" />
 
-      <PremiumNavigation />
 
       <main className="relative z-10 container mx-auto px-4 pt-20 pb-8 max-w-6xl">
         <ParallaxSection offset={20} className="text-center mb-6">
