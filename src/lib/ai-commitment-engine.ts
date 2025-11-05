@@ -9,6 +9,7 @@
  */
 
 import { contractService } from '@/services/contractService';
+import { veniceClient, isVeniceAvailable } from '@/lib/venice-client';
 
 // Social proof interfaces
 export interface SocialProof {
@@ -110,6 +111,37 @@ Will I make it on time? 🤔 #PunctualityChallenge #Web3 #IMONMYWAY`;
 
             // Get social reputation from Farcaster/Twitter
             const socialRep = await this.getSocialReputation(userAddress);
+
+            // Try Venice AI enhancement first (if available)
+            if (isVeniceAvailable() && history.length > 0) {
+                console.log('🧠 Using Venice AI for enhanced recommendation...');
+
+                const veniceRecommendation = await veniceClient.generatePaceRecommendation(
+                    history,
+                    context,
+                    distance / 1000 // Convert meters to km
+                );
+
+                if (veniceRecommendation) {
+                    console.log('✅ Venice AI recommendation received:', veniceRecommendation);
+
+                    // Enhance with blockchain data for social metrics
+                    const socialBoost = socialRep.socialCredibility;
+                    const viralPotential = Math.min(0.9, socialRep.totalProofs / 10 + socialRep.sentimentScore * 0.3);
+
+                    return {
+                        estimatedPace: veniceRecommendation.recommendedPace,
+                        suggestedDeadline: Math.ceil((distance * veniceRecommendation.recommendedPace) / 60) + this.calculateBuffer(context, veniceRecommendation.confidence, history.length),
+                        confidenceLevel: veniceRecommendation.confidence,
+                        reasoning: veniceRecommendation.reasoning,
+                        socialBoost,
+                        viralPotential
+                    };
+                }
+            }
+
+            // Fallback to rule-based algorithm
+            console.log('⏭️ Using rule-based algorithm (Venice AI not available)');
 
             if (history.length === 0) {
                 return this.getNewUserSuggestion(distance, context);

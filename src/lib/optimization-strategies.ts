@@ -212,10 +212,10 @@ export class ViralOptimizer {
     const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
     
     const predictions: Record<string, string[]> = {
-      '/': ['/plan', '/share'],
-      '/plan': ['/watch', '/share'],
-      '/watch': ['/share', '/plan'],
-      '/share': ['/plan', '/watch']
+      '/': ['/plan', '/create'],
+      '/plan': ['/watch', '/create'],
+      '/watch': ['/create', '/plan'],
+      '/create': ['/plan', '/watch']
     };
 
     return predictions[currentPath] || [];

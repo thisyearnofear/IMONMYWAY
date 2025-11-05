@@ -16,10 +16,10 @@ export function ModeSwitch() {
       description: 'Set route & calculate ETA'
     },
     {
-      path: '/share',
-      label: 'Live',
-      icon: '📍',
-      description: 'Share real-time location'
+      path: '/create',
+      label: 'Create',
+      icon: '🧠',
+      description: 'Create AI challenge'
     }
   ]
 

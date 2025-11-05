@@ -69,9 +69,9 @@ export default function ChallengeBrowserPage() {
     // Cultural celebration message
     const celebrationMessage = culturalAdaptation.getCulturalMessage('celebration');
     addToast({
-      message: celebrationMessage,
-      type: "achievement",
-      duration: 4000
+    message: celebrationMessage,
+    type: "success",
+    duration: 4000
     });
     
     // Navigate to tracking with context

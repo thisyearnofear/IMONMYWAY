@@ -8,10 +8,40 @@ import { Input } from "@/components/ui/Input";
 import { useWallet } from "@/hooks/useWallet";
 import { useUIStore } from "@/stores/uiStore";
 import { useLocationStore } from "@/stores/locationStore";
+import { useNavigationContext } from "@/hooks/useNavigationContext";
 import { CHALLENGE_TEMPLATES, createChallengeFromTemplate } from "@/lib/challenge-templates";
 import { AICommitmentEngine, type AICommitmentSuggestion } from "@/lib/ai-commitment-engine";
 import { MapContainer } from "@/components/map/MapContainer";
 import { calculateDistance } from "@/lib/distance";
+
+// Enhanced geocoding with autocomplete suggestions
+const geocodeAddress = async (
+  address: string
+): Promise<[number, number] | null> => {
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+        address
+      )}&limit=1`
+    );
+
+    if (!response.ok) {
+      throw new Error("Geocoding service unavailable");
+    }
+
+    const data = await response.json();
+
+    if (data.length > 0) {
+      const result = data[0];
+      return [parseFloat(result.lat), parseFloat(result.lon)];
+    }
+
+    return null;
+  } catch (error) {
+    console.error("Geocoding error:", error);
+    return null;
+  }
+};
 
 export default function CreatePageContent() {
   const params = useSearchParams();
@@ -19,6 +49,7 @@ export default function CreatePageContent() {
   const { address, isConnected } = useWallet();
   const { addToast } = useUIStore();
   const { currentLocation } = useLocationStore();
+  const { getPreservedState } = useNavigationContext();
 
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(
     params.get("template")
@@ -37,10 +68,45 @@ export default function CreatePageContent() {
       return;
     }
 
+    // Load preserved route data from plan page
+    const preservedRoute = getPreservedState('plannedRoute');
+    if (preservedRoute && !destination) {
+      // If we have preserved route data and no destination set, use it
+      if (preservedRoute.endCoords) {
+        // Use coordinates directly if available
+        setDestination(preservedRoute.endCoords);
+        setEndAddress(preservedRoute.endAddress || '');
+      } else if (preservedRoute.endAddress && preservedRoute.endAddress !== 'Current Location') {
+        // Fallback to geocoding addresses
+        const loadPreservedRoute = async () => {
+          try {
+            const coords = await geocodeAddress(preservedRoute.endAddress);
+            if (coords) {
+              setDestination(coords);
+              setEndAddress(preservedRoute.endAddress);
+            }
+          } catch (error) {
+            console.error('Error loading preserved route:', error);
+          }
+        };
+        loadPreservedRoute();
+      }
+      if (preservedRoute.startAddress && preservedRoute.startAddress !== 'Current Location') {
+        setStartAddress(preservedRoute.startAddress);
+      }
+    }
+
     // Generate AI suggestion when user and destination are available
     const generateAISuggestion = async () => {
       if (address && destination && currentLocation) {
         try {
+          console.log('Generating AI suggestion for distance:', calculateDistance(
+            currentLocation.latitude,
+            currentLocation.longitude,
+            destination[0],
+            destination[1]
+          ));
+
           const distance = calculateDistance(
             currentLocation.latitude,
             currentLocation.longitude,
@@ -54,9 +120,19 @@ export default function CreatePageContent() {
             commitmentContext
           );
 
+          console.log('AI suggestion generated:', suggestion);
           setAiSuggestion(suggestion);
         } catch (error) {
           console.error('Error generating AI suggestion:', error);
+          // Set fallback suggestion on error
+          setAiSuggestion({
+            estimatedPace: 0.083,
+            suggestedDeadline: 30,
+            confidenceLevel: 0.3,
+            reasoning: "Error generating AI suggestion, using fallback",
+            socialBoost: 0,
+            viralPotential: 0
+          });
         }
       }
     };
@@ -104,12 +180,16 @@ export default function CreatePageContent() {
       } else {
         // AI-Assisted Custom Commitment (using on-chain data)
         if (!aiSuggestion) {
-          addToast({
-            message: "AI analysis in progress. Please wait a moment.",
-            type: "error"
-          });
-          setIsCreating(false);
-          return;
+          console.log('No AI suggestion available, using fallback values');
+          // Fallback values if AI is not available
+          aiSuggestion = {
+            estimatedPace: 0.083, // ~12 min/mile = 5 mph walking pace
+            suggestedDeadline: 30,
+            confidenceLevel: 0.5,
+            reasoning: "Fallback estimate - AI analysis unavailable",
+            socialBoost: 0,
+            viralPotential: 0
+          };
         }
 
         const deadline = new Date(Date.now() + aiSuggestion.suggestedDeadline * 60 * 1000);
@@ -138,8 +218,78 @@ export default function CreatePageContent() {
       if (commitmentData) {
         // Create on-chain commitment (the real source of truth)
         try {
-          // TODO: Add actual contract integration here
-          console.log('Creating on-chain commitment:', commitmentData);
+          // Create commitment in database first
+          const commitmentId = commitmentData.commitmentId;
+
+          // Try to create in database, but don't fail if it's not available
+          try {
+            const { dbService } = await import('@/lib/db-service');
+            await dbService.createCommitment(commitmentData);
+          } catch (dbError) {
+            console.warn('Database not available, creating commitment in memory:', dbError);
+          }
+
+          // If blockchain is available, create on-chain commitment
+          console.log('Checking for window.ethereum:', typeof window !== 'undefined' && window.ethereum);
+          if (typeof window !== 'undefined' && window.ethereum) {
+            console.log('Attempting blockchain interaction...');
+            try {
+              const { BrowserProvider } = await import('ethers');
+              const provider = new BrowserProvider(window.ethereum);
+              const signer = await provider.getSigner();
+              const network = await provider.getNetwork();
+              console.log('Connected to network:', network.chainId);
+
+              // Convert coordinates to contract format (scaled integers)
+              const startLoc: [bigint, bigint, bigint, bigint] = [
+                BigInt(Math.round(currentLocation.latitude * 1e6)),
+                BigInt(Math.round(currentLocation.longitude * 1e6)),
+                BigInt(Math.round(Date.now() / 1000)),
+                BigInt(100) // accuracy
+              ];
+              const endLoc: [bigint, bigint, bigint, bigint] = [
+                BigInt(Math.round(destination[0] * 1e6)),
+                BigInt(Math.round(destination[1] * 1e6)),
+                BigInt(Math.round(commitmentData.deadline.getTime() / 1000)),
+                BigInt(100) // accuracy
+              ];
+
+              console.log('Creating commitment with params:', {
+                startLoc,
+                endLoc,
+                deadline: BigInt(Math.round(commitmentData.deadline.getTime() / 1000)),
+                pace: BigInt(commitmentData.estimatedPace),
+                stakeAmount: commitmentData.stakeAmount
+              });
+
+              // Use the contract service to create the commitment
+              const { ContractService } = await import('@/services/contractService');
+              const contractService = new ContractService(signer);
+
+              const result = await contractService.createCommitment(
+                startLoc,
+                endLoc,
+                BigInt(Math.round(commitmentData.deadline.getTime() / 1000)),
+                BigInt(commitmentData.estimatedPace),
+                commitmentData.stakeAmount
+              );
+
+              console.log('On-chain commitment created successfully:', result);
+
+              // Update commitment status to pending if database is available
+              try {
+                const { dbService } = await import('@/lib/db-service');
+                await dbService.updateCommitmentStatus(commitmentId, 'pending');
+              } catch (dbError) {
+                console.warn('Could not update commitment status in database:', dbError);
+              }
+            } catch (contractError) {
+              console.error('Blockchain interaction failed:', contractError);
+              console.warn('Continuing with off-chain commitment due to blockchain error');
+            }
+          } else {
+            console.log('window.ethereum not available, skipping on-chain interaction');
+          }
 
           addToast({
             message: "AI-Assisted Commitment created successfully!",

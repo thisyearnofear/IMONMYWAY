@@ -333,6 +333,8 @@ export default function PlanPageContent() {
       preserveState('plannedRoute', {
         startAddress,
         endAddress,
+        startCoords,
+        endCoords,
         distance,
         eta,
         confidence,
@@ -341,10 +343,10 @@ export default function PlanPageContent() {
       
       // Personality-driven success message
       const personalizedMessage = personalityEngine.getMessage('celebration', undefined, { type: 'route_planned' });
-      addToast({ 
-        message: personalizedMessage, 
-        type: "achievement",
-        duration: 4000
+      addToast({
+      message: personalizedMessage,
+      type: "success",
+      duration: 4000
       });
     } catch (error) {
       triggerHaptic('error');

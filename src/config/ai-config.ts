@@ -1,6 +1,27 @@
 // AI Configuration for Punctuality Protocol
 // Single source of truth for all AI-related settings
 
+// ============================================================================
+// VENICE AI CONFIGURATION
+// ============================================================================
+
+export const VENICE_CONFIG = {
+  baseUrl: 'https://api.venice.ai/api/v1',
+  defaultModel: 'llama-3.3-70b', // Balanced performance for most use cases
+  models: {
+    balanced: 'llama-3.3-70b',
+    powerful: 'qwen3-235b',
+    vision: 'mistral-31-24b',
+    uncensored: 'venice-uncensored'
+  },
+  parameters: {
+    enableWebSearch: 'auto',
+    includeVeniceSystemPrompt: true,
+    temperature: 0.7,
+    maxTokens: 1000
+  }
+};
+
 // ============================================================================ 
 // AI MODEL CONFIGURATIONS
 // ============================================================================
@@ -147,6 +168,7 @@ export const AI_FEATURE_FLAGS = {
 // ============================================================================
 
 export const aiConfig = {
+  venice: VENICE_CONFIG,
   models: AI_MODEL_CONFIGS,
   performance: AI_PERFORMANCE,
   privacy: AI_PRIVACY,

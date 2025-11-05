@@ -27,10 +27,10 @@ export const ReadyToUseState = memo(function ReadyToUseState({
         </button>
       </Link>
       
-      <Link href="/share">
-        <button className="w-full bg-white/20 backdrop-blur-sm text-white py-6 rounded-xl font-bold text-xl border-2 border-white/30 hover:border-white/50 transition-all duration-300">
-          💰 Create Bet Challenge
-        </button>
+      <Link href="/create">
+      <button className="w-full bg-white/20 backdrop-blur-sm text-white py-6 rounded-xl font-bold text-xl border-2 border-white/30 hover:border-white/50 transition-all duration-300">
+      🧠 Create AI Challenge
+      </button>
       </Link>
       
       {/* Compact Status - Success State */}

@@ -5,6 +5,7 @@
 import { aiConfig, isFeatureEnabled, getPerformanceConfig } from '@/config/ai-config';
 import { cacheService } from '@/lib/cache-service';
 import { performanceMonitor, adaptiveLoader, getDeviceCapabilities } from '@/lib/performance';
+import { veniceClient, isVeniceAvailable } from '@/lib/venice-client';
 
 // ============================================================================
 // DATABASE SERVICE HELPER
@@ -248,6 +249,85 @@ export class AIService {
       if (!user) {
         throw new Error('User not found');
       }
+
+      // Try Venice AI enhancement
+      if (isVeniceAvailable()) {
+        console.log('🧠 Using Venice AI for reputation prediction...');
+
+        // Get comprehensive user data for AI analysis
+        const userBets = await dbService.getUserBets(userId, 50);
+        const recentBets = userBets.filter(bet =>
+          new Date(bet.createdAt) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) // Last 30 days
+        );
+
+        // Calculate current metrics
+        const successRate = userBets.length > 0 ?
+          userBets.filter(bet => bet.outcome === 'won').length / userBets.length : 0;
+
+        const prompt = `Analyze this user's betting/reputation history and predict their future reputation score.
+
+User Profile:
+- Current Reputation: ${user.reputationScore}/1000
+- Total Bets: ${userBets.length}
+- Recent Bets (30 days): ${recentBets.length}
+- Success Rate: ${(successRate * 100).toFixed(1)}%
+- Prediction Timeframe: ${timeframe} days
+
+Recent Performance (last 10 bets):
+${userBets.slice(-10).map((bet, i) => `${i+1}. ${bet.outcome} - ${bet.amount} tokens`).join('\n')}
+
+Provide a JSON response with:
+- predictedScore: number (0-1000)
+- confidence: number (0-1)
+- trend: "improving" | "declining" | "stable"
+- reasoning: brief explanation
+
+Consider:
+- Historical performance patterns
+- Recent trends and consistency
+- Risk of overfitting to small sample sizes`;
+
+        const messages = [
+          {
+            role: 'system' as const,
+            content: 'You are a financial analyst specializing in reputation-based systems and predictive modeling. Provide data-driven reputation predictions.'
+          },
+          {
+            role: 'user' as const,
+            content: prompt
+          }
+        ];
+
+        const response = await veniceClient.chatCompletion(messages, {
+          model: aiConfig.venice.models.balanced,
+          temperature: 0.2, // Low temperature for consistent predictions
+          enableWebSearch: false
+        });
+
+        if (response) {
+          try {
+            const parsed = JSON.parse(response);
+            console.log('✅ Venice AI reputation prediction:', parsed);
+
+            return {
+              predictedScore: Math.max(0, Math.min(1000, parsed.predictedScore)),
+              confidence: Math.max(0, Math.min(1, parsed.confidence)),
+              timeframe,
+              trend: ['improving', 'declining', 'stable'].includes(parsed.trend) ? parsed.trend : 'stable',
+              influencingFactors: [
+                'AI-powered pattern analysis',
+                `Historical performance (${userBets.length} bets)`,
+                'Trend analysis and prediction'
+              ]
+            };
+          } catch (parseError) {
+            console.error('Failed to parse Venice reputation prediction:', parseError);
+          }
+        }
+      }
+
+      // Fallback to rule-based prediction
+      console.log('⏭️ Using rule-based reputation prediction');
 
       // Analyze user's historical performance
       const userBets = await dbService.getUserBets(userId, 50);
@@ -552,6 +632,75 @@ export class AIService {
   }
 
   // ============================================================================
+  // CONTEXTUAL INSIGHTS WITH VENICE AI
+  // ============================================================================
+
+  async generateContextualInsights(
+  userId: string,
+  context: {
+  currentTime: string;
+      location: string;
+  weather?: string;
+  socialContext: 'solo' | 'friends' | 'public';
+  urgency: 'low' | 'medium' | 'high';
+  }
+  ): Promise<{
+  insights: string[];
+  recommendations: string[];
+  riskAssessment: 'low' | 'medium' | 'high';
+  }> {
+  if (isVeniceAvailable()) {
+  console.log('🧠 Using Venice AI for contextual insights...');
+
+  try {
+  const dbService = await getDbService();
+  const user = await dbService.getUserByWallet(userId);
+    const userBets = await dbService.getUserBets(userId, 20);
+
+        const successRate = userBets.length > 0 ?
+          (userBets.filter(bet => bet.outcome === 'won').length / userBets.length) : 0;
+
+        const insights = await veniceClient.generateContextualInsights(
+          {
+            reputation: user?.reputationScore || 750,
+            totalCommitments: userBets.length,
+            successRate,
+            averagePace: 0.083 // Default pace
+          },
+          {
+            type: context.urgency === 'high' ? 'urgent' : context.urgency === 'medium' ? 'work' : 'social',
+            timeOfDay: context.currentTime,
+            location: context.location,
+            weather: context.weather
+          }
+        );
+
+        if (insights) {
+          console.log('✅ Venice AI contextual insights:', insights);
+          return insights;
+        }
+      } catch (error) {
+        console.error('Error generating Venice contextual insights:', error);
+      }
+    }
+
+    // Fallback insights
+    return {
+      insights: [
+        `Current time: ${context.currentTime}`,
+        `Location: ${context.location}`,
+        `${context.socialContext} context with ${context.urgency} urgency`
+      ],
+      recommendations: [
+        'Consider current conditions for timing',
+        'Check weather and traffic conditions',
+        'Adjust pace based on social context'
+      ],
+      riskAssessment: context.urgency === 'high' ? 'high' : context.urgency === 'medium' ? 'medium' : 'low'
+    };
+  }
+
+  // ============================================================================
   // PERFORMANCE MONITORING
   // ============================================================================
 
@@ -559,11 +708,16 @@ export class AIService {
     try {
       const performanceTier = getPerformanceConfig();
       const isFeatureEnabled = Object.values(aiConfig.features).filter(f => f).length;
+      const veniceHealth = isVeniceAvailable() ? {
+        veniceAvailable: true,
+        veniceApiKeyConfigured: !!process.env.NEXT_PUBLIC_VENICE_API_KEY
+      } : { veniceAvailable: false, veniceApiKeyConfigured: false };
 
       return {
         performanceTier,
         featuresEnabled: isFeatureEnabled,
         modelsLoaded: Object.keys(aiConfig.models).length,
+        veniceHealth,
         lastUpdate: new Date(),
         aiProcessingEnabled: true
       };
@@ -573,6 +727,7 @@ export class AIService {
         performanceTier: 'midRange',
         featuresEnabled: 4,
         modelsLoaded: 3,
+        veniceHealth: { veniceAvailable: false, veniceApiKeyConfigured: false },
         lastUpdate: new Date(),
         aiProcessingEnabled: false
       };

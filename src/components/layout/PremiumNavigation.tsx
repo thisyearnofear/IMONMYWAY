@@ -14,7 +14,7 @@ const NAV_ITEMS = [
   { href: "/challenges", label: "Browse", icon: "🎯", description: "Discover challenges" },
   { href: "/plan", label: "Plan", icon: "🗺️", description: "Plan your route" },
   { href: "/create", label: "Create", icon: "🧠", description: "New challenge" },
-  { href: "/profile", label: "My Challenges", icon: "📊", description: "Track progress" },
+  { href: "/profile", label: "Profile", icon: "👤", description: "View your dashboard" },
   { href: "/leaderboard", label: "Leaderboard", icon: "🏆", description: "See rankings" }
 ];
 
@@ -22,7 +22,7 @@ const NAV_ITEMS = [
 const getPageContext = (pathname: string) => {
   if (pathname.startsWith('/challenges')) return { step: 1, nextStep: '/plan', nextLabel: 'Plan Route' };
   if (pathname === '/plan') return { step: 2, nextStep: '/create', nextLabel: 'Create Challenge' };
-  if (pathname === '/create') return { step: 3, nextStep: '/profile', nextLabel: 'Track Progress' };
+  if (pathname === '/create') return { step: 3, nextStep: '/profile', nextLabel: 'View Dashboard' };
   if (pathname.startsWith('/profile')) return { step: 4, nextStep: '/leaderboard', nextLabel: 'View Rankings' };
   if (pathname === '/leaderboard') return { step: 5, nextStep: '/challenges', nextLabel: 'New Challenge' };
   return { step: 0, nextStep: '/challenges', nextLabel: 'Get Started' };

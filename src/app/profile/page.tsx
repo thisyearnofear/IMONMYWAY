@@ -77,9 +77,9 @@ export default function ProfilePage() {
           setTimeout(() => {
             const celebrationMessage = culturalAdaptation.getCulturalMessage('celebration')
             addToast({
-              message: celebrationMessage,
-              type: "achievement",
-              duration: 5000
+            message: celebrationMessage,
+            type: "success",
+            duration: 5000
             })
             triggerHaptic('success')
           }, 1000)

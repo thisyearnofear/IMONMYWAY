@@ -23,10 +23,10 @@ export default function WatchPage() {
             To watch someone&apos;s live GPS tracking, you need a specific sharing link. Active sessions appear as /watch/[id].
           </p>
           <div className="space-y-3">
-            <Link href="/share">
-              <PremiumButton variant="primary" className="w-full">
-                Create Your Own Session
-              </PremiumButton>
+            <Link href="/create">
+            <PremiumButton variant="primary" className="w-full">
+            Create Your Own Challenge
+            </PremiumButton>
             </Link>
             <Link href="/leaderboard">
               <PremiumButton variant="secondary" className="w-full">
