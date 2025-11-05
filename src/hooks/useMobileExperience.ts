@@ -75,11 +75,13 @@ export function useMobileExperience(config: {
     // ============================================================================
 
     useEffect(() => {
+        if (typeof window === 'undefined') return;
+
         const detectDevice = () => {
-            const userAgent = navigator.userAgent;
+            const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent : '';
             const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
             const isTabletDevice = /iPad|Android(?=.*Mobile)|Tablet/i.test(userAgent);
-            const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+            const isTouchDevice = 'ontouchstart' in window || (typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0);
             const isSmallScreen = window.innerWidth <= 768;
 
             const screenSize =
@@ -100,8 +102,8 @@ export function useMobileExperience(config: {
                 orientation,
                 screenSize,
                 hasNotch,
-                supportsHaptics: 'vibrate' in navigator,
-                supportsGeolocation: 'geolocation' in navigator,
+                supportsHaptics: typeof navigator !== 'undefined' && 'vibrate' in navigator,
+                supportsGeolocation: typeof navigator !== 'undefined' && 'geolocation' in navigator,
             });
         };
 
@@ -120,7 +122,7 @@ export function useMobileExperience(config: {
     // ============================================================================
 
     useEffect(() => {
-        if (!enableSafeArea) return;
+        if (typeof window === 'undefined' || !enableSafeArea) return;
 
         const updateSafeArea = () => {
             const computedStyle = getComputedStyle(document.documentElement);

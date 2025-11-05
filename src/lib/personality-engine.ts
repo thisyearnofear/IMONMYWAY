@@ -83,26 +83,58 @@ const MESSAGE_TEMPLATES = {
         "Great to see you! ✨ Let's make the rest of today amazing!"
       ],
       evening: [
-        "Evening! 🌙 Planning tomorrow or tackling tonight?",
-        "Hey night owl! 🦉 Let's set you up for success!",
-        "Perfect evening for some thoughtful planning! 🌃"
+      "Evening! 🌙 Planning tomorrow or tackling tonight?",
+      "Hey night owl! 🦉 Let's set you up for success!",
+      "Perfect evening for some thoughtful planning! 🌃"
+      ],
+      night: [
+        "Late night planning session! 🌙 Let's make tomorrow amazing!",
+        "Night time is perfect for big dreams! ✨ What shall we create?",
+        "Hello night owl! 🦉 Ready to plan something extraordinary?"
       ]
     },
     friendly: {
+    morning: [
+    "Good morning! 🌟 I'm excited to help you plan something great today!",
+    "Hello there! ☀️ What punctuality goals shall we tackle this morning?",
+    "Morning! 🌅 Ready to turn your time management dreams into reality?"
+    ],
+    afternoon: [
+    "Good afternoon! 🌞 I hope your day has been productive so far!",
+    "Hey there! 👋 Ready to make the most of the rest of your day?",
+    "Afternoon! ✨ Let's create something meaningful together!"
+    ],
+    evening: [
+    "Good evening! 🌙 Whether you're planning ahead or wrapping up, I'm here to help!",
+    "Evening! 🌃 Perfect time for reflection and forward planning!",
+    "Hello! 🌆 Let's make your time management goals crystal clear!"
+    ],
+      night: [
+        "Good evening! 🌙 Late night is perfect for strategic planning!",
+        "Hello! 🌃 Let's turn your night thoughts into tomorrow's achievements!",
+        "Night time inspiration! ✨ Ready to plan something meaningful?"
+      ]
+    },
+    professional: {
       morning: [
-        "Good morning! 🌟 I'm excited to help you plan something great today!",
-        "Hello there! ☀️ What punctuality goals shall we tackle this morning?",
-        "Morning! 🌅 Ready to turn your time management dreams into reality?"
+        "Good morning. I'm ready to assist with your time management objectives.",
+        "Hello. Let's optimize your schedule for maximum productivity today.",
+        "Good morning. What strategic goals shall we address this morning?"
       ],
       afternoon: [
-        "Good afternoon! 🌞 I hope your day has been productive so far!",
-        "Hey there! 👋 Ready to make the most of the rest of your day?",
-        "Afternoon! ✨ Let's create something meaningful together!"
+        "Good afternoon. How has your productivity been progressing today?",
+        "Hello. Let's focus on high-impact activities for the remainder of your day.",
+        "Good afternoon. Ready to advance your time management strategy?"
       ],
       evening: [
-        "Good evening! 🌙 Whether you're planning ahead or wrapping up, I'm here to help!",
-        "Evening! 🌃 Perfect time for reflection and forward planning!",
-        "Hello! 🌆 Let's make your time management goals crystal clear!"
+      "Good evening. Shall we review today's accomplishments and plan for tomorrow?",
+      "Hello. Perfect time to reflect on your progress and prepare for success.",
+      "Good evening. Let's ensure you're positioned for optimal performance."
+      ],
+      night: [
+        "Good evening. Late hours are ideal for strategic planning and preparation.",
+        "Hello. Let's optimize your objectives for maximum tomorrow efficiency.",
+        "Good evening. Time to align your goals with optimal execution strategy."
       ]
     }
   },
@@ -294,7 +326,7 @@ export class PersonalityEngine {
   }
   
   private getCelebrationMessage(metadata?: Record<string, any>): string {
-    const type = metadata?.type || "milestone";
+    const type = (metadata?.type as keyof typeof MESSAGE_TEMPLATES.celebration) || "milestone";
     return this.getRandomMessage(MESSAGE_TEMPLATES.celebration[type] || MESSAGE_TEMPLATES.celebration.milestone);
   }
   

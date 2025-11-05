@@ -94,20 +94,54 @@ const CULTURAL_MESSAGES = {
     ]
   },
   LATAM: {
+  encouragement: [
+  "¡Vamos! 🔥 Your energy is contagious!",
+  "¡Qué increíble! 🌟 You're inspiring everyone around you!",
+  "¡Sigue así! 💃 Your passion is your superpower!"
+  ],
+  celebration: [
+  "¡Fantástico! 🎉 Time to celebrate this amazing victory!",
+  "¡Increíble! 🏆 Your joy is infectious - share this moment!",
+  "¡Perfecto! ✨ This calls for a celebration with friends!"
+  ],
+  guidance: [
+  "Con amor: Share your journey - success is sweeter together! 💕",
+  "Sabiduría: Let your passion guide you, but plan for success! 🎯",
+  "Remember: Your community believes in you - lean on their support! 🤝"
+  ]
+  },
+  MENA: {
     encouragement: [
-      "¡Vamos! 🔥 Your energy is contagious!",
-      "¡Qué increíble! 🌟 You're inspiring everyone around you!",
-      "¡Sigue así! 💃 Your passion is your superpower!"
+      "Your perseverance honors your heritage! 🌟 Keep moving forward!",
+      "With faith and determination! 💪 Your journey inspires many!",
+      "Your dedication brings honor! 🙏 Continue with strength!"
     ],
     celebration: [
-      "¡Fantástico! 🎉 Time to celebrate this amazing victory!",
-      "¡Increíble! 🏆 Your joy is infectious - share this moment!",
-      "¡Perfecto! ✨ This calls for a celebration with friends!"
+      "Mashallah! 🕌 What a beautiful achievement!",
+      "Your success brings joy to your community! 🎉 Share this blessing!",
+      "Honorable accomplishment! 🌟 Your efforts have been blessed!"
     ],
     guidance: [
-      "Con amor: Share your journey - success is sweeter together! 💕",
-      "Sabiduría: Let your passion guide you, but plan for success! 🎯",
-      "Remember: Your community believes in you - lean on their support! 🤝"
+      "Wisdom from tradition: Patience brings the sweetest rewards 🌙",
+      "Remember: Your actions reflect on your family and community 🤝",
+      "Plan with intention: Success comes to those who prepare 📖"
+    ]
+  },
+  AF: {
+    encouragement: [
+      "Your strength inspires the village! 🔥 Keep pushing forward!",
+      "The ancestors smile upon your progress! 🌟 You honor the community!",
+      "Your determination lights the way! 💪 The community believes in you!"
+    ],
+    celebration: [
+      "What a triumph! 🥁 Let the drums celebrate your victory!",
+      "Your success brings pride to everyone! 🎉 Share this moment!",
+      "Honorable achievement! 🌟 The community gathers to celebrate!"
+    ],
+    guidance: [
+      "Ancient wisdom: Unity brings strength - share your journey 🤝",
+      "Community first: Your success lifts everyone around you 💕",
+      "Remember: The journey shapes the warrior - embrace each step 🛤️"
     ]
   }
 };
@@ -133,17 +167,29 @@ const CULTURAL_DEFAULTS = {
     preferredChallengeTypes: ["mindfulness", "balance", "community"]
   },
   LATAM: {
-    communicationStyle: "encouraging" as const,
-    motivationTriggers: ["social", "celebration", "community"],
+  communicationStyle: "encouraging" as const,
+  motivationTriggers: ["social", "celebration", "community"],
+  timeOrientation: "polychronic" as const,
+  preferredChallengeTypes: ["social", "adventure", "celebration"]
+  },
+  MENA: {
+    communicationStyle: "diplomatic" as const,
+    motivationTriggers: ["personal", "family", "achievement"],
     timeOrientation: "polychronic" as const,
-    preferredChallengeTypes: ["social", "adventure", "celebration"]
+    preferredChallengeTypes: ["personal", "spiritual", "community"]
+  },
+  AF: {
+    communicationStyle: "encouraging" as const,
+    motivationTriggers: ["community", "personal", "social"],
+    timeOrientation: "polychronic" as const,
+    preferredChallengeTypes: ["community", "adventure", "personal"]
   }
 };
 
 // Detect user's cultural context
 export function detectCulturalContext(): CulturalContext {
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const language = navigator.language || 'en-US';
+  const language = (typeof navigator !== 'undefined' ? navigator.language : null) || 'en-US';
   
   // Simple region detection based on timezone (in real app, use more sophisticated detection)
   let region: CulturalContext["region"] = "NA";

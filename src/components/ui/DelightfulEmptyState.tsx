@@ -212,26 +212,29 @@ export function DelightfulEmptyState({
         >
           <p className="text-white/60 text-sm font-medium mb-4">💡 Here's what you can do:</p>
           <div className="space-y-2">
-            {suggestions.map((suggestion, index) => (
-              <motion.div
-                key={index}
-                initial={showAnimation ? { opacity: 0, x: -10 } : {}}
-                animate={showAnimation ? { opacity: 1, x: 0 } : {}}
-                transition={{ delay: 0.9 + index * 0.1 }}
-                className={`flex items-center gap-3 text-left p-3 rounded-lg transition-all duration-200 ${
-                  suggestion.onClick 
-                    ? "cursor-pointer hover:bg-white/5 border border-transparent hover:border-violet-500/30" 
-                    : ""
+            {suggestions.map((suggestion, index) => {
+            const hasOnClick = 'onClick' in suggestion && typeof suggestion.onClick === 'function';
+            return (
+            <motion.div
+              key={index}
+              initial={showAnimation ? { opacity: 0, x: -10 } : {}}
+              animate={showAnimation ? { opacity: 1, x: 0 } : {}}
+            transition={{ delay: 0.9 + index * 0.1 }}
+            className={`flex items-center gap-3 text-left p-3 rounded-lg transition-all duration-200 ${
+            hasOnClick
+                  ? "cursor-pointer hover:bg-white/5 border border-transparent hover:border-violet-500/30"
+                  : ""
                 }`}
-                onClick={suggestion.onClick}
-              >
-                <span className="text-lg flex-shrink-0">{suggestion.icon}</span>
-                <span className="text-white/80 text-sm">{suggestion.text}</span>
-                {suggestion.onClick && (
+              onClick={hasOnClick ? (suggestion.onClick as () => void) : undefined}
+            >
+              <span className="text-lg flex-shrink-0">{suggestion.icon}</span>
+            <span className="text-white/80 text-sm">{suggestion.text}</span>
+              {hasOnClick && (
                   <span className="ml-auto text-violet-400 text-xs">→</span>
-                )}
-              </motion.div>
-            ))}
+                  )}
+                </motion.div>
+              );
+            })}
           </div>
         </motion.div>
       )}

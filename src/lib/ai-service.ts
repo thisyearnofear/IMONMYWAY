@@ -251,7 +251,7 @@ export class AIService {
       }
 
       // Try Venice AI enhancement
-      if (isVeniceAvailable()) {
+      if (await isVeniceAvailable()) {
         console.log('🧠 Using Venice AI for reputation prediction...');
 
         // Get comprehensive user data for AI analysis
@@ -262,7 +262,7 @@ export class AIService {
 
         // Calculate current metrics
         const successRate = userBets.length > 0 ?
-          userBets.filter(bet => bet.outcome === 'won').length / userBets.length : 0;
+        userBets.filter(bet => bet.result === 'won').length / userBets.length : 0;
 
         const prompt = `Analyze this user's betting/reputation history and predict their future reputation score.
 
@@ -274,7 +274,7 @@ User Profile:
 - Prediction Timeframe: ${timeframe} days
 
 Recent Performance (last 10 bets):
-${userBets.slice(-10).map((bet, i) => `${i+1}. ${bet.outcome} - ${bet.amount} tokens`).join('\n')}
+${userBets.slice(-10).map((bet, i) => `${i+1}. ${bet.result} - ${bet.amount} tokens`).join('\n')}
 
 Provide a JSON response with:
 - predictedScore: number (0-1000)
@@ -327,22 +327,11 @@ Consider:
         const errorData = await response.json();
         if (errorData.paymentRequired) {
           console.log('💰 Payment required for Venice AI reputation - using rule-based fallback');
-            const fallback = await this.getRuleBasedReputationPrediction(userId, timeframe);
-              return {
-                ...fallback,
-                aiEnhanced: false,
-                method: 'rule_based',
-                upgradePrompt: 'Pay 0.5 STT for AI-enhanced predictions'
-              };
+            return await this.getRuleBasedReputationPrediction(userId, timeframe);
             }
             if (errorData.fallback) {
               console.log('⏭️ Venice AI reputation prediction unavailable, using fallback');
-              const fallback = await this.getRuleBasedReputationPrediction(userId, timeframe);
-              return {
-                ...fallback,
-                aiEnhanced: false,
-                method: 'rule_based'
-              };
+              return await this.getRuleBasedReputationPrediction(userId, timeframe);
             }
           }
       }
@@ -670,7 +659,7 @@ Consider:
   recommendations: string[];
   riskAssessment: 'low' | 'medium' | 'high';
   }> {
-  if (isVeniceAvailable()) {
+  if (await isVeniceAvailable()) {
   console.log('🧠 Using Venice AI for contextual insights...');
 
   try {
@@ -679,7 +668,7 @@ Consider:
     const userBets = await dbService.getUserBets(userId, 20);
 
         const successRate = userBets.length > 0 ?
-          (userBets.filter(bet => bet.outcome === 'won').length / userBets.length) : 0;
+          (userBets.filter(bet => bet.result === 'won').length / userBets.length) : 0;
 
         const insights = await veniceClient.generateContextualInsights(
           {
@@ -729,7 +718,7 @@ Consider:
     try {
       const performanceTier = getPerformanceConfig();
       const isFeatureEnabled = Object.values(aiConfig.features).filter(f => f).length;
-      const veniceHealth = isVeniceAvailable() ? {
+      const veniceHealth = await isVeniceAvailable() ? {
         veniceAvailable: true,
         veniceApiKeyConfigured: !!process.env.NEXT_PUBLIC_VENICE_API_KEY
       } : { veniceAvailable: false, veniceApiKeyConfigured: false };

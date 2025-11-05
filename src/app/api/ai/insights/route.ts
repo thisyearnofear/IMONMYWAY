@@ -74,13 +74,7 @@ Focus on:
       model: 'llama-3.3-70b',
       messages,
       temperature: 0.4,
-      max_tokens: 600,
-      extra_body: {
-        venice_parameters: {
-          enable_web_search: 'auto',
-          include_venice_system_prompt: true
-        }
-      }
+      max_tokens: 600
     });
 
     const response = completion.choices[0]?.message?.content;

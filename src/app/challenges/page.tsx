@@ -242,31 +242,6 @@ export default function ChallengeBrowserPage() {
               >
                 <ChallengeBrowser
                   onSelectChallenge={handleChallengeSelect}
-                  culturalContext={culturalContext}
-                  onEmptyState={() => (
-                    <DelightfulEmptyState
-                      {...EmptyStatePresets.noChallenges(
-                        handleCreateFromScratch,
-                        handleBrowseTemplates
-                      )}
-                      mood={culturalContext.preferences.communicationStyle === 'diplomatic' ? 'supportive' : 'encouraging'}
-                      suggestions={[
-                        {
-                          icon: "🌍",
-                          text: `Challenges adapted for ${culturalContext.cultural.region} region`,
-                        },
-                        {
-                          icon: "📏",
-                          text: `Using ${culturalContext.cultural.measurementSystem} measurements`,
-                        },
-                        {
-                          icon: "🎯",
-                          text: `${culturalContext.preferences.experienceLevel} difficulty level recommended`,
-                        }
-                      ]}
-                      gradient={true}
-                    />
-                  )}
                 />
               </motion.div>
             </>

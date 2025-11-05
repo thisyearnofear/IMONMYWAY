@@ -9,7 +9,6 @@
 
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { useLocalStorage } from "./useLocalStorage";
 
 interface NavigationStep {
   path: string;
@@ -19,7 +18,7 @@ interface NavigationStep {
   metadata?: Record<string, any>;
 }
 
-interface UserJourney {
+export interface UserJourney {
   steps: NavigationStep[];
   currentGoal?: "browse" | "plan" | "create" | "track" | "compete";
   lastActiveTimestamp: number;

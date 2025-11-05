@@ -333,7 +333,7 @@ export class DatabaseService {
       if (!user) return false;
 
       const now = new Date();
-      return user.aiAccessExpiresAt && user.aiAccessExpiresAt > now;
+      return !!(user.aiAccessExpiresAt && user.aiAccessExpiresAt > now);
     } catch (error) {
       console.error('❌ Error checking AI access:', error);
       return false;

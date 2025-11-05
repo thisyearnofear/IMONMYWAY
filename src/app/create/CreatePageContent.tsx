@@ -179,20 +179,16 @@ export default function CreatePageContent() {
         }
       } else {
         // AI-Assisted Custom Commitment (using on-chain data)
-        if (!aiSuggestion) {
-          console.log('No AI suggestion available, using fallback values');
-          // Fallback values if AI is not available
-          aiSuggestion = {
-            estimatedPace: 0.083, // ~12 min/mile = 5 mph walking pace
-            suggestedDeadline: 30,
-            confidenceLevel: 0.5,
-            reasoning: "Fallback estimate - AI analysis unavailable",
-            socialBoost: 0,
-            viralPotential: 0
-          };
-        }
+        const suggestionToUse = aiSuggestion || {
+          estimatedPace: 0.083, // ~12 min/mile = 5 mph walking pace
+          suggestedDeadline: 30,
+          confidenceLevel: 0.5,
+          reasoning: "Fallback estimate - AI analysis unavailable",
+          socialBoost: 0,
+          viralPotential: 0
+        };
 
-        const deadline = new Date(Date.now() + aiSuggestion.suggestedDeadline * 60 * 1000);
+        const deadline = new Date(Date.now() + suggestionToUse.suggestedDeadline * 60 * 1000);
         const distance = calculateDistance(
           currentLocation.latitude,
           currentLocation.longitude,
@@ -211,7 +207,7 @@ export default function CreatePageContent() {
           targetLatitude: destination[0],
           targetLongitude: destination[1],
           estimatedDistance: Number(distance),
-          estimatedPace: Number(aiSuggestion.estimatedPace),
+          estimatedPace: Number(suggestionToUse.estimatedPace),
         };
       }
 

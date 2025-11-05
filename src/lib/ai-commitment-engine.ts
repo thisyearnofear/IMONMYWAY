@@ -113,7 +113,7 @@ Will I make it on time? 🤔 #PunctualityChallenge #Web3 #IMONMYWAY`;
             const socialRep = await this.getSocialReputation(userAddress);
 
             // Try Venice AI enhancement first (if available and user has paid)
-            if (isVeniceAvailable() && history.length > 0) {
+            if (await isVeniceAvailable() && history.length > 0) {
                 console.log('🧠 Attempting Venice AI enhancement...');
 
                 const veniceRecommendation = await veniceClient.generatePaceRecommendation(

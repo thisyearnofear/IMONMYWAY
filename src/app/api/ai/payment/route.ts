@@ -77,25 +77,39 @@ export async function GET(request: NextRequest) {
     // Check AI access status
     try {
       const { dbService } = await import('@/lib/db-service');
-      const user = await dbService.getUserByWallet(userAddress);
+      // Use raw Prisma query to get only the access field
+      const { PrismaClient } = await import('@prisma/client');
+      const prisma = new PrismaClient();
 
-      if (!user) {
-        return NextResponse.json({
-          hasAccess: false,
-          message: 'User not found'
+      try {
+        const user = await prisma.user.findUnique({
+          where: { walletAddress: userAddress },
+          select: { 
+            aiAccessExpiresAt: true 
+          }
         });
-      }
 
-      const now = new Date();
-      const hasAccess = user.aiAccessExpiresAt && user.aiAccessExpiresAt > now;
+        if (!user) {
+          return NextResponse.json({
+            hasAccess: false,
+            message: 'User not found'
+          });
+        }
 
-      return NextResponse.json({
-        hasAccess,
-        accessExpiresAt: user.aiAccessExpiresAt?.toISOString(),
-        timeRemaining: hasAccess ?
+        const now = new Date();
+        const accessAvailable = user.aiAccessExpiresAt && user.aiAccessExpiresAt > now;
+        const timeRemaining = accessAvailable ?
           Math.floor((user.aiAccessExpiresAt!.getTime() - now.getTime()) / (1000 * 60 * 60)) : // hours remaining
-          0
-      });
+          0;
+
+        return NextResponse.json({
+          hasAccess: accessAvailable,
+          accessExpiresAt: user.aiAccessExpiresAt?.toISOString(),
+          timeRemaining: timeRemaining
+        });
+      } finally {
+        await prisma.$disconnect();
+      }
     } catch (dbError) {
       console.error('Database error checking AI access:', dbError);
       return NextResponse.json({

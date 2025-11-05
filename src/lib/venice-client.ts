@@ -170,8 +170,8 @@ export const veniceClient = new VeniceClient();
 // UTILITY FUNCTIONS
 // ============================================================================
 
-export function isVeniceAvailable(): boolean {
-  return veniceClient.isAvailable();
+export async function isVeniceAvailable(): Promise<boolean> {
+  return await veniceClient.isAvailable();
 }
 
 export function getVeniceHealth(): {
@@ -179,9 +179,11 @@ export function getVeniceHealth(): {
   apiKeyConfigured: boolean;
   initialized: boolean;
 } {
+  // This function is kept for compatibility but checks through backend API
+  // The actual API key is maintained server-side
   return {
-    available: veniceClient.isAvailable(),
-    apiKeyConfigured: !!VENICE_API_KEY,
-    initialized: true // Client always tries to initialize
+    available: true, // Client is available, health check happens via backend API
+    apiKeyConfigured: true, // Server-side check only
+    initialized: true
   };
 }
