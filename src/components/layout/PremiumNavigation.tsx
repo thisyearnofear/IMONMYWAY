@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useWallet } from "@/hooks/useWallet";
 import { useLocationStore } from "@/stores/locationStore";
 import { useEffect, useState, useRef } from "react";
@@ -8,22 +9,36 @@ import { Button } from "@/components/ui/PremiumButton";
 import { motion, AnimatePresence } from "framer-motion";
 import { ClientOnly } from "@/components/core/ClientOnly";
 
-// Navigation items - single source of truth
+// Enhanced navigation items with contextual information
 const NAV_ITEMS = [
-  { href: "/challenges", label: "Browse", icon: "🎯" },
-  { href: "/create", label: "Create", icon: "🧠" },
-  { href: "/profile", label: "My Challenges", icon: "📊" },
-  { href: "/watch", label: "Watch", icon: "👀" },
-  { href: "/leaderboard", label: "Leaderboard", icon: "🏆" }
+  { href: "/challenges", label: "Browse", icon: "🎯", description: "Discover challenges" },
+  { href: "/plan", label: "Plan", icon: "🗺️", description: "Plan your route" },
+  { href: "/create", label: "Create", icon: "🧠", description: "New challenge" },
+  { href: "/profile", label: "My Challenges", icon: "📊", description: "Track progress" },
+  { href: "/leaderboard", label: "Leaderboard", icon: "🏆", description: "See rankings" }
 ];
 
+// Get contextual page info for better UX cohesion
+const getPageContext = (pathname: string) => {
+  if (pathname.startsWith('/challenges')) return { step: 1, nextStep: '/plan', nextLabel: 'Plan Route' };
+  if (pathname === '/plan') return { step: 2, nextStep: '/create', nextLabel: 'Create Challenge' };
+  if (pathname === '/create') return { step: 3, nextStep: '/profile', nextLabel: 'Track Progress' };
+  if (pathname.startsWith('/profile')) return { step: 4, nextStep: '/leaderboard', nextLabel: 'View Rankings' };
+  if (pathname === '/leaderboard') return { step: 5, nextStep: '/challenges', nextLabel: 'New Challenge' };
+  return { step: 0, nextStep: '/challenges', nextLabel: 'Get Started' };
+};
+
 export function PremiumNavigation() {
+  const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isWalletDropdownOpen, setIsWalletDropdownOpen] = useState(false);
   const { address, isConnected, connect, disconnect, balance, chainId, networkMetrics } = useWallet();
   const { setWalletAddress, setWalletConnected } = useLocationStore();
   const walletDropdownRef = useRef<HTMLDivElement>(null);
+  
+  const pageContext = getPageContext(pathname);
+  const isActive = (href: string) => pathname === href || (href !== '/' && pathname.startsWith(href));
 
   // Truncate wallet address for display
   const truncatedAddress = address ? `${address.slice(0, 4)}...${address.slice(-4)}` : "";
@@ -93,19 +108,51 @@ export function PremiumNavigation() {
           </div>
         </Link>
 
-        {/* Desktop Navigation */}
+        {/* Enhanced Desktop Navigation with Active States */}
         <nav className="hidden md:flex items-center gap-1" role="navigation" aria-label="Main navigation">
-          {NAV_ITEMS.map((item) => (
-            <Link key={item.href} href={item.href}>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-gray-300 hover:text-white hover:bg-violet-500/10 rounded-lg px-4 py-2"
-              >
-                {item.label}
-              </Button>
-            </Link>
-          ))}
+          {NAV_ITEMS.map((item) => {
+            const active = isActive(item.href);
+            return (
+              <Link key={item.href} href={item.href}>
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="relative"
+                >
+                  <Button
+                    variant={active ? "primary" : "ghost"}
+                    size="sm"
+                    className={`relative group rounded-lg px-4 py-2 transition-all duration-200 ${
+                      active 
+                        ? "text-white bg-gradient-to-r from-violet-600 to-purple-600 shadow-lg" 
+                        : "text-gray-300 hover:text-white hover:bg-violet-500/10"
+                    }`}
+                  >
+                    <span className="flex items-center gap-2">
+                      <span className={`transition-transform ${active ? 'scale-110' : 'group-hover:scale-110'}`}>
+                        {item.icon}
+                      </span>
+                      {item.label}
+                    </span>
+                    {active && (
+                      <motion.div
+                        layoutId="activeNavIndicator"
+                        className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gold-500 rounded-full"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                      />
+                    )}
+                  </Button>
+                  
+                  {/* Tooltip for additional context */}
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
+                    {item.description}
+                  </div>
+                </motion.div>
+              </Link>
+            );
+          })}
         </nav>
 
         {/* Wallet Connection */}
@@ -257,18 +304,44 @@ export function PremiumNavigation() {
           className="md:hidden border-t border-violet-500/20 bg-graphite-800/90 backdrop-blur-lg"
         >
           <nav className="container mx-auto px-4 py-4 space-y-2">
-            {NAV_ITEMS.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <div className="flex items-center gap-3 text-gray-300 hover:text-white py-3 px-4 rounded-lg hover:bg-violet-500/10 transition-colors">
-                  <span aria-hidden="true">{item.icon}</span>
-                  {item.label}
-                </div>
-              </Link>
-            ))}
+            {NAV_ITEMS.map((item) => {
+              const active = isActive(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <motion.div
+                    whileTap={{ scale: 0.98 }}
+                    className={`flex items-center justify-between py-3 px-4 rounded-lg transition-all duration-200 ${
+                      active 
+                        ? "bg-gradient-to-r from-violet-600/20 to-purple-600/20 border border-violet-500/30 text-white" 
+                        : "text-gray-300 hover:text-white hover:bg-violet-500/10"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className={`text-lg transition-transform ${active ? 'scale-110' : ''}`} aria-hidden="true">
+                        {item.icon}
+                      </span>
+                      <div>
+                        <div className={`font-medium ${active ? 'text-white' : ''}`}>{item.label}</div>
+                        <div className={`text-xs ${active ? 'text-violet-200' : 'text-gray-500'}`}>
+                          {item.description}
+                        </div>
+                      </div>
+                    </div>
+                    {active && (
+                      <motion.div
+                        initial={{ scale: 0, rotate: -180 }}
+                        animate={{ scale: 1, rotate: 0 }}
+                        className="w-2 h-2 bg-gold-500 rounded-full"
+                      />
+                    )}
+                  </motion.div>
+                </Link>
+              );
+            })}
 
             <div className="pt-4 space-y-3">
               <ClientOnly fallback={

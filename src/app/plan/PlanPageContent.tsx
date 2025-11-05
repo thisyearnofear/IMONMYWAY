@@ -14,6 +14,9 @@ import {
 import { useUIStore } from "@/stores/uiStore";
 import { useLocationStore } from "@/stores/locationStore";
 import { useMobileExperience } from "@/hooks/useMobileExperience";
+import { useNavigationContext } from "@/hooks/useNavigationContext";
+import { DelightfulEmptyState, EmptyStatePresets } from "@/components/ui/DelightfulEmptyState";
+import { personalityEngine, getWelcomeMessage, getSuccessMessage } from "@/lib/personality-engine";
 import { calculateDistance, calculateETA } from "@/lib/distance";
 import { formatTime, formatDistance } from "@/lib/utils";
 import { getConfidenceScore, SPEED_PRESETS, findPresetByPace } from "@/lib/speed";
@@ -120,6 +123,13 @@ export default function PlanPageContent() {
   const { addToast } = useUIStore();
   const { selectedPace, setSelectedPace } = useLocationStore();
   const { isMobile, triggerHaptic, supportsGeolocation } = useMobileExperience();
+  const { 
+    navigateWithContext, 
+    markStepCompleted, 
+    suggestedNextAction,
+    preserveState,
+    getPreservedState 
+  } = useNavigationContext();
 
   // Smart address handling with debounced suggestions
   const debouncedGetSuggestions = useDebounce(async (query: string, field: 'start' | 'end') => {
@@ -315,8 +325,24 @@ export default function PlanPageContent() {
       });
 
       triggerHaptic('success');
+      
+      // Mark planning step as completed
+      markStepCompleted('route-planned');
+      
+      // Preserve route data for next steps
+      preserveState('plannedRoute', {
+        startAddress,
+        endAddress,
+        distance,
+        eta,
+        confidence,
+        selectedPace
+      });
+      
+      // Personality-driven success message
+      const personalizedMessage = personalityEngine.getMessage('celebration', undefined, { type: 'route_planned' });
       addToast({ 
-        message: "🎉 Perfect route found! Ready to challenge yourself?", 
+        message: personalizedMessage, 
         type: "achievement",
         duration: 4000
       });
@@ -480,9 +506,20 @@ export default function PlanPageContent() {
                 🗺️ Plan Your Route
               </span>
             </h1>
-            <p className="text-white/70 text-base max-w-2xl mx-auto">
+            <p className="text-white/70 text-base max-w-2xl mx-auto mb-3">
               Enter addresses or click on the map to plan your punctuality challenge
             </p>
+            {/* Personality-driven welcome message */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.5, duration: 0.5 }}
+              className="inline-block px-4 py-2 bg-gradient-to-r from-violet-500/20 to-purple-500/20 rounded-full border border-violet-500/30"
+            >
+              <p className="text-violet-200 text-sm font-medium">
+                {getWelcomeMessage()}
+              </p>
+            </motion.div>
           </motion.div>
         </ParallaxSection>
 
@@ -513,11 +550,23 @@ export default function PlanPageContent() {
             />
             {!planData && !isPreviewMode && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm">
-                <div className="text-center">
-                  <div className="text-4xl mb-3">🗺️</div>
-                  <p className="text-white text-lg font-medium">Enter addresses to see route</p>
-                  <p className="text-white/60 text-sm mt-2">Real-time preview as you type!</p>
-                </div>
+                <DelightfulEmptyState
+                  {...EmptyStatePresets.noRoute(
+                    () => {
+                      // Focus on first input when user wants to plan
+                      const startInput = document.querySelector('input[placeholder="From..."]') as HTMLInputElement;
+                      startInput?.focus();
+                      addToast({
+                        message: getWelcomeMessage(),
+                        type: "info",
+                        duration: 3000
+                      });
+                    },
+                    () => navigateWithContext('/challenges', { from: 'plan-page', action: 'browse-templates' })
+                  )}
+                  size="sm"
+                  showAnimation={true}
+                />
               </div>
             )}
             
@@ -810,7 +859,14 @@ export default function PlanPageContent() {
                 <Button
                   size="sm"
                   className="flex-1 bg-green-600 text-white py-2 hover:bg-green-700"
-                  onClick={() => window.location.href = '/share'}
+                  onClick={() => {
+                    markStepCompleted('route-shared');
+                    navigateWithContext('/create', { 
+                      from: 'plan-results', 
+                      hasRoute: true,
+                      confidence: planData.confidence 
+                    });
+                  }}
                 >
                   🚀 Start Challenge
                 </Button>
@@ -818,11 +874,35 @@ export default function PlanPageContent() {
                   size="sm"
                   variant="outline"
                   className="flex-1 border-white/30 text-white py-2"
-                  onClick={() => window.location.href = '/challenges'}
+                  onClick={() => navigateWithContext('/challenges', { 
+                    from: 'plan-results', 
+                    action: 'browse-alternatives' 
+                  })}
                 >
-                  🎯 Challenge Templates
+                  🎯 Browse More
                 </Button>
               </div>
+              
+              {/* Smart Navigation Suggestion */}
+              {suggestedNextAction && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-4 p-3 bg-violet-500/10 border border-violet-500/30 rounded-lg text-center"
+                >
+                  <p className="text-violet-200 text-sm mb-2">
+                    💡 {suggestedNextAction.reason}
+                  </p>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => navigateWithContext(suggestedNextAction.path)}
+                    className="text-violet-300 hover:text-white border-violet-500/50"
+                  >
+                    {suggestedNextAction.icon} {suggestedNextAction.label}
+                  </Button>
+                </motion.div>
+              )}
             </div>
           </motion.div>
         )}
