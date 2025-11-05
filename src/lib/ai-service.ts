@@ -298,32 +298,53 @@ Consider:
           }
         ];
 
-        const response = await veniceClient.chatCompletion(messages, {
-          model: aiConfig.venice.models.balanced,
-          temperature: 0.2, // Low temperature for consistent predictions
-          enableWebSearch: false
+        const response = await fetch('/api/ai/reputation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId,
+            userData: {
+              reputation: user.reputationScore,
+              totalBets: userBets.length,
+              recentBets: recentBets.length,
+              successRate
+            },
+            timeframe
+          })
         });
 
-        if (response) {
-          try {
-            const parsed = JSON.parse(response);
-            console.log('✅ Venice AI reputation prediction:', parsed);
+        if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Venice AI reputation prediction:', data);
 
-            return {
-              predictedScore: Math.max(0, Math.min(1000, parsed.predictedScore)),
-              confidence: Math.max(0, Math.min(1, parsed.confidence)),
-              timeframe,
-              trend: ['improving', 'declining', 'stable'].includes(parsed.trend) ? parsed.trend : 'stable',
-              influencingFactors: [
-                'AI-powered pattern analysis',
-                `Historical performance (${userBets.length} bets)`,
-                'Trend analysis and prediction'
-              ]
-            };
-          } catch (parseError) {
-            console.error('Failed to parse Venice reputation prediction:', parseError);
+          // Mark as AI-enhanced
+        return {
+          ...data,
+        aiEnhanced: true,
+        method: 'venice_ai'
+        };
+        } else {
+        const errorData = await response.json();
+        if (errorData.paymentRequired) {
+          console.log('💰 Payment required for Venice AI reputation - using rule-based fallback');
+            const fallback = await this.getRuleBasedReputationPrediction(userId, timeframe);
+              return {
+                ...fallback,
+                aiEnhanced: false,
+                method: 'rule_based',
+                upgradePrompt: 'Pay 0.5 STT for AI-enhanced predictions'
+              };
+            }
+            if (errorData.fallback) {
+              console.log('⏭️ Venice AI reputation prediction unavailable, using fallback');
+              const fallback = await this.getRuleBasedReputationPrediction(userId, timeframe);
+              return {
+                ...fallback,
+                aiEnhanced: false,
+                method: 'rule_based'
+              };
+            }
           }
-        }
       }
 
       // Fallback to rule-based prediction

@@ -112,17 +112,24 @@ Will I make it on time? 🤔 #PunctualityChallenge #Web3 #IMONMYWAY`;
             // Get social reputation from Farcaster/Twitter
             const socialRep = await this.getSocialReputation(userAddress);
 
-            // Try Venice AI enhancement first (if available)
+            // Try Venice AI enhancement first (if available and user has paid)
             if (isVeniceAvailable() && history.length > 0) {
-                console.log('🧠 Using Venice AI for enhanced recommendation...');
+                console.log('🧠 Attempting Venice AI enhancement...');
 
                 const veniceRecommendation = await veniceClient.generatePaceRecommendation(
+                    userAddress,
                     history,
                     context,
                     distance / 1000 // Convert meters to km
                 );
 
                 if (veniceRecommendation) {
+                    // Check if payment is required
+                    if (veniceRecommendation.paymentRequired) {
+                        console.log('💰 Payment required for Venice AI - falling back to rule-based');
+                        return this.getRuleBasedRecommendation(history, context, distance, socialRep);
+                    }
+
                     console.log('✅ Venice AI recommendation received:', veniceRecommendation);
 
                     // Enhance with blockchain data for social metrics
@@ -133,7 +140,7 @@ Will I make it on time? 🤔 #PunctualityChallenge #Web3 #IMONMYWAY`;
                         estimatedPace: veniceRecommendation.recommendedPace,
                         suggestedDeadline: Math.ceil((distance * veniceRecommendation.recommendedPace) / 60) + this.calculateBuffer(context, veniceRecommendation.confidence, history.length),
                         confidenceLevel: veniceRecommendation.confidence,
-                        reasoning: veniceRecommendation.reasoning,
+                        reasoning: `🤖 AI Enhanced: ${veniceRecommendation.reasoning}`,
                         socialBoost,
                         viralPotential
                     };
@@ -141,62 +148,8 @@ Will I make it on time? 🤔 #PunctualityChallenge #Web3 #IMONMYWAY`;
             }
 
             // Fallback to rule-based algorithm
-            console.log('⏭️ Using rule-based algorithm (Venice AI not available)');
-
-            if (history.length === 0) {
-                return this.getNewUserSuggestion(distance, context);
-            }
-
-            // Analyze successful commitments only
-            const successful = history.filter(h => h.successful);
-
-            if (successful.length === 0) {
-                return this.getStrugglingUserSuggestion(distance, context, history.length);
-            }
-
-            // Calculate average actual pace from successful commitments
-            const actualPaces = successful.map(h => {
-                const travelTime = h.actualArrivalTime - (h.arrivalDeadline - (h.estimatedDistance * h.estimatedPace));
-                return travelTime / h.estimatedDistance;
-            });
-
-            const avgPace = actualPaces.reduce((sum, pace) => sum + pace, 0) / actualPaces.length;
-
-            // Calculate consistency (how often estimates match reality)
-            const estimateErrors = successful.map(h => {
-                const actualPace = (h.actualArrivalTime - (h.arrivalDeadline - (h.estimatedDistance * h.estimatedPace))) / h.estimatedDistance;
-                return Math.abs(h.estimatedPace - actualPace) / h.estimatedPace;
-            });
-
-            const avgError = estimateErrors.reduce((sum, err) => sum + err, 0) / estimateErrors.length;
-            const consistency = Math.max(0, 1 - avgError);
-
-            // Context-based adjustments
-            const contextMultipliers = {
-                'urgent': 0.85,   // 15% faster when urgent
-                'work': 0.9,      // 10% faster for work
-                'social': 1.0     // Normal pace for social
-            };
-
-            const adjustedPace = avgPace * contextMultipliers[context];
-
-            // Calculate suggested deadline with buffer
-            const baseTimeMinutes = (distance * adjustedPace) / 60;
-            const bufferMinutes = this.calculateBuffer(context, consistency, history.length);
-            const suggestedDeadline = Math.ceil(baseTimeMinutes + bufferMinutes);
-
-            // Calculate social boost and viral potential
-            const socialBoost = socialRep.socialCredibility;
-            const viralPotential = Math.min(0.9, socialRep.totalProofs / 10 + socialRep.sentimentScore * 0.3);
-
-            return {
-                estimatedPace: adjustedPace,
-                suggestedDeadline,
-                confidenceLevel: Math.min(0.9, consistency * (history.length / 10)),
-                reasoning: this.generateReasoning(history.length, successful.length, consistency, context),
-                socialBoost,
-                viralPotential
-            };
+            console.log('⏭️ Using rule-based algorithm (Venice AI not available or payment required)');
+            return this.getRuleBasedRecommendation(history, context, distance, socialRep);
 
         } catch (error) {
             console.error('Error generating AI suggestion:', error);
@@ -288,5 +241,67 @@ Will I make it on time? 🤔 #PunctualityChallenge #Web3 #IMONMYWAY`;
         }
 
         return reasoning;
+    }
+
+    private static getRuleBasedRecommendation(
+        history: Array<any>,
+        context: 'work' | 'social' | 'urgent',
+        distance: number,
+        socialRep: any
+    ): AICommitmentSuggestion {
+        if (history.length === 0) {
+            return this.getNewUserSuggestion(distance, context);
+        }
+
+        // Analyze successful commitments only
+        const successful = history.filter(h => h.successful);
+
+        if (successful.length === 0) {
+            return this.getStrugglingUserSuggestion(distance, context, history.length);
+        }
+
+        // Calculate average actual pace from successful commitments
+        const actualPaces = successful.map(h => {
+            const travelTime = h.actualArrivalTime - (h.arrivalDeadline - (h.estimatedDistance * h.estimatedPace));
+            return travelTime / h.estimatedDistance;
+        });
+
+        const avgPace = actualPaces.reduce((sum, pace) => sum + pace, 0) / actualPaces.length;
+
+        // Calculate consistency (how often estimates match reality)
+        const estimateErrors = successful.map(h => {
+            const actualPace = (h.actualArrivalTime - (h.arrivalDeadline - (h.estimatedDistance * h.estimatedPace))) / h.estimatedDistance;
+            return Math.abs(h.estimatedPace - actualPace) / h.estimatedPace;
+        });
+
+        const avgError = estimateErrors.reduce((sum, err) => sum + err, 0) / estimateErrors.length;
+        const consistency = Math.max(0, 1 - avgError);
+
+        // Context-based adjustments
+        const contextMultipliers = {
+            'urgent': 0.85,   // 15% faster when urgent
+            'work': 0.9,      // 10% faster for work
+            'social': 1.0     // Normal pace for social
+        };
+
+        const adjustedPace = avgPace * contextMultipliers[context];
+
+        // Calculate suggested deadline with buffer
+        const baseTimeMinutes = (distance * adjustedPace) / 60;
+        const bufferMinutes = this.calculateBuffer(context, consistency, history.length);
+        const suggestedDeadline = Math.ceil(baseTimeMinutes + bufferMinutes);
+
+        // Calculate social boost and viral potential
+        const socialBoost = socialRep.socialCredibility;
+        const viralPotential = Math.min(0.9, socialRep.totalProofs / 10 + socialRep.sentimentScore * 0.3);
+
+        return {
+            estimatedPace: adjustedPace,
+            suggestedDeadline,
+            confidenceLevel: Math.min(0.9, consistency * (history.length / 10)),
+            reasoning: this.generateReasoning(history.length, successful.length, consistency, context),
+            socialBoost,
+            viralPotential
+        };
     }
 }

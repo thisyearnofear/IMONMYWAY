@@ -1,65 +1,45 @@
 /**
- * Venice AI Client
+ * Venice AI Client - Frontend API Caller
  *
- * OpenAI-compatible client for Venice AI API integration
- * Provides inference capabilities powered by Venice models
+ * Routes Venice AI requests through secure backend API
+ * Keeps API key server-side for security
  * Paid via Somnia testnet integration
  */
 
-import { OpenAI } from 'openai';
-import { aiConfig } from '@/config/ai-config';
-
 // ============================================================================
-// VENICE CLIENT CONFIGURATION
-// ============================================================================
-
-const VENICE_API_KEY = process.env.NEXT_PUBLIC_VENICE_API_KEY;
-
-if (!VENICE_API_KEY) {
-  console.warn('⚠️ VENICE_API_KEY not found. Venice AI features will use fallback algorithms.');
-}
-
-// ============================================================================
-// VENICE CLIENT CLASS
+// VENICE CLIENT CLASS - API ROUTE VERSION
 // ============================================================================
 
 export class VeniceClient {
-  private client: OpenAI | null = null;
-  private initialized = false;
+  private baseUrl: string;
 
   constructor() {
-    this.initialize();
+    // Use relative URL for API routes - works in both dev and production
+    this.baseUrl = '/api/ai';
   }
 
-  private initialize() {
-    if (!VENICE_API_KEY) {
-      console.log('⏭️ Skipping Venice client initialization - no API key');
-      return;
-    }
-
+  /**
+   * Check if Venice client is available by calling health check
+   */
+  async isAvailable(): Promise<boolean> {
     try {
-      this.client = new OpenAI({
-        apiKey: VENICE_API_KEY,
-        baseURL: aiConfig.venice.baseUrl,
-        dangerouslyAllowBrowser: true, // Required for client-side usage
+      const response = await fetch(`${this.baseUrl}/health`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
       });
 
-      this.initialized = true;
-      console.log('🤖 Venice AI client initialized successfully');
+      if (!response.ok) return false;
+
+      const health = await response.json();
+      return health.veniceAvailable || false;
     } catch (error) {
-      console.error('❌ Failed to initialize Venice client:', error);
+      console.error('Error checking Venice availability:', error);
+      return false;
     }
   }
 
   /**
-   * Check if Venice client is available
-   */
-  isAvailable(): boolean {
-    return this.initialized && this.client !== null;
-  }
-
-  /**
-   * Make a chat completion request to Venice
+   * Make a chat completion request through backend API
    */
   async chatCompletion(
     messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
@@ -71,57 +51,17 @@ export class VeniceClient {
       stream?: boolean;
     } = {}
   ): Promise<string | null> {
-    if (!this.isAvailable()) {
-      console.log('⏭️ Venice client not available, skipping inference');
-      return null;
-    }
-
-    try {
-      const {
-        model = aiConfig.venice.defaultModel,
-        temperature = aiConfig.venice.parameters.temperature,
-        maxTokens = aiConfig.venice.parameters.maxTokens,
-        enableWebSearch = false,
-        stream = false
-      } = options;
-
-      const completion = await this.client!.chat.completions.create({
-        model,
-        messages,
-        temperature,
-        max_tokens: maxTokens,
-        stream,
-        extra_body: enableWebSearch ? {
-          venice_parameters: {
-            enable_web_search: 'auto',
-            include_venice_system_prompt: aiConfig.venice.parameters.includeVeniceSystemPrompt
-          }
-        } : undefined
-      });
-
-      if (stream) {
-        // Handle streaming response
-        let fullContent = '';
-        for await (const chunk of completion as any) {
-          if (chunk.choices && chunk.choices[0]?.delta?.content) {
-            fullContent += chunk.choices[0].delta.content;
-          }
-        }
-        return fullContent;
-      } else {
-        // Handle regular response
-        return (completion as any).choices[0]?.message?.content || null;
-      }
-    } catch (error) {
-      console.error('❌ Venice API error:', error);
-      return null;
-    }
+    // This method is kept for compatibility but routes through specific API endpoints
+    console.warn('Direct chatCompletion not available in secure client. Use specific methods instead.');
+    return null;
   }
 
   /**
-   * Generate personalized pace recommendation using Venice AI
+   * Generate personalized pace recommendation using Venice AI via backend API
+   * Requires STT payment for premium AI features
    */
   async generatePaceRecommendation(
+    userAddress: string,
     userHistory: Array<{
       commitmentId: string;
       estimatedDistance: number;
@@ -137,74 +77,41 @@ export class VeniceClient {
     recommendedPace: number;
     confidence: number;
     reasoning: string;
+    paymentRequired: boolean;
+    paymentAmount?: string;
   } | null> {
-    if (!this.isAvailable()) return null;
-
     try {
-      const historySummary = userHistory.slice(-5).map(h => ({
-        success: h.successful,
-        pace: h.estimatedPace,
-        distance: h.estimatedDistance,
-        onTime: h.actualArrivalTime <= h.arrivalDeadline
-      }));
-
-      const prompt = `Based on this user's punctuality history and the current context, recommend an optimal running pace in seconds per meter for a ${distance.toFixed(1)}km route.
-
-User History (last 5 commitments):
-${historySummary.map(h => `- ${h.success ? 'SUCCESS' : 'FAILED'}: ${h.pace.toFixed(3)} sec/m for ${h.distance.toFixed(1)}km (${h.onTime ? 'on time' : 'late'})`).join('\n')}
-
-Context: ${context} (work = professional urgency, social = flexible, urgent = maximum speed needed)
-Distance: ${distance.toFixed(1)}km
-
-Provide a JSON response with:
-- recommendedPace: number (seconds per meter, e.g., 0.083 = ~12 min/mile)
-- confidence: number (0-1, based on history reliability)
-- reasoning: string (brief explanation)
-
-Consider:
-- User's historical performance patterns
-- Context-appropriate adjustments (${context} context)
-- Realistic pace for ${distance.toFixed(1)}km distance
-- Risk of over/under estimation`;
-
-      const messages = [
-        {
-          role: 'system' as const,
-          content: 'You are an expert running coach and data analyst specializing in punctuality optimization. Provide precise, evidence-based pace recommendations.'
-        },
-        {
-          role: 'user' as const,
-          content: prompt
-        }
-      ];
-
-      const response = await this.chatCompletion(messages, {
-        model: aiConfig.venice.models.balanced,
-        temperature: 0.3, // Lower temperature for consistent recommendations
-        enableWebSearch: false
+      const response = await fetch(`${this.baseUrl}/pace-recommendation`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userAddress,
+          userHistory,
+          context,
+          distance
+        })
       });
 
-      if (!response) return null;
-
-      try {
-        const parsed = JSON.parse(response);
-        return {
-          recommendedPace: Math.max(0.05, Math.min(0.2, parsed.recommendedPace)), // Clamp to realistic range
-          confidence: Math.max(0, Math.min(1, parsed.confidence)),
-          reasoning: parsed.reasoning || 'AI-generated recommendation'
-        };
-      } catch (parseError) {
-        console.error('Failed to parse Venice pace recommendation:', parseError);
-        return null;
+      if (!response.ok) {
+        const errorData = await response.json();
+        if (errorData.fallback) {
+          console.log('⏭️ Venice AI unavailable or payment required, using fallback');
+          return null;
+        }
+        throw new Error(`API error: ${response.status}`);
       }
+
+      const data = await response.json();
+      console.log('✅ Venice AI pace recommendation received:', data);
+      return data;
     } catch (error) {
-      console.error('Error generating Venice pace recommendation:', error);
+      console.error('Error calling Venice pace recommendation API:', error);
       return null;
     }
   }
 
   /**
-   * Generate contextual insights using Venice AI
+   * Generate contextual insights using Venice AI via backend API
    */
   async generateContextualInsights(
     userData: {
@@ -224,66 +131,30 @@ Consider:
     recommendations: string[];
     riskAssessment: 'low' | 'medium' | 'high';
   } | null> {
-    if (!this.isAvailable()) return null;
-
     try {
-      const prompt = `Analyze this user's punctuality profile and current context to provide personalized insights and recommendations.
-
-User Profile:
-- Reputation Score: ${userData.reputation}/1000
-- Total Commitments: ${userData.totalCommitments}
-- Success Rate: ${(userData.successRate * 100).toFixed(1)}%
-- Average Pace: ${(userData.averagePace * 60).toFixed(1)} min/mile
-
-Current Context:
-- Type: ${currentContext.type}
-- Time: ${currentContext.timeOfDay}
-- Location: ${currentContext.location}
-${currentContext.weather ? `- Weather: ${currentContext.weather}` : ''}
-
-Provide a JSON response with:
-- insights: array of 2-3 key observations about the user's patterns
-- recommendations: array of 2-3 actionable suggestions
-- riskAssessment: "low" | "medium" | "high" based on likelihood of success
-
-Focus on:
-- Pattern recognition from user data
-- Context-appropriate advice
-- Realistic risk assessment
-- Motivational and practical recommendations`;
-
-      const messages = [
-        {
-          role: 'system' as const,
-          content: 'You are a behavioral economist and sports psychologist specializing in motivation and punctuality. Provide insightful, actionable advice.'
-        },
-        {
-          role: 'user' as const,
-          content: prompt
-        }
-      ];
-
-      const response = await this.chatCompletion(messages, {
-        model: aiConfig.venice.models.balanced,
-        temperature: 0.4,
-        enableWebSearch: true // Enable web search for current context awareness
+      const response = await fetch(`${this.baseUrl}/insights`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userData,
+          context: currentContext
+        })
       });
 
-      if (!response) return null;
-
-      try {
-        const parsed = JSON.parse(response);
-        return {
-          insights: Array.isArray(parsed.insights) ? parsed.insights.slice(0, 3) : [],
-          recommendations: Array.isArray(parsed.recommendations) ? parsed.recommendations.slice(0, 3) : [],
-          riskAssessment: ['low', 'medium', 'high'].includes(parsed.riskAssessment) ? parsed.riskAssessment : 'medium'
-        };
-      } catch (parseError) {
-        console.error('Failed to parse Venice contextual insights:', parseError);
-        return null;
+      if (!response.ok) {
+        const errorData = await response.json();
+        if (errorData.fallback) {
+          console.log('⏭️ Venice AI unavailable, using fallback');
+          return null;
+        }
+        throw new Error(`API error: ${response.status}`);
       }
+
+      const data = await response.json();
+      console.log('✅ Venice AI contextual insights received:', data);
+      return data;
     } catch (error) {
-      console.error('Error generating Venice contextual insights:', error);
+      console.error('Error calling Venice contextual insights API:', error);
       return null;
     }
   }

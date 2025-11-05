@@ -307,6 +307,39 @@ export class DatabaseService {
     }
   }
 
+  /**
+   * Update AI access expiration for user after STT payment
+   */
+  async updateUserAIAccess(walletAddress: string, expiresAt: Date) {
+    return this.updateUser(walletAddress, {
+      aiAccessExpiresAt: expiresAt
+    });
+  }
+
+  /**
+   * Check if user has active AI access
+   */
+  async checkUserAIAccess(walletAddress: string): Promise<boolean> {
+    if (this.isBuildTime()) {
+      return true; // Allow during build time
+    }
+
+    try {
+      const user = await this.getPrisma().user.findUnique({
+        where: { walletAddress },
+        select: { aiAccessExpiresAt: true }
+      });
+
+      if (!user) return false;
+
+      const now = new Date();
+      return user.aiAccessExpiresAt && user.aiAccessExpiresAt > now;
+    } catch (error) {
+      console.error('❌ Error checking AI access:', error);
+      return false;
+    }
+  }
+
   async getAllUsers() {
     if (this.isBuildTime()) {
       // Return mock data during build time
