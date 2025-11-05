@@ -6,21 +6,36 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/PremiumButton";
 import { ChallengeTemplate, ChallengeCondition, challengeService } from "@/lib/challenge-templates";
 import { AIGeneratedChallenge } from "@/lib/ai-challenge-generator";
+import { culturalAdaptation } from "@/lib/cultural-adaptation";
+import { useMobileExperience } from "@/hooks/useMobileExperience";
 
 interface ChallengeCardProps {
   challenge: ChallengeTemplate;
   onSelect: (challenge: ChallengeTemplate) => void;
   isFeatured?: boolean;
   className?: string;
+  culturalRelevance?: number;
 }
 
 export function ChallengeCard({ 
   challenge, 
   onSelect, 
   isFeatured = false,
-  className = "" 
+  className = "",
+  culturalRelevance 
 }: ChallengeCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const { triggerHaptic } = useMobileExperience();
+  
+  // Cultural adaptation
+  const culturalContext = culturalAdaptation.getContext();
+  const adaptedChallenge = {
+    ...challenge,
+    estimatedDistance: culturalAdaptation.formatNumber(challenge.estimatedDistance, 'distance'),
+    estimatedTime: culturalAdaptation.formatNumber(challenge.estimatedTime, 'time'),
+    description: challenge.description + (culturalRelevance ? ` (${culturalRelevance}% match for your region)` : '')
+  };
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -44,33 +59,55 @@ export function ChallengeCard({
     }
   };
 
+  const handleCardClick = () => {
+    triggerHaptic('light');
+    onSelect(challenge);
+  };
+
+  const handleExpandToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    triggerHaptic('light');
+    setIsExpanded(!isExpanded);
+  };
+
   return (
     <motion.div
       className={cn(
-        "bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 rounded-2xl p-5 cursor-pointer overflow-hidden",
-        "hover:scale-[1.02] transition-all duration-300 relative",
+        "bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 rounded-2xl overflow-hidden cursor-pointer relative group",
+        "hover:scale-[1.02] transition-all duration-300",
         isFeatured && "ring-2 ring-yellow-400/50",
+        culturalRelevance && culturalRelevance > 80 && "ring-2 ring-green-400/30",
         className
       )}
-      onClick={() => onSelect(challenge)}
+      onClick={handleCardClick}
+      onHoverStart={() => setIsHovered(true)}
+      onHoverEnd={() => setIsHovered(false)}
       whileHover={{ y: -5 }}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
+      whileTap={{ scale: 0.98 }}
     >
       {/* Category gradient header */}
       <div className={`h-2 bg-gradient-to-r ${getCategoryColor(challenge.category)} rounded-t-xl`}></div>
       
-      <div className="p-4">
+      <div className="p-5">
         <div className="flex justify-between items-start mb-3">
-          <div>
+          <div className="flex-1 pr-3">
             <h3 className="font-bold text-white text-lg">{challenge.name}</h3>
-            <p className="text-sm text-white/70 mt-1">{challenge.description}</p>
+            <p className="text-sm text-white/70 mt-1 line-clamp-2">{adaptedChallenge.description}</p>
           </div>
-          {isFeatured && (
-            <div className="bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded-full text-xs font-medium">
-              Featured
-            </div>
-          )}
+          <div className="flex flex-col gap-1">
+            {isFeatured && (
+              <div className="bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded-full text-xs font-medium">
+                ⭐ Featured
+              </div>
+            )}
+            {culturalRelevance && culturalRelevance > 70 && (
+              <div className="bg-green-500/20 text-green-400 px-2 py-1 rounded-full text-xs font-medium">
+                🌍 {culturalRelevance}% match
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="flex flex-wrap gap-2 mb-4">
@@ -89,14 +126,14 @@ export function ChallengeCard({
             <span className="text-2xl">⏱️</span>
             <div>
               <div className="text-white/60">Time</div>
-              <div className="text-white font-medium">{challenge.estimatedTime} min</div>
+              <div className="text-white font-medium">{adaptedChallenge.estimatedTime}</div>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-2xl">📍</span>
             <div>
               <div className="text-white/60">Distance</div>
-              <div className="text-white font-medium">{challenge.estimatedDistance} km</div>
+              <div className="text-white font-medium">{adaptedChallenge.estimatedDistance}</div>
             </div>
           </div>
         </div>
@@ -153,17 +190,40 @@ export function ChallengeCard({
           )}
         </AnimatePresence>
 
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="w-full mt-4"
-          onClick={(e) => {
-            e.stopPropagation();
-            setIsExpanded(!isExpanded);
-          }}
-        >
-          {isExpanded ? "Show Less" : "View Details"}
-        </Button>
+        <div className="flex gap-2 mt-4">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex-1"
+            onClick={handleExpandToggle}
+          >
+            {isExpanded ? "Show Less" : "View Details"}
+          </Button>
+          
+          {/* Cultural quick action */}
+          {culturalRelevance && culturalRelevance > 80 && (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleCardClick}
+              className="px-3 py-1 bg-green-500/20 text-green-400 rounded-lg text-xs font-medium border border-green-500/30 hover:bg-green-500/30 transition-colors"
+            >
+              Perfect Match! →
+            </motion.button>
+          )}
+        </div>
+        
+        {/* Hover effect overlay */}
+        <AnimatePresence>
+          {isHovered && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-gradient-to-br from-violet-500/5 to-purple-500/5 pointer-events-none rounded-2xl"
+            />
+          )}
+        </AnimatePresence>
       </div>
     </motion.div>
   );

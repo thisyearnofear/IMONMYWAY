@@ -8,6 +8,13 @@ import { PremiumButton } from '@/components/ui/PremiumButton'
 import { profileData, type UserProfile } from '@/lib/profile-data'
 import { useProfileRealtime, useReputationRealtime } from '@/hooks/useRealtime'
 import { ChallengeHub } from '@/components/challenges/ChallengeHub'
+import { useNavigationContext } from '@/hooks/useNavigationContext'
+import { DelightfulEmptyState, EmptyStatePresets } from '@/components/ui/DelightfulEmptyState'
+import { personalityEngine, getWelcomeMessage, getCelebrationMessage } from '@/lib/personality-engine'
+import { culturalAdaptation } from '@/lib/cultural-adaptation'
+import { useUIStore } from '@/stores/uiStore'
+import { useMobileExperience } from '@/hooks/useMobileExperience'
+import ParallaxSection from '@/components/three/ParallaxSection'
 
 // Dynamic imports for components that might cause SSR issues
 const WebGLParticleSystem = dynamicImport(() => import('@/components/three/ParticleSystem'), {
@@ -36,6 +43,18 @@ export default function ProfilePage() {
     newScore: number
     reason: string
   } | null>(null)
+  const [welcomeMessage, setWelcomeMessage] = useState("")
+  const [culturalContext, setCulturalContext] = useState(culturalAdaptation.getContext())
+  const [shouldShowCelebration, setShouldShowCelebration] = useState(false)
+
+  const { addToast } = useUIStore()
+  const { triggerHaptic } = useMobileExperience()
+  const { 
+    navigateWithContext, 
+    markStepCompleted, 
+    suggestedNextAction,
+    getPreservedState 
+  } = useNavigationContext()
 
   const loadProfile = useCallback(async () => {
     if (!address) return
@@ -50,6 +69,24 @@ export default function ProfilePage() {
         setError('Profile not found. Complete your first session to create a profile.')
       } else {
         setProfile(userProfile)
+        
+        // Check for celebration triggers
+        const preservedData = getPreservedState('newChallenge')
+        if (preservedData) {
+          setShouldShowCelebration(true)
+          setTimeout(() => {
+            const celebrationMessage = culturalAdaptation.getCulturalMessage('celebration')
+            addToast({
+              message: celebrationMessage,
+              type: "achievement",
+              duration: 5000
+            })
+            triggerHaptic('success')
+          }, 1000)
+        }
+        
+        // Mark profile visit
+        markStepCompleted('profile-visited')
       }
     } catch (err) {
       console.error('Error loading profile:', err)
@@ -91,12 +128,23 @@ export default function ProfilePage() {
     setTimeout(() => setReputationChange(null), 8000)
   })
 
-  // Load profile data when wallet connects
+  // Load profile data when wallet connects and initialize cultural context
   useEffect(() => {
     if (isConnected && address) {
       loadProfile()
+      
+      // Initialize cultural messaging
+      const message = culturalAdaptation.getCulturalMessage('encouragement', getWelcomeMessage())
+      setWelcomeMessage(message)
+      
+      // Track page visit for analytics
+      culturalAdaptation.updatePreferences({
+        action: 'page_visit_profile',
+        timestamp: Date.now(),
+        context: { page: 'profile', hasProfile: !!profile }
+      })
     }
-  }, [isConnected, address, loadProfile])
+  }, [isConnected, address, loadProfile, profile])
 
   const getTierIcon = (tier: UserProfile['tier']) => {
     const icons = {
