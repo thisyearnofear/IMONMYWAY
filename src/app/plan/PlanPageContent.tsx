@@ -25,7 +25,7 @@ import { motion } from "framer-motion";
 import { createStartMarker, createDestinationMarker, createPolyline, fitBoundsToMarkers } from "@/lib/map-utils";
 import { realtimeService } from "@/lib/realtime-service";
 
-// We'll use OpenStreetMap's Nominatim service for geocoding
+// Enhanced geocoding with autocomplete suggestions
 const geocodeAddress = async (
   address: string
 ): Promise<[number, number] | null> => {
@@ -54,6 +54,43 @@ const geocodeAddress = async (
   }
 };
 
+// Smart address suggestions with debouncing
+const getAddressSuggestions = async (
+  query: string,
+  limit: number = 5
+): Promise<string[]> => {
+  if (query.length < 3) return [];
+  
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+        query
+      )}&limit=${limit}&addressdetails=1`
+    );
+
+    if (!response.ok) return [];
+
+    const data = await response.json();
+    return data.map((item: any) => item.display_name);
+  } catch (error) {
+    console.error("Suggestions error:", error);
+    return [];
+  }
+};
+
+// Debounced address input handler
+const useDebounce = (callback: Function, delay: number) => {
+  const timeoutRef = useCallback((fn: Function, ms: number) => {
+    let timeoutId: NodeJS.Timeout;
+    return (...args: any[]) => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => fn(...args), ms);
+    };
+  }, []);
+  
+  return timeoutRef(callback, delay);
+};
+
 export default function PlanPageContent() {
   const [startAddress, setStartAddress] = useState("");
   const [endAddress, setEndAddress] = useState("");
@@ -66,6 +103,11 @@ export default function PlanPageContent() {
     speedEstimate?: any;
   } | null>(null);
   const [isPlanning, setIsPlanning] = useState(false);
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const [addressSuggestions, setAddressSuggestions] = useState<{
+    start: string[];
+    end: string[];
+  }>({ start: [], end: [] });
   const [currentLocation, setCurrentLocation] = useState<{
     lat: number;
     lng: number;
@@ -78,6 +120,68 @@ export default function PlanPageContent() {
   const { addToast } = useUIStore();
   const { selectedPace, setSelectedPace } = useLocationStore();
   const { isMobile, triggerHaptic, supportsGeolocation } = useMobileExperience();
+
+  // Smart address handling with debounced suggestions
+  const debouncedGetSuggestions = useDebounce(async (query: string, field: 'start' | 'end') => {
+    const suggestions = await getAddressSuggestions(query);
+    setAddressSuggestions(prev => ({
+      ...prev,
+      [field]: suggestions
+    }));
+  }, 300);
+
+  // Real-time preview when both addresses are available
+  const debouncedPreview = useDebounce(async () => {
+    if (startAddress.length > 3 && endAddress.length > 3 && !isPlanning) {
+      setIsPreviewMode(true);
+      try {
+        const startCoords = await geocodeAddress(startAddress);
+        const endCoords = await geocodeAddress(endAddress);
+        
+        if (startCoords && endCoords) {
+          const distance = calculateDistance(
+            startCoords[0], startCoords[1], endCoords[0], endCoords[1]
+          );
+          const eta = calculateETA(distance, selectedPace);
+          const confidence = getConfidenceScore(selectedPace, distance);
+          
+          setPlanData({
+            distance,
+            eta,
+            confidence,
+            startCoords,
+            endCoords,
+          });
+          triggerHaptic('light');
+        }
+      } catch (error) {
+        console.error('Preview error:', error);
+      } finally {
+        setIsPreviewMode(false);
+      }
+    }
+  }, 800);
+
+  // Enhanced address change handlers
+  const handleStartAddressChange = (value: string) => {
+    setStartAddress(value);
+    if (value.length > 2) {
+      debouncedGetSuggestions(value, 'start');
+    } else {
+      setAddressSuggestions(prev => ({ ...prev, start: [] }));
+    }
+    debouncedPreview();
+  };
+
+  const handleEndAddressChange = (value: string) => {
+    setEndAddress(value);
+    if (value.length > 2) {
+      debouncedGetSuggestions(value, 'end');
+    } else {
+      setAddressSuggestions(prev => ({ ...prev, end: [] }));
+    }
+    debouncedPreview();
+  };
 
   // Speed picker functions
   const currentPreset = findPresetByPace(selectedPace);
@@ -122,7 +226,7 @@ export default function PlanPageContent() {
       triggerHaptic('success');
 
       addToast({
-        message: `Location found with ${position.accuracy}m accuracy`,
+        message: `📍 Location found with ${Math.round(position.accuracy)}m accuracy`,
         type: "success",
       });
     } catch (error) {
@@ -134,6 +238,25 @@ export default function PlanPageContent() {
       });
     }
   }, [supportsGeolocation, addToast, triggerHaptic]);
+
+  // Use current location for start address
+  const useCurrentLocationAsStart = useCallback(async () => {
+    if (currentLocation) {
+      setStartAddress("📍 Current Location");
+      triggerHaptic('success');
+      addToast({
+        message: "🎯 Using your current location as start point",
+        type: "success",
+      });
+      debouncedPreview();
+    } else {
+      await getCurrentLocation();
+      if (currentLocation) {
+        setStartAddress("📍 Current Location");
+        triggerHaptic('success');
+      }
+    }
+  }, [currentLocation, getCurrentLocation, triggerHaptic, addToast, debouncedPreview]);
 
   const planRoute = useCallback(async () => {
     if (!startAddress.trim() || !endAddress.trim()) {
@@ -192,7 +315,11 @@ export default function PlanPageContent() {
       });
 
       triggerHaptic('success');
-      addToast({ message: "Route planned successfully!", type: "success" });
+      addToast({ 
+        message: "🎉 Perfect route found! Ready to challenge yourself?", 
+        type: "achievement",
+        duration: 4000
+      });
     } catch (error) {
       triggerHaptic('error');
       addToast({ message: "Failed to plan route", type: "error" });
@@ -359,114 +486,184 @@ export default function PlanPageContent() {
           </motion.div>
         </ParallaxSection>
 
-        {/* Compact Layout - Side by Side */}
-        <div className="grid md:grid-cols-2 gap-4 mb-4">
-          {/* Map Section */}
-          <motion.div
-            className="rounded-xl overflow-hidden shadow-xl border border-white/20 bg-gradient-to-br from-white/10 to-white/5"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <div className="p-4 border-b border-white/10">
-              <h2 className="text-lg font-bold text-white mb-1">
-                📍 Interactive Map
-              </h2>
-              <p className="text-white/60 text-sm">
-                Click to set points or use form
-              </p>
-            </div>
-            <div className="relative">
-              <MapContainer
-                className="h-64"
-                center={
-                  planData ? planData.startCoords :
-                    currentLocation ? [currentLocation.lat, currentLocation.lng] :
-                      [40.7128, -74.006]
-                }
-                onMapReady={handleMapReady}
-              />
-              {!planData && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm">
-                  <div className="text-center">
-                    <div className="text-3xl mb-2">🗺️</div>
-                    <p className="text-white text-sm">Enter addresses to see route</p>
-                  </div>
+        {/* Hero Map Section - Full Width */}
+        <motion.div
+          className="mb-6 rounded-xl overflow-hidden shadow-2xl border border-white/20 bg-gradient-to-br from-white/10 to-white/5"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <div className="p-4 border-b border-white/10">
+            <h2 className="text-lg font-bold text-white mb-1">
+              📍 Interactive Map
+            </h2>
+            <p className="text-white/60 text-sm">
+              Click to set points or use the controls below
+            </p>
+          </div>
+          <div className="relative">
+            <MapContainer
+              className="h-[60vh] min-h-96"
+              center={
+                planData ? planData.startCoords :
+                  currentLocation ? [currentLocation.lat, currentLocation.lng] :
+                    [40.7128, -74.006]
+              }
+              onMapReady={handleMapReady}
+            />
+            {!planData && !isPreviewMode && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+                <div className="text-center">
+                  <div className="text-4xl mb-3">🗺️</div>
+                  <p className="text-white text-lg font-medium">Enter addresses to see route</p>
+                  <p className="text-white/60 text-sm mt-2">Real-time preview as you type!</p>
                 </div>
-              )}
-            </div>
-          </motion.div>
+              </div>
+            )}
+            
+            {/* Preview Mode Indicator */}
+            {isPreviewMode && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm">
+                <div className="text-center">
+                  <div className="animate-pulse text-3xl mb-2">🔍</div>
+                  <p className="text-white text-sm font-medium">Previewing route...</p>
+                </div>
+              </div>
+            )}
+            
+            {/* Route Confidence Indicator */}
+            {planData && (
+              <div className="absolute top-4 right-4 z-10">
+                <div className={`px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${
+                  planData.confidence >= 80 
+                    ? 'bg-green-500/20 border-green-500/50 text-green-200' 
+                    : planData.confidence >= 60 
+                    ? 'bg-yellow-500/20 border-yellow-500/50 text-yellow-200' 
+                    : 'bg-red-500/20 border-red-500/50 text-red-200'
+                }`}>
+                  {planData.confidence}% confidence
+                </div>
+              </div>
+            )}
+          </div>
+        </motion.div>
 
-          {/* Controls Section */}
-          <motion.div
-            className="space-y-4"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-          >
-            {/* Address Inputs */}
-            <div className="space-y-3">
-              <Input
-                label="Start Location"
-                value={startAddress}
-                onChange={(e) => setStartAddress(e.target.value)}
-                placeholder="From..."
-                variant="dark"
-                className="text-sm"
-              />
+        {/* Compact Controls Below Map */}
+        <motion.div
+          className="bg-white/5 rounded-xl p-6 border border-white/10 backdrop-blur-sm mb-4"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+        >
+          {/* Enhanced Address Inputs with Autocomplete */}
+          <div className="grid md:grid-cols-2 gap-4 mb-6">
+            {/* Start Location with Current Location Button */}
+            <div className="relative">
+              <div className="flex gap-2">
+                <div className="flex-1 relative">
+                  <Input
+                    label="Start Location"
+                    value={startAddress}
+                    onChange={(e) => handleStartAddressChange(e.target.value)}
+                    placeholder="From..."
+                    variant="dark"
+                  />
+                  {/* Start Address Suggestions */}
+                  {addressSuggestions.start.length > 0 && (
+                    <div className="absolute top-full left-0 right-0 z-20 mt-1 bg-black/90 backdrop-blur-sm rounded-lg border border-white/20 overflow-hidden">
+                      {addressSuggestions.start.map((suggestion, index) => (
+                        <button
+                          key={index}
+                          onClick={() => {
+                            setStartAddress(suggestion);
+                            setAddressSuggestions(prev => ({ ...prev, start: [] }));
+                            triggerHaptic('light');
+                            debouncedPreview();
+                          }}
+                          className="w-full text-left px-3 py-2 text-sm text-white/90 hover:bg-white/10 transition-colors"
+                        >
+                          📍 {suggestion}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={useCurrentLocationAsStart}
+                  className="mt-6 px-3 border border-blue-500/50 text-blue-400 hover:bg-blue-500/10"
+                  title="Use current location"
+                >
+                  📍
+                </Button>
+              </div>
+            </div>
+
+            {/* Destination Input */}
+            <div className="relative">
               <Input
                 label="Destination"
                 value={endAddress}
-                onChange={(e) => setEndAddress(e.target.value)}
+                onChange={(e) => handleEndAddressChange(e.target.value)}
                 placeholder="To..."
                 variant="dark"
-                className="text-sm"
               />
+              {/* End Address Suggestions */}
+              {addressSuggestions.end.length > 0 && (
+                <div className="absolute top-full left-0 right-0 z-20 mt-1 bg-black/90 backdrop-blur-sm rounded-lg border border-white/20 overflow-hidden">
+                  {addressSuggestions.end.map((suggestion, index) => (
+                    <button
+                      key={index}
+                      onClick={() => {
+                        setEndAddress(suggestion);
+                        setAddressSuggestions(prev => ({ ...prev, end: [] }));
+                        triggerHaptic('light');
+                        debouncedPreview();
+                      }}
+                      className="w-full text-left px-3 py-2 text-sm text-white/90 hover:bg-white/10 transition-colors"
+                    >
+                      🎯 {suggestion}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Speed Selection - Horizontal Pills */}
+          <div className="mb-6">
+            <h3 className="text-white font-medium mb-3">How fast will you move?</h3>
+            <div className="flex flex-wrap gap-2 mb-4">
+              {SPEED_PRESETS.slice(0, 6).map((preset) => (
+                <Button
+                  key={preset.id}
+                  variant={currentPreset?.id === preset.id ? "primary" : "ghost"}
+                  size="sm"
+                  onClick={() => handlePresetSelect(preset.pace)}
+                  className="flex items-center gap-2 px-4 py-2"
+                >
+                  <span>{preset.icon}</span>
+                  <span className="font-medium">{preset.label}</span>
+                  <span className="text-xs opacity-70">{preset.pace} min/mile</span>
+                </Button>
+              ))}
+              <Button
+                variant={!currentPreset ? "primary" : "ghost"}
+                size="sm"
+                onClick={() => setShowCustomInput(!showCustomInput)}
+                className="flex items-center gap-2 px-4 py-2"
+              >
+                <span>⚙️</span>
+                <span className="font-medium">Custom</span>
+                {!currentPreset && <span className="text-xs opacity-70">{selectedPace} min/mile</span>}
+              </Button>
             </div>
 
-            {/* Compact Speed Picker */}
-            <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-              <h3 className="text-white font-medium mb-2 text-sm">How fast will you move?</h3>
-              <p className="text-white/60 text-xs mb-3">This helps calculate arrival times</p>
-
-              {/* Current Selection Display */}
-              <div className="bg-white/10 rounded-lg p-3 mb-3 text-center">
-                <div className="text-lg mb-1">{currentPreset?.icon || '⚡'}</div>
-                <div className="text-white font-medium text-sm">{currentPreset?.label || 'Custom'}</div>
-                <div className="text-white/70 text-xs">{selectedPace} min/mile</div>
-              </div>
-
-              {/* Speed Options Grid */}
-              <div className="grid grid-cols-2 gap-2 mb-3">
-                {SPEED_PRESETS.slice(0, 6).map((preset) => (
-                  <Button
-                    key={preset.id}
-                    variant={currentPreset?.id === preset.id ? "primary" : "ghost"}
-                    size="sm"
-                    onClick={() => handlePresetSelect(preset.pace)}
-                    className="text-xs h-auto py-2 px-2"
-                  >
-                    <div className="text-center">
-                      <div className="text-sm">{preset.icon}</div>
-                      <div className="text-xs font-medium">{preset.label}</div>
-                      <div className="text-xs opacity-70">{preset.pace} min/mile</div>
-                    </div>
-                  </Button>
-                ))}
-              </div>
-
-              {/* Custom Speed Toggle */}
-              {!showCustomInput ? (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowCustomInput(true)}
-                  className="w-full text-xs border border-dashed border-white/30"
-                >
-                  ⚙️ Custom Speed
-                </Button>
-              ) : (
-                <div className="space-y-2">
+            {/* Custom Speed Input */}
+            {showCustomInput && (
+              <div className="flex gap-3 items-end">
+                <div className="flex-1">
                   <Input
                     type="number"
                     value={customPace}
@@ -475,36 +672,74 @@ export default function PlanPageContent() {
                     step="0.1"
                     min="1"
                     max="30"
-                    className="text-sm"
+                    label="Custom pace"
                   />
-                  <div className="flex gap-2">
-                    <Button size="sm" onClick={handleCustomSubmit} className="flex-1 text-xs">
-                      Apply
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => setShowCustomInput(false)}
-                      className="flex-1 text-xs"
-                    >
-                      Cancel
-                    </Button>
-                  </div>
                 </div>
-              )}
-            </div>
+                <Button size="sm" onClick={handleCustomSubmit} className="px-4">
+                  Apply
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setShowCustomInput(false)}
+                  className="px-4"
+                >
+                  Cancel
+                </Button>
+              </div>
+            )}
+          </div>
 
-            {/* Calculate Button */}
+          {/* Enhanced Calculate Button with Smart Messaging */}
+          <div className="space-y-3">
+            {/* Real-time preview feedback */}
+            {planData && !isPlanning && (
+              <div className="text-center p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+                <div className="text-green-400 text-sm font-medium mb-1">
+                  ✨ Live Preview Ready!
+                </div>
+                <div className="text-white/80 text-xs">
+                  {formatDistance(planData.distance)} • {formatTime(planData.eta)} • {planData.confidence}% confidence
+                </div>
+              </div>
+            )}
+            
             <Button
               onClick={planRoute}
-              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold py-3 rounded-xl shadow-xl hover:from-blue-700 hover:to-purple-700"
+              className={`w-full font-bold py-4 rounded-xl shadow-xl text-lg transition-all duration-300 ${
+                planData 
+                  ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white'
+                  : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white'
+              }`}
               isLoading={isPlanning}
               disabled={isPlanning || !startAddress.trim() || !endAddress.trim()}
             >
-              {isPlanning ? "Planning..." : "📍 Calculate Route"}
+              {isPlanning ? (
+                <span className="flex items-center justify-center gap-2">
+                  <div className="animate-spin text-lg">⚡</div>
+                  Calculating optimal route...
+                </span>
+              ) : planData ? (
+                "🚀 Finalize & Start Challenge"
+              ) : (
+                "📍 Calculate Route"
+              )}
             </Button>
-          </motion.div>
-        </div>
+            
+            {/* Contextual help text */}
+            <div className="text-center text-xs text-white/60">
+              {!startAddress || !endAddress ? (
+                "💡 Enter both locations to see live preview"
+              ) : isPreviewMode ? (
+                "🔄 Updating preview..."
+              ) : planData ? (
+                "Ready to create your punctuality challenge!"
+              ) : (
+                "Real-time preview available as you type"
+              )}
+            </div>
+          </div>
+        </motion.div>
 
         {/* Compact Results Display */}
         {planData && (
