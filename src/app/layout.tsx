@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+// Leaflet's styles (must come before our own base CSS)
+import "leaflet/dist/leaflet.css";
 import "./globals.css";
 import { PremiumNavigation } from "@/components/layout/PremiumNavigation";
 import { GlobalErrorBoundary } from '@/components/core/GlobalErrorBoundary';

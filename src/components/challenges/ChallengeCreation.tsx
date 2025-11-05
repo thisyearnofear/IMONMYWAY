@@ -43,17 +43,27 @@ export function ChallengeCreation({
     setIsCreating(true);
     
     try {
-      // Create challenge from template with custom settings
+      // Placeholder location data for this component context
+      const placeholderLocations = {
+        start: { latitude: 0, longitude: 0 },
+        target: { latitude: 0, longitude: 0 },
+      };
+
+      // Custom settings to override template defaults
+      const customSettings = {
+        stakeAmount: {
+          min: challenge.stakeAmount.min,
+          max: challenge.stakeAmount.max,
+          suggested: parseFloat(stakeAmount),
+        },
+      };
+
+      // Create challenge from template with custom settings and placeholder locations
       const newChallenge = createChallengeFromTemplate(
         challenge.id,
         'current-user-id', // In a real app, this would come from auth context
-        {
-          stakeAmount: {
-            min: challenge.stakeAmount.min,
-            max: challenge.stakeAmount.max,
-            suggested: parseFloat(stakeAmount)
-          }
-        }
+        placeholderLocations,
+        customSettings
       );
 
       if (newChallenge) {

@@ -63,263 +63,280 @@ export interface ProofSubmission {
   verificationNotes?: string;
 }
 
-// PREVENT BLOAT: Consolidated challenge templates to reduce redundancy
+// CULTURAL TIME INTELLIGENCE: Universal, localized challenges
+// Based on Hofstede cultural dimensions and running speed intelligence
 export const CHALLENGE_TEMPLATES: ChallengeTemplate[] = [
+  // Buenos Aires DevConnect Challenges
   {
-    id: 'london-to-france-eco',
-    name: 'London to France Eco Challenge',
-    description: 'Get from London to France with specific eco-friendly conditions',
+    id: 'ba-train-hop',
+    name: 'Buenos Aires Train-Hop',
+    description: 'Get off at Retiro station, run to Once station, catch the same train within 4 minutes',
     category: 'adventure',
-    difficulty: 'hard',
-    estimatedTime: 720, // 12 hours
-    estimatedDistance: 500,
-    stakeAmount: { min: 10, max: 100, suggested: 30 },
+    difficulty: 'medium',
+    estimatedTime: 5,
+    estimatedDistance: 1.2,
+    stakeAmount: { min: 2, max: 20, suggested: 5 },
     conditions: [
       {
         type: 'mode',
-        value: 30,
-        unit: 'percentage',
-        description: '30% of journey must be by bicycle',
-        verificationMethod: 'gps',
-        required: true
-      },
-      {
-        type: 'mode',
-        value: 20,
-        unit: 'percentage',
-        description: '20% of journey must be on foot',
+        value: 'running',
+        description: 'Must run between stations',
         verificationMethod: 'gps',
         required: true
       },
       {
         type: 'time',
-        value: 720,
+        value: 4,
         unit: 'minutes',
-        description: 'Complete within 12 hours',
-        verificationMethod: 'blockchain',
-        required: true
-      }
-    ],
-    proofRequirements: [
-      'GPS tracking showing bicycle and walking segments',
-      'Photos at major checkpoints',
-      'Final destination verification'
-    ],
-    rewards: {
-      achievement: 'Eco Adventurer',
-      multiplier: 2.5
-    },
-    socialImpact: true,
-    viralFactor: 8,
-    tags: ['adventure', 'eco', 'bicycle', 'multi-modal', 'europe'],
-    isActive: true,
-    createdAt: new Date('2025-01-15'),
-    popularityScore: 95
-  },
-
-  {
-    id: 'lands-end-to-john-ogroats-backwards',
-    name: 'Lands End to John O\'Groats Backwards',
-    description: 'Walk the entire length of Great Britain... backwards!',
-    category: 'fitness',
-    difficulty: 'extreme',
-    estimatedTime: 10080, // 7 days
-    estimatedDistance: 874,
-    stakeAmount: { min: 50, max: 500, suggested: 200 },
-    conditions: [
-      {
-        type: 'behavior',
-        value: 'walking backwards',
-        description: 'At least 50% of walking segments must be done backwards',
-        verificationMethod: 'video',
-        required: true
-      },
-      {
-        type: 'distance',
-        value: 874,
-        unit: 'kilometers',
-        description: 'Complete the full route',
+        description: 'Back on train within 4 minutes',
         verificationMethod: 'gps',
         required: true
       },
       {
         type: 'location',
-        value: ['Penzance', 'Bath', 'Birmingham', 'Edinburgh', 'John O\'Groats'],
-        description: 'Must pass through all checkpoint locations',
-        verificationMethod: 'photo',
+        value: ['Retiro', 'Once'],
+        description: 'Must visit both stations',
+        verificationMethod: 'gps',
         required: true
       }
     ],
     proofRequirements: [
-      'Video evidence of walking backwards',
-      'GPS tracking of the route',
-      'Photo verification at checkpoints',
-      'Daily progress updates'
+      'GPS track between stations',
+      'Train schedule verification',
+      'Timestamped location proof'
     ],
     rewards: {
-      achievement: 'Backwards Brit',
-      tokenReward: 500
+      achievement: 'BA Express',
+      multiplier: 1.5
     },
     socialImpact: false,
-    viralFactor: 9,
-    tags: ['fitness', 'britain', 'walking', 'creative', 'extreme'],
+    viralFactor: 7,
+    tags: ['ba', 'train', 'running', 'local', 'devconnect'],
     isActive: true,
-    createdAt: new Date('2025-01-10'),
-    popularityScore: 88
+    createdAt: new Date(),
+    popularityScore: 85
+  },
+
+  // Beat Google Maps Challenges
+  {
+    id: 'beat-google-easy',
+    name: 'Beat Google Maps (Easy)',
+    description: 'Run any route 1.5x faster than Google Maps walking estimate',
+    category: 'fitness',
+    difficulty: 'easy',
+    estimatedTime: 15,
+    estimatedDistance: 1,
+    stakeAmount: { min: 1, max: 10, suggested: 3 },
+    conditions: [
+      {
+        type: 'speed',
+        value: 1.5,
+        unit: 'multiplier',
+        description: 'Run 1.5x faster than walking estimate',
+        verificationMethod: 'gps',
+        required: true
+      }
+    ],
+    proofRequirements: [
+      'GPS speed tracking',
+      'Google Maps baseline comparison'
+    ],
+    rewards: {
+      achievement: 'Speed Walker',
+      multiplier: 1.2
+    },
+    socialImpact: false,
+    viralFactor: 5,
+    tags: ['running', 'speed', 'google-maps', 'universal'],
+    isActive: true,
+    createdAt: new Date(),
+    popularityScore: 78
   },
 
   {
-    id: 'zero-carbon-commute',
-    name: 'Zero Carbon Commute Challenge',
-    description: 'Get to work with zero carbon emissions for a week',
-    category: 'social',
-    difficulty: 'medium',
-    estimatedTime: 420, // 7 hours cumulative
-    estimatedDistance: 70, // 10km per day x 7 days
+    id: 'beat-google-extreme',
+    name: 'Beat Google Maps (Extreme)',
+    description: 'Run any route 3x faster than Google Maps walking estimate',
+    category: 'fitness',
+    difficulty: 'extreme',
+    estimatedTime: 10,
+    estimatedDistance: 2,
     stakeAmount: { min: 5, max: 50, suggested: 15 },
     conditions: [
       {
-        type: 'mode',
-        value: ['bicycle', 'foot', 'public transport'],
-        description: 'No private motor vehicle usage',
-        verificationMethod: 'ai',
-        required: true
-      },
-      {
-        type: 'time',
-        value: 7,
-        unit: 'days',
-        description: 'Complete challenge for 7 consecutive days',
-        verificationMethod: 'blockchain',
-        required: true
-      },
-      {
-        type: 'behavior',
-        value: 'no shortcuts',
-        description: 'Must take the longest viable route',
+        type: 'speed',
+        value: 3.0,
+        unit: 'multiplier',
+        description: 'Run 3x faster than walking estimate',
         verificationMethod: 'gps',
-        required: false
+        required: true
       }
     ],
     proofRequirements: [
-      'Daily GPS tracking',
-      'Transport mode verification',
-      'Streak continuity proof'
+      'GPS speed tracking',
+      'Google Maps baseline comparison',
+      'Video proof of running'
     ],
     rewards: {
-      achievement: 'Carbon Zero',
+      achievement: 'Speed Demon',
+      multiplier: 3.0
+    },
+    socialImpact: false,
+    viralFactor: 8,
+    tags: ['running', 'speed', 'google-maps', 'extreme'],
+    isActive: true,
+    createdAt: new Date(),
+    popularityScore: 92
+  },
+
+  // Cultural Time Challenges
+  {
+    id: 'cultural-adaptation',
+    name: 'Cultural Time Adaptation',
+    description: 'Arrive according to local cultural expectations for punctuality',
+    category: 'social',
+    difficulty: 'medium',
+    estimatedTime: 30,
+    estimatedDistance: 2,
+    stakeAmount: { min: 3, max: 25, suggested: 8 },
+    conditions: [
+      {
+        type: 'behavior',
+        value: 'cultural_timing',
+        description: 'Arrive within cultural expectations',
+        verificationMethod: 'ai',
+        required: true
+      }
+    ],
+    proofRequirements: [
+      'Cultural profile verification',
+      'Arrival time tracking',
+      'Peer review validation'
+    ],
+    rewards: {
+      achievement: 'Cultural Ambassador',
       multiplier: 2.0
     },
     socialImpact: true,
     viralFactor: 6,
-    tags: ['social', 'eco', 'commute', 'sustainability'],
+    tags: ['cultural', 'social', 'adaptation', 'universal'],
     isActive: true,
-    createdAt: new Date('2025-01-05'),
-    popularityScore: 75
+    createdAt: new Date(),
+    popularityScore: 73
   },
 
+  // Airport Terminal Challenges
   {
-    id: 'speed-of-sound',
-    name: 'Speed of Sound Challenge',
-    description: 'Travel 100 meters in under 1 minute (or as close as possible)',
-    category: 'creative',
-    difficulty: 'medium',
-    estimatedTime: 1,
-    estimatedDistance: 0.1,
-    stakeAmount: { min: 2, max: 20, suggested: 5 },
+    id: 'airport-terminal-sprint',
+    name: 'Airport Terminal Sprint',
+    description: 'Navigate between terminals faster than shuttle service',
+    category: 'adventure',
+    difficulty: 'hard',
+    estimatedTime: 12,
+    estimatedDistance: 1.5,
+    stakeAmount: { min: 5, max: 30, suggested: 12 },
     conditions: [
       {
+        type: 'location',
+        value: 'airport',
+        description: 'Must be at major international airport',
+        verificationMethod: 'gps',
+        required: true
+      },
+      {
         type: 'speed',
-        value: 1.667, // km/h equivalent of 100m in 1 minute
-        unit: 'km/h',
-        description: 'Average speed must exceed 6 km/h (100m per minute)',
+        value: 'shuttle_time',
+        description: 'Faster than airport shuttle',
         verificationMethod: 'gps',
-        required: true
-      },
-      {
-        type: 'distance',
-        value: 0.1,
-        unit: 'kilometers',
-        description: 'Distance must be exactly 100 meters',
-        verificationMethod: 'gps',
-        required: true
-      },
-      {
-        type: 'time',
-        value: 60,
-        unit: 'seconds',
-        description: 'Must complete within 1 minute',
-        verificationMethod: 'blockchain',
         required: true
       }
     ],
     proofRequirements: [
-      'High-precision GPS tracking',
-      'Start and end time verification',
-      'Speed tracking throughout'
+      'Airport location verification',
+      'Terminal-to-terminal GPS track',
+      'Shuttle schedule comparison'
     ],
     rewards: {
-      achievement: 'Lightning Fast',
-      multiplier: 3.0
+      achievement: 'Terminal Runner',
+      multiplier: 2.2
     },
     socialImpact: false,
     viralFactor: 7,
-    tags: ['creative', 'speed', 'running', 'fitness'],
+    tags: ['airport', 'terminal', 'travel', 'universal'],
     isActive: true,
-    createdAt: new Date('2025-01-20'),
-    popularityScore: 82
+    createdAt: new Date(),
+    popularityScore: 81
   },
 
+  // Daily Micro-Challenges
   {
-    id: 'around-the-world-in-80-places',
-    name: 'Around the World in 80 Places',
-    description: 'Visit 80 significant locations around the world in 80 days',
-    category: 'adventure',
-    difficulty: 'extreme',
-    estimatedTime: 115200, // 80 days
-    estimatedDistance: 40000,
-    stakeAmount: { min: 100, max: 1000, suggested: 400 },
+    id: 'morning-routine-master',
+    name: 'Morning Routine Master',
+    description: 'Complete full morning routine within your cultural time expectations',
+    category: 'social',
+    difficulty: 'easy',
+    estimatedTime: 20,
+    estimatedDistance: 0,
+    stakeAmount: { min: 1, max: 8, suggested: 3 },
     conditions: [
       {
-        type: 'location',
-        value: 80,
-        unit: 'locations',
-        description: 'Must visit exactly 80 designated locations',
-        verificationMethod: 'photo',
-        required: true
-      },
-      {
         type: 'time',
-        value: 80,
-        unit: 'days',
-        description: 'Complete within 80 days',
-        verificationMethod: 'blockchain',
-        required: true
-      },
-      {
-        type: 'proof',
-        value: ['photo', 'gps'],
-        description: 'Photo and GPS proof required for each location',
+        value: 20,
+        unit: 'minutes',
+        description: 'Complete routine in under 20 minutes',
         verificationMethod: 'manual',
         required: true
       }
     ],
     proofRequirements: [
-      'Photo evidence at each location',
-      'GPS verification',
-      'Time stamps for each visit',
-      'Geographic spread validation'
+      'Start and end timestamps',
+      'Routine completion checklist'
     ],
     rewards: {
-      achievement: 'Global Explorer',
-      tokenReward: 1000
+      achievement: 'Morning Pro',
+      multiplier: 1.2
+    },
+    socialImpact: false,
+    viralFactor: 3,
+    tags: ['daily', 'routine', 'universal', 'micro'],
+    isActive: true,
+    createdAt: new Date(),
+    popularityScore: 65
+  },
+
+  {
+    id: 'commute-optimizer',
+    name: 'Commute Optimizer',
+    description: 'Beat your usual commute time using any combination of transport',
+    category: 'social',
+    difficulty: 'medium',
+    estimatedTime: 25,
+    estimatedDistance: 3,
+    stakeAmount: { min: 2, max: 15, suggested: 6 },
+    conditions: [
+      {
+        type: 'time',
+        value: 'personal_best',
+        description: 'Faster than your average commute',
+        verificationMethod: 'gps',
+        required: true
+      }
+    ],
+    proofRequirements: [
+      'Historical commute data',
+      'GPS tracking of route',
+      'Transport mode verification'
+    ],
+    rewards: {
+      achievement: 'Commute Master',
+      multiplier: 1.5
     },
     socialImpact: true,
-    viralFactor: 10,
-    tags: ['adventure', 'world', 'travel', 'achievement'],
+    viralFactor: 4,
+    tags: ['commute', 'optimization', 'universal', 'daily'],
     isActive: true,
-    createdAt: new Date('2025-01-25'),
-    popularityScore: 92
+    createdAt: new Date(),
+    popularityScore: 70
   }
 ];
 
@@ -327,27 +344,32 @@ export const CHALLENGE_TEMPLATES: ChallengeTemplate[] = [
 export function createChallengeFromTemplate(
   templateId: string,
   userId: string,
+  locations: {
+    start: { latitude: number; longitude: number };
+    target: { latitude: number; longitude: number };
+  },
   customSettings?: Partial<ChallengeTemplate>
-): ChallengeCommitment | null {
+) {
   const template = CHALLENGE_TEMPLATES.find(t => t.id === templateId);
   if (!template) return null;
 
   const now = new Date();
-  const deadline = new Date(now.getTime() + (template.estimatedTime * 60000)); // Convert minutes to milliseconds
+  const deadline = new Date(now.getTime() + (template.estimatedTime * 60000));
 
+  const finalTemplate = { ...template, ...customSettings };
+
+  // Returns an object matching the dbService.createCommitment parameter type
   return {
-    ...template,
-    ...customSettings,
-    commitmentId: `challenge_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
     userId,
-    startTime: now,
+    commitmentId: `challenge_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    stakeAmount: finalTemplate.stakeAmount.suggested.toString(),
     deadline,
-    currentProgress: 0,
-    status: 'pending',
-    proofSubmissions: [],
-    verificationStatus: 'pending',
-    totalBetsFor: 0,
-    totalBetsAgainst: 0
+    startLatitude: locations.start.latitude,
+    startLongitude: locations.start.longitude,
+    targetLatitude: locations.target.latitude,
+    targetLongitude: locations.target.longitude,
+    estimatedDistance: finalTemplate.estimatedDistance, // km
+    estimatedPace: 8, // Default pace for templates
   };
 }
 

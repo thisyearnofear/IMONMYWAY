@@ -83,9 +83,9 @@ export function UserSkeleton({ className }: { className?: string }) {
   );
 }
 
-export function RouteCardSkeleton() {
+export function RouteCardSkeleton({ className }: { className?: string }) {
   return (
-    <div className="bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 p-6 space-y-4">
+    <div className={cn("bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 p-6 space-y-4", className)}>
       <div className="flex justify-between items-start">
         <div className="flex-1">
           <Skeleton variant="text" className="w-1/2 h-6 mb-2" />

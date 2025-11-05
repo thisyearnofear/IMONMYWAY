@@ -635,6 +635,12 @@ export class DatabaseService {
     }
   }
 
+  // ============================================================================
+  // REMOVED: CULTURAL PROFILE & PEER REVIEW METHODS
+  // ============================================================================
+  // These methods were removed as part of AGGRESSIVE CONSOLIDATION
+  // AI now uses on-chain commitment history instead of database profiles
+
   async getUserBets(userId: string, limit = 50) {
     if (this.isBuildTime()) {
       // Return mock bets during build time
@@ -699,6 +705,12 @@ export class DatabaseService {
       throw error;
     }
   }
+
+  // ============================================================================
+  // REMOVED: RUNNING PROFILE MANAGEMENT
+  // ============================================================================
+  // These methods were removed as part of AGGRESSIVE CONSOLIDATION
+  // AI now analyzes actual performance from blockchain events
 
   async updateStreak(userId: string, type: string, updates: {
     current?: number

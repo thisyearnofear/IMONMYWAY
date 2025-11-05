@@ -17,6 +17,7 @@ import { useMobileExperience } from "@/hooks/useMobileExperience";
 import { calculateDistance, calculateETA } from "@/lib/distance";
 import { formatTime, formatDistance } from "@/lib/utils";
 import { getConfidenceScore, SPEED_PRESETS, findPresetByPace } from "@/lib/speed";
+// Removed: runningService - AI now uses on-chain data
 import { MapContainer } from "@/components/map/MapContainer";
 import ParallaxSection from "@/components/three/ParallaxSection";
 import WebGLParticleSystem from "@/components/three/ParticleSystem";
@@ -62,6 +63,7 @@ export default function PlanPageContent() {
     confidence: number;
     startCoords: [number, number];
     endCoords: [number, number];
+    speedEstimate?: any;
   } | null>(null);
   const [isPlanning, setIsPlanning] = useState(false);
   const [currentLocation, setCurrentLocation] = useState<{
@@ -168,12 +170,25 @@ export default function PlanPageContent() {
       const eta = calculateETA(distance, selectedPace);
       const confidence = getConfidenceScore(selectedPace, distance);
 
+      // Simplified: Use basic speed calculation instead of complex service
+      let speedEstimate = null;
+      if (currentLocation) {
+        const walkingTime = (distance / 5) * 60; // 5 km/h walking speed
+        const runningTime = (distance / 10) * 60; // 10 km/h running speed
+        speedEstimate = {
+          walkingTime: Math.round(walkingTime),
+          runningTime: Math.round(runningTime),
+          timeSaved: Math.round(walkingTime - runningTime)
+        };
+      }
+
       setPlanData({
         distance,
         eta,
         confidence,
         startCoords,
         endCoords,
+        speedEstimate,
       });
 
       triggerHaptic('success');
@@ -207,6 +222,50 @@ export default function PlanPageContent() {
       });
     }
   }, [planData, selectedPace, addToast]);
+
+  // DRY: Single map ready handler for both mobile and desktop
+  const handleMapReady = useCallback(
+    async (map: any) => {
+      // Add current location marker if available
+      if (currentLocation) {
+        try {
+          const L = await import("leaflet");
+          const currentLocationMarker = L.default.marker([currentLocation.lat, currentLocation.lng], {
+            icon: L.default.divIcon({
+              className: 'current-location-marker',
+              html: '<div class="w-3 h-3 bg-blue-500 rounded-full border-2 border-white shadow-lg animate-pulse"></div>',
+              iconSize: [12, 12],
+              iconAnchor: [6, 6]
+            })
+          }).bindPopup(`Current Location (±${currentLocation.accuracy}m)`);
+
+          currentLocationMarker.addTo(map);
+        } catch (error) {
+          console.error("Error adding current location marker:", error);
+        }
+      }
+
+      // Add route markers if available
+      if (planData) {
+        try {
+          const L = await import("leaflet");
+          const startMarker = await createStartMarker(planData.startCoords);
+          const endMarker = await createDestinationMarker(planData.endCoords);
+          const polyline = await createPolyline([planData.startCoords, planData.endCoords], true);
+
+          startMarker.addTo(map);
+          endMarker.addTo(map);
+          polyline.addTo(map);
+
+          const group = L.default.featureGroup([startMarker, endMarker, polyline]);
+          fitBoundsToMarkers(map, group);
+        } catch (error) {
+          console.error("Error adding markers to map:", error);
+        }
+      }
+    },
+    [currentLocation, planData]
+  );
 
   // Mobile-first rendering with enhanced GPS integration
   if (isMobile) {
@@ -248,45 +307,7 @@ export default function PlanPageContent() {
                 currentLocation ? [currentLocation.lat, currentLocation.lng] :
                   [40.7128, -74.006]
             }
-            onMapReady={async (map) => {
-              // Add current location marker if available
-              if (currentLocation && typeof window !== "undefined") {
-                try {
-                  const L = await import("leaflet");
-                  const currentLocationMarker = L.default.marker([currentLocation.lat, currentLocation.lng], {
-                    icon: L.default.divIcon({
-                      className: 'current-location-marker',
-                      html: '<div class="w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-lg animate-pulse"></div>',
-                      iconSize: [16, 16],
-                      iconAnchor: [8, 8]
-                    })
-                  }).bindPopup(`Current Location (±${currentLocation.accuracy}m)`);
-
-                  currentLocationMarker.addTo(map);
-                } catch (error) {
-                  console.error("Error adding current location marker:", error);
-                }
-              }
-
-              // Add route markers if available
-              if (planData && typeof window !== "undefined") {
-                try {
-                  const L = await import("leaflet");
-                  const startMarker = await createStartMarker(planData.startCoords);
-                  const endMarker = await createDestinationMarker(planData.endCoords);
-                  const polyline = await createPolyline([planData.startCoords, planData.endCoords], true);
-
-                  startMarker.addTo(map);
-                  endMarker.addTo(map);
-                  polyline.addTo(map);
-
-                  const group = L.default.featureGroup([startMarker, endMarker, polyline]);
-                  fitBoundsToMarkers(map, group);
-                } catch (error) {
-                  console.error("Error adding markers to map:", error);
-                }
-              }
-            }}
+            onMapReady={handleMapReady}
           />
         </div>
 
@@ -320,8 +341,8 @@ export default function PlanPageContent() {
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_30%_40%,rgba(59,130,246,0.08),transparent_70%)]" />
 
 
-      <main className="relative z-10 container mx-auto px-4 pt-20 pb-8 max-w-6xl">
-        <ParallaxSection offset={20} className="text-center mb-6">
+      <main className="relative z-10 container mx-auto px-4 pt-16 pb-6 max-w-4xl">
+        <ParallaxSection offset={20} className="text-center mb-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -339,7 +360,7 @@ export default function PlanPageContent() {
         </ParallaxSection>
 
         {/* Compact Layout - Side by Side */}
-        <div className="grid lg:grid-cols-2 gap-6 mb-6">
+        <div className="grid md:grid-cols-2 gap-4 mb-4">
           {/* Map Section */}
           <motion.div
             className="rounded-xl overflow-hidden shadow-xl border border-white/20 bg-gradient-to-br from-white/10 to-white/5"
@@ -357,50 +378,13 @@ export default function PlanPageContent() {
             </div>
             <div className="relative">
               <MapContainer
-                className="h-80"
+                className="h-64"
                 center={
                   planData ? planData.startCoords :
                     currentLocation ? [currentLocation.lat, currentLocation.lng] :
                       [40.7128, -74.006]
                 }
-                onMapReady={async (map) => {
-                  // Add current location marker if available
-                  if (currentLocation && typeof window !== "undefined") {
-                    try {
-                      const L = await import("leaflet");
-                      const currentLocationMarker = L.default.marker([currentLocation.lat, currentLocation.lng], {
-                        icon: L.default.divIcon({
-                          className: 'current-location-marker',
-                          html: '<div class="w-3 h-3 bg-blue-500 rounded-full border-2 border-white shadow-lg animate-pulse"></div>',
-                          iconSize: [12, 12],
-                          iconAnchor: [6, 6]
-                        })
-                      }).bindPopup(`Current Location (±${currentLocation.accuracy}m)`);
-                      currentLocationMarker.addTo(map);
-                    } catch (error) {
-                      console.error("Error adding current location marker:", error);
-                    }
-                  }
-
-                  // Add route markers if available
-                  if (planData && typeof window !== "undefined") {
-                    try {
-                      const L = await import("leaflet");
-                      const startMarker = await createStartMarker(planData.startCoords);
-                      const endMarker = await createDestinationMarker(planData.endCoords);
-                      const polyline = await createPolyline([planData.startCoords, planData.endCoords], true);
-
-                      startMarker.addTo(map);
-                      endMarker.addTo(map);
-                      polyline.addTo(map);
-
-                      const group = L.default.featureGroup([startMarker, endMarker, polyline]);
-                      fitBoundsToMarkers(map, group);
-                    } catch (error) {
-                      console.error("Error adding markers to map:", error);
-                    }
-                  }
-                }}
+                onMapReady={handleMapReady}
               />
               {!planData && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm">
@@ -525,7 +509,7 @@ export default function PlanPageContent() {
         {/* Compact Results Display */}
         {planData && (
           <motion.div
-            className="mb-6 p-4 bg-white/10 rounded-xl backdrop-blur-sm border border-white/20"
+            className="mb-4 p-4 bg-white/10 rounded-xl backdrop-blur-sm border border-white/20"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
@@ -554,6 +538,31 @@ export default function PlanPageContent() {
                   <div className="text-white/70 text-xs">Confidence</div>
                 </div>
               </div>
+
+              {/* Running vs Walking Comparison */}
+              {planData.speedEstimate && (
+                <div className="mb-4 p-4 bg-gradient-to-r from-green-500/20 to-blue-500/20 rounded-xl border border-green-400/30">
+                  <h4 className="text-white font-bold mb-2">🏃‍♂️ Beat Google Maps</h4>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <div className="text-white/70">Google Maps (walking)</div>
+                      <div className="text-white font-bold">{planData.speedEstimate.walkingTime} min</div>
+                    </div>
+                    <div>
+                      <div className="text-white/70">Your running estimate</div>
+                      <div className="text-green-400 font-bold">{planData.speedEstimate.runningTime} min</div>
+                    </div>
+                  </div>
+                  <div className="mt-2 text-center">
+                    <div className="text-green-300 font-bold">
+                      Save {planData.speedEstimate.timeSaved} minutes by running!
+                    </div>
+                    <div className="text-white/60 text-xs">
+                      Conditions: {planData.speedEstimate.conditions}
+                    </div>
+                  </div>
+                </div>
+              )}
               <div className="flex space-x-3">
                 <Button
                   onClick={shareRoute}

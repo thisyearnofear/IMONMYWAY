@@ -50,6 +50,7 @@ model User {
   routes              Route[]
   commitments         Commitment[]
   bets                Bet[]
+  // Removed: culturalProfile and runningProfile - AI now uses on-chain data
 
   @@map("users")
 }
@@ -235,6 +236,17 @@ model Route {
 
   @@map("routes")
 }
+
+// ============================================================================
+// CULTURAL TIME INTELLIGENCE (PostgreSQL - Core Innovation)
+// ============================================================================
+
+/// Cultural time perception profiles based on Hofstede cultural dimensions
+// ============================================================================
+// REMOVED: Complex Profile Models
+// ============================================================================
+// CulturalTimeProfile, RunningProfile, PeerReview - Replaced by on-chain AI
+// AI now analyzes actual blockchain commitment history instead of self-reported data
 
 // ============================================================================
 // ANALYTICS & METRICS (PostgreSQL - Business Intelligence)

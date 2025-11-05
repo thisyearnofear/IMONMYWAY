@@ -30,6 +30,15 @@ export interface UserProfile {
   totalBets: number
   successfulBets: number
   bettingSuccessRate: number
+
+  // Cultural Time Intelligence
+  culturalProfile?: any // CulturalTimeProfile
+  runningProfile?: any  // RunningProfile
+
+  // Peer Reviews
+  peerReviewCount?: number
+  averagePunctualityRating?: number
+  culturalAdaptabilityScore?: number
 }
 
 export interface Achievement {
@@ -84,6 +93,11 @@ class ProfileDataService {
       // Get recent sessions
       const recentSessions = this.getRecentSessions(analytics, 10)
 
+      // Get cultural and running profiles
+      const cultural = await this.getCulturalProfile(walletAddress)
+      const running = await this.getRunningProfile(walletAddress)
+      const peerReviewStats = await this.getPeerReviewStats(walletAddress)
+
       const profile: UserProfile = {
         walletAddress: user.walletAddress,
         displayName: user.displayName || undefined,
@@ -112,7 +126,16 @@ class ProfileDataService {
         // Betting Performance
         totalBets: bettingStats.totalBets,
         successfulBets: bettingStats.successfulBets,
-        bettingSuccessRate: bettingStats.successRate
+        bettingSuccessRate: bettingStats.successRate,
+
+        // Cultural Time Intelligence
+        culturalProfile: cultural,
+        runningProfile: running,
+
+        // Peer Reviews
+        peerReviewCount: peerReviewStats.count,
+        averagePunctualityRating: peerReviewStats.avgPunctuality,
+        culturalAdaptabilityScore: peerReviewStats.adaptabilityScore
       }
 
       console.log(`✅ Profile loaded: ${sessionStats.totalSessions} sessions, ${processedAchievements.length} achievements`)
@@ -351,6 +374,30 @@ class ProfileDataService {
       'social_butterfly': 'social'
     }
     return categories[id] || 'special'
+  }
+
+  /**
+   * Get cultural profile for user - REMOVED: Now uses on-chain AI
+   */
+  private async getCulturalProfile(walletAddress: string) {
+    // Removed: Cultural profiles replaced by on-chain AI analysis
+    return null;
+  }
+
+  /**
+   * Get running profile for user - REMOVED: Now uses on-chain AI
+   */
+  private async getRunningProfile(walletAddress: string) {
+    // Removed: Running profiles replaced by on-chain AI analysis
+    return null;
+  }
+
+  /**
+   * Get peer review statistics - REMOVED: Now uses on-chain reputation
+   */
+  private async getPeerReviewStats(walletAddress: string) {
+    // Removed: Peer reviews replaced by on-chain reputation
+    return { count: 0, avgPunctuality: 0, adaptabilityScore: 0 };
   }
 }
 

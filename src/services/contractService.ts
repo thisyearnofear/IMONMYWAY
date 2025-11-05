@@ -48,6 +48,17 @@ export interface Commitment {
   totalBetsAgainst: bigint;
 }
 
+// Historical performance data from on-chain events
+export interface UserPerformanceHistory {
+  commitmentId: string;
+  estimatedDistance: number;
+  estimatedPace: number;
+  actualArrivalTime: number;
+  arrivalDeadline: number;
+  successful: boolean;
+  timestamp: number;
+}
+
 /**
  * Initialize contract service with signer
  */
@@ -59,10 +70,10 @@ export class ContractService {
   constructor(signer: ethers.Signer | null = null) {
     const networkConfig = getNetworkConfig();
     this.signer = signer;
-    
+
     // Create provider
     this.provider = new ethers.JsonRpcProvider(networkConfig.rpcUrl);
-    
+
     // Create contract instance
     if (signer) {
       this.contract = getContract(networkConfig.chainId, signer);
@@ -99,9 +110,9 @@ export class ContractService {
         estimatedPace,
         { value: ethers.parseEther(stakeAmount) }
       );
-      
+
       const receipt = await tx.wait();
-      
+
       // Extract commitment ID from events
       const commitmentCreatedEvent = receipt.logs.find((log: any) => {
         try {
@@ -111,12 +122,12 @@ export class ContractService {
           return false;
         }
       });
-      
+
       if (commitmentCreatedEvent) {
         const parsedEvent = this.contract.interface.parseLog(commitmentCreatedEvent);
         return parsedEvent?.args.commitmentId;
       }
-      
+
       throw new Error('Failed to extract commitment ID from transaction');
     } catch (error) {
       console.error('Error creating commitment:', error);
@@ -142,7 +153,7 @@ export class ContractService {
         bettingFor,
         { value: ethers.parseEther(betAmount) }
       );
-      
+
       await tx.wait();
     } catch (error) {
       console.error('Error placing bet:', error);
@@ -166,7 +177,7 @@ export class ContractService {
         commitmentId,
         arrivalLocation
       );
-      
+
       await tx.wait();
     } catch (error) {
       console.error('Error fulfilling commitment:', error);
@@ -180,7 +191,7 @@ export class ContractService {
   async getCommitment(commitmentId: string): Promise<Commitment | null> {
     try {
       const commitment = await this.contract.getCommitment(commitmentId);
-      
+
       return {
         user: commitment.user,
         stakeAmount: commitment.stakeAmount,
@@ -212,6 +223,59 @@ export class ContractService {
     } catch (error) {
       console.error('Error getting user reputation:', error);
       return BigInt(0);
+    }
+  }
+
+  /**
+   * Get user's historical performance from on-chain events
+   * This is the CLEAN approach - derive AI insights from actual blockchain data
+   */
+  async getUserPerformanceHistory(userAddress: string): Promise<UserPerformanceHistory[]> {
+    try {
+      // Query CommitmentCreated events for this user
+      const createdFilter = this.contract.filters.CommitmentCreated(null, userAddress);
+      const createdEvents = await this.contract.queryFilter(createdFilter);
+
+      // Query CommitmentFulfilled events for this user  
+      const fulfilledFilter = this.contract.filters.CommitmentFulfilled(null, userAddress);
+      const fulfilledEvents = await this.contract.queryFilter(fulfilledFilter);
+
+      // Combine and process events
+      const history: UserPerformanceHistory[] = [];
+
+      for (const createdEvent of createdEvents) {
+        if ('args' in createdEvent && createdEvent.args) {
+          const commitmentId = createdEvent.args.commitmentId;
+          if (!commitmentId) continue;
+
+          // Find corresponding fulfilled event
+          const fulfilledEvent = fulfilledEvents.find(e =>
+            'args' in e && e.args && e.args.commitmentId === commitmentId
+          );
+
+          if (fulfilledEvent && 'args' in fulfilledEvent && fulfilledEvent.args) {
+            // Get commitment details to extract distance and pace
+            const commitment = await this.getCommitment(commitmentId);
+            if (commitment) {
+              history.push({
+                commitmentId,
+                estimatedDistance: Number(commitment.distance),
+                estimatedPace: Number(commitment.pace),
+                actualArrivalTime: Number(fulfilledEvent.args.actualArrivalTime || 0),
+                arrivalDeadline: Number(commitment.arrivalDeadline),
+                successful: fulfilledEvent.args.successful || false,
+                timestamp: Number(commitment.startTime)
+              });
+            }
+          }
+        }
+      }
+
+      // Sort by timestamp (most recent first)
+      return history.sort((a, b) => b.timestamp - a.timestamp);
+    } catch (error) {
+      console.error('Error getting user performance history:', error);
+      return [];
     }
   }
 
@@ -285,3 +349,6 @@ export class ContractService {
     this.contract.removeAllListeners();
   }
 }
+
+// Export singleton instance
+export const contractService = new ContractService();

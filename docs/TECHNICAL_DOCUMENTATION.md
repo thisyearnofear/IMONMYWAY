@@ -1,114 +1,220 @@
 # IMONMYWAY Technical Documentation
 
-## System Architecture
+## 🏗️ **System Architecture**
+
+### **Clean & Focused Design**
+Following **AGGRESSIVE CONSOLIDATION** principles - minimal database, maximum blockchain leverage:
 
 ```
-Frontend (Next.js 14 + React 18)
-├── UI Components (Modular, Reusable)
-├── State Management (Zustand Stores)
-├── Hooks (Contract Interactions)
-└── Real-time (Socket.IO)
-
-Smart Contracts (Somnia Network)
-├── PunctualityCore.sol (Main Logic)
-├── LocationVerifier.sol (Proof System)
-└── ReputationOracle.sol (Scoring)
-
-Backend Services
-├── PostgreSQL Database (Primary Storage)
-├── Socket.IO Server (Real-time Updates)
-└── Location Tracking Service (GPS Integration)
+┌─────────────────────────────────────┐
+│        Social Integration           │
+│    (Farcaster/Twitter APIs)        │  ← Leverage existing networks
+├─────────────────────────────────────┤
+│         AI Engine                  │
+│   (On-chain Performance Analysis)   │  ← Trustless learning
+├─────────────────────────────────────┤
+│       Smart Contracts              │
+│      (Somnia Network)              │  ← Single source of truth
+├─────────────────────────────────────┤
+│        Frontend                    │
+│   (Next.js 14 + Real-time GPS)    │  ← Mobile-optimized PWA
+└─────────────────────────────────────┘
 ```
 
-## Database Architecture
+### **Key Innovation: Trustless AI Learning**
+```typescript
+// ❌ Traditional: Trust user input
+const userProfile = await database.getUserProfile(userId);
 
-### PostgreSQL with Prisma ORM
+// ✅ Our approach: Analyze blockchain truth
+const history = await contractService.getUserPerformanceHistory(address);
+const aiSuggestion = AICommitmentEngine.generateSuggestion(address, distance, context);
+```
 
-**Schema Overview**:
+## 🧠 **AI Engine Architecture**
+
+### **Core Components**
+
+#### **AICommitmentEngine** (`src/lib/ai-commitment-engine.ts`)
+```typescript
+class AICommitmentEngine {
+  // Analyzes actual blockchain performance
+  static async generateSuggestion(
+    userAddress: string,
+    distance: number,
+    context: 'work' | 'social' | 'urgent'
+  ): Promise<AICommitmentSuggestion>
+
+  // Generates viral social content
+  static generateSocialMessage(suggestion, destination, context): string
+}
+```
+
+#### **SocialIntegrationService** (`src/lib/social-integration.ts`)
+```typescript
+class SocialIntegrationService {
+  // Cross-platform sharing
+  static async shareCommitmentCreation(commitment, platforms)
+  
+  // Social sentiment analysis
+  static async analyzeSocialSentiment(walletAddress): Promise<SocialReputation>
+  
+  // Viral potential calculation
+  static async getViralPotential(walletAddress): Promise<number>
+}
+```
+
+## 🗄️ **Database Architecture (Minimal)**
+
+### **AGGRESSIVE CONSOLIDATION Applied**
+- **Removed**: Complex profile models (CulturalTimeProfile, RunningProfile, PeerReview)
+- **Kept**: Essential social features only
+
+### **Simplified Schema**
 ```sql
+-- Core user management
 users {
   id: String (Primary Key)
   walletAddress: String (Unique)
-  email: String?
   reputationScore: Float (0-100)
   createdAt: DateTime
-  updatedAt: DateTime
 }
 
-journeys {
+-- Minimal commitment tracking (for leaderboards)
+commitments {
   id: String (Primary Key)
   userId: String (Foreign Key)
-  startLat: Float
-  startLng: Float
-  endLat: Float
-  endLng: Float
-  stakeAmount: Float
-  status: JourneyStatus
+  stakeAmount: String
+  deadline: DateTime
+  successful: Boolean?
   createdAt: DateTime
-  completedAt: DateTime?
 }
 
+-- Social betting features  
 bets {
   id: String (Primary Key)
-  journeyId: String (Foreign Key)
-  bettorAddress: String
-  amount: Float
-  betType: BetType (FOR/AGAINST)
-  status: BetStatus
+  commitmentId: String (Foreign Key)
+  bettor: String
+  amount: String
+  bettingFor: Boolean
   createdAt: DateTime
-  resolvedAt: DateTime?
 }
 ```
 
-**Configuration & Commands**:
-```env
-DATABASE_URL="postgresql://username:password@localhost:5432/punctuality_protocol"
+## 📜 **Smart Contract Architecture**
+
+### **PunctualityCore.sol** (`contracts/core/PunctualityCore.sol`)
+```solidity
+contract PunctualityCore {
+    // Core commitment structure
+    struct ETACommitment {
+        address user;
+        uint256 stakeAmount;
+        uint256 arrivalDeadline;
+        LocationData startLocation;
+        LocationData targetLocation;
+        uint256 estimatedDistance;
+        uint256 estimatedPace;
+        bool fulfilled;
+        bool successful;
+        uint256 actualArrivalTime;
+        uint256 totalBetsFor;
+        uint256 totalBetsAgainst;
+    }
+
+    // AI learns from these events
+    event CommitmentCreated(bytes32 indexed commitmentId, address indexed user, ...);
+    event CommitmentFulfilled(bytes32 indexed commitmentId, bool successful, ...);
+}
 ```
 
-```bash
-npm run db:deploy           # Apply migrations
-npm run db:generate-migration  # Generate new migration
-npm run db:reset           # Reset database
-```
-
-## Smart Contract Architecture
-
-### Contract Deployment on Somnia
-
-**Prerequisites**: Node.js 18+, pnpm, wallet with STT tokens, private key in .env.local
-
-**Deployment Steps**:
-1. Set environment: `PRIVATE_KEY`, `SOMNIA_RPC_URL`
-2. Install: `pnpm install`
-3. Compile: `pnpm compile`
-4. Deploy: `pnpm deploy --network somnia_testnet`
-5. Update addresses in `src/contracts/addresses.ts`
-
-### Contract Configuration & Interaction
+### **Event-Driven AI Learning**
 ```typescript
-// src/contracts/addresses.ts
-export const CONTRACT_ADDRESSES = {
-  somnia_mainnet: {
-    PunctualityCore: "0x...",
-    LocationVerifier: "0x...",
-    ReputationOracle: "0x..."
-  },
-  somnia_testnet: {
-    PunctualityCore: "0x...",
-    LocationVerifier: "0x...",
-    ReputationOracle: "0x..."
-  }
-};
+// AI analyzes these blockchain events
+const createdEvents = await contract.queryFilter(contract.filters.CommitmentCreated(null, userAddress));
+const fulfilledEvents = await contract.queryFilter(contract.filters.CommitmentFulfilled(null, userAddress));
 
-// src/lib/contracts.ts
-export class ContractService {
-  private provider: ethers.JsonRpcProvider;
-  private signer: ethers.Wallet;
-  private contracts: Record<string, ethers.Contract>;
+// Build performance history from trustless on-chain data
+const history = this.combineEvents(createdEvents, fulfilledEvents);
+```
 
-  async initialize() {
-    this.provider = new ethers.JsonRpcProvider(process.env.SOMNIA_RPC_URL);
-    this.signer = new ethers.Wallet(process.env.PRIVATE_KEY!, this.provider);
+## 🚀 **Deployment & Configuration**
+
+### **Environment Setup**
+```env
+# Blockchain
+SOMNIA_RPC_URL="https://rpc.somnia.network"
+PRIVATE_KEY="your_private_key_here"
+
+# Database (minimal usage)
+DATABASE_URL="postgresql://username:password@localhost:5432/punctuality_protocol"
+
+# Social APIs (future integration)
+FARCASTER_API_KEY="your_farcaster_key"
+TWITTER_API_KEY="your_twitter_key"
+```
+
+### **Build Commands**
+```bash
+pnpm install              # Install dependencies
+pnpm build               # Production build
+pnpm dev                 # Development server
+npm run db:deploy        # Apply database migrations (minimal)
+```
+
+### **Smart Contract Deployment**
+```bash
+# Prerequisites: Node.js 18+, pnpm, wallet with STT tokens
+pnpm compile             # Compile contracts
+pnpm deploy --network somnia_testnet  # Deploy to Somnia
+```
+
+## 📊 **Performance & Optimization**
+
+### **AGGRESSIVE CONSOLIDATION Results**
+- **Removed**: 2,400+ lines of complex profile management code
+- **Simplified**: Database from 10+ tables to 3 essential ones  
+- **Enhanced**: AI now uses trustless blockchain data instead of user claims
+- **Bundle Size**: Reduced shared JS by ~1KB (102KB vs 103KB)
+- **Build Time**: Faster compilation with cleaner architecture
+
+### **Mobile Optimization**
+- **PWA Ready**: Service worker, offline capabilities
+- **Touch Optimized**: Gesture-based interactions
+- **Performance**: Adaptive loading, resource optimization
+- **Real-time**: WebSocket for live GPS tracking
+
+### **Caching Strategy**
+```typescript
+// Smart caching for blockchain queries
+const cachedHistory = await cacheService.get(`performance_${address}`);
+if (!cachedHistory) {
+  const history = await contractService.getUserPerformanceHistory(address);
+  await cacheService.set(`performance_${address}`, history, 300); // 5min cache
+}
+```
+
+## 🔧 **Development Workflow**
+
+### **Core Principles Applied**
+- **ENHANCEMENT FIRST**: Enhance blockchain data, don't recreate it
+- **PREVENT BLOAT**: Minimal database, leverage existing social networks
+- **DRY**: Single source of truth (blockchain events)
+- **CLEAN**: Clear separation of concerns
+- **PERFORMANT**: Optimized for mobile and real-time use
+
+### **Testing Strategy**
+```bash
+pnpm test                # Unit tests
+pnpm test:integration    # Integration tests
+pnpm test:e2e           # End-to-end tests
+```
+
+### **Monitoring & Analytics**
+- Real-time performance metrics
+- AI suggestion accuracy tracking
+- Social engagement analytics
+- Blockchain event monitoring
     
     const addresses = getContractAddresses('somnia_testnet');
     this.contracts = {

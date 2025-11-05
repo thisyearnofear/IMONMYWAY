@@ -11,9 +11,8 @@ import { ClientOnly } from "@/components/core/ClientOnly";
 // Navigation items - single source of truth
 const NAV_ITEMS = [
   { href: "/challenges", label: "Browse", icon: "🎯" },
+  { href: "/create", label: "Create", icon: "🧠" },
   { href: "/profile", label: "My Challenges", icon: "📊" },
-  { href: "/plan", label: "Plan", icon: "🗺️" },
-  { href: "/share", label: "Create", icon: "📍" },
   { href: "/watch", label: "Watch", icon: "👀" },
   { href: "/leaderboard", label: "Leaderboard", icon: "🏆" }
 ];
@@ -169,8 +168,8 @@ export function PremiumNavigation() {
                           <div className="flex justify-between items-center">
                             <span className="text-gray-400">Network:</span>
                             <span className={`text-sm px-2 py-1 rounded-full ${networkMetrics?.isOnSomnia
-                                ? 'bg-green-500/20 text-green-400'
-                                : 'bg-yellow-500/20 text-yellow-400'
+                              ? 'bg-green-500/20 text-green-400'
+                              : 'bg-yellow-500/20 text-yellow-400'
                               }`}>
                               {getNetworkName()}
                             </span>
@@ -299,8 +298,8 @@ export function PremiumNavigation() {
                         <div className="flex justify-between">
                           <span className="text-gray-400">Network:</span>
                           <span className={`text-xs px-2 py-1 rounded-full ${networkMetrics?.isOnSomnia
-                              ? 'bg-green-500/20 text-green-400'
-                              : 'bg-yellow-500/20 text-yellow-400'
+                            ? 'bg-green-500/20 text-green-400'
+                            : 'bg-yellow-500/20 text-yellow-400'
                             }`}>
                             {getNetworkName()}
                           </span>

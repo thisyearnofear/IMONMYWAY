@@ -9,42 +9,42 @@ import { motion } from "framer-motion";
 import { ViralChallenges } from "@/components/challenges/ViralChallenges";
 import { CHALLENGE_TEMPLATES } from "@/lib/challenge-templates";
 
-// Feature data - single source of truth
+// Feature data - Cultural Time Intelligence focused
 const FEATURES = [
   {
-    icon: "🪙",
-    title: "Staked Commitments",
-    description: "Put your money where your time is. Stake tokens on your arrival commitments and earn rewards for punctuality."
+    icon: "🌍",
+    title: "Cultural Time Profiles",
+    description: "Define what 'on time' means in your culture. Jamaica's flexible 30min vs Japan's precise timing - both respected."
   },
   {
-    icon: "🎲",
-    title: "Social Betting",
-    description: "Challenge friends or let others bet on your punctuality. The earlier you arrive, the bigger your rewards."
+    icon: "🏃‍♂️",
+    title: "Running Speed Intelligence",
+    description: "Fill Google Maps' gap between walking (3mph) and driving. Get accurate running time estimates for any route."
   },
   {
-    icon: "📍",
-    title: "GPS Verification",
-    description: "Real-time location tracking ensures fair play. No more excuses - your phone knows when you arrive."
+    icon: "🚂",
+    title: "Local Transport Challenges",
+    description: "Buenos Aires train-hops, airport terminal sprints, and city-specific punctuality challenges worldwide."
   },
   {
-    icon: "⭐",
-    title: "Reputation System",
-    description: "Build your punctuality reputation score. Higher scores unlock better rewards and betting odds."
+    icon: "👥",
+    title: "Peer Review System",
+    description: "Build reputation through peer reviews that understand cultural context. Rate punctuality by local standards."
   },
   {
-    icon: "🤖",
-    title: "AI-Powered Insights",
-    description: "Get smart recommendations for optimal routes, arrival times, and challenge stakes based on your history."
+    icon: "📊",
+    title: "Hofstede-Based Analytics",
+    description: "Objective cultural framework based on research. No stereotypes - just data-driven time perception insights."
   },
   {
-    icon: "🎮",
-    title: "Interactive Experience",
-    description: "Engaging UI with real-time tracking, progress visualization, and delightful animations throughout your journey."
+    icon: "🎯",
+    title: "Adaptive Challenges",
+    description: "Challenges that adapt to your cultural background, fitness level, and local transport infrastructure."
   },
   {
     icon: "⚡",
-    title: "Instant Settlements",
-    description: "Win or lose, tokens are automatically distributed. No waiting, no disputes - just instant results."
+    title: "Real-Time Verification",
+    description: "GPS tracking with cultural context awareness. Arrive 'on time' by your culture's definition to win."
   }
 ];
 
@@ -131,9 +131,9 @@ export default function HomePage() {
                 transition={{ duration: 0.5 }}
                 className="text-4xl md:text-6xl font-bold mb-6 leading-tight"
               >
-                <span className="block">Put Your Money</span>
+                <span className="block">Cultural Time</span>
                 <span className="block bg-gradient-to-r from-gold-400 via-violet-400 to-gold-400 bg-clip-text text-transparent drop-shadow-[0_2px_2px_rgba(110,43,242,0.3)]">
-                  On Your Minutes
+                  Intelligence Protocol
                 </span>
               </motion.h1>
 
@@ -143,8 +143,8 @@ export default function HomePage() {
                 transition={{ duration: 0.5, delay: 0.1 }}
                 className="text-xl text-gray-300 mb-8 max-w-lg"
               >
-                Stake tokens on your punctuality. Earn reputation in real-time.
-                Challenge friends and build trust through consistent arrivals.
+                Stake tokens on punctuality commitments that respect cultural time differences.
+                Run faster than Google Maps. Build global reputation through consistent arrivals.
               </motion.p>
 
               <motion.div
@@ -153,20 +153,21 @@ export default function HomePage() {
                 transition={{ duration: 0.5, delay: 0.2 }}
                 className="flex flex-col sm:flex-row gap-4 mb-12"
               >
-                <Button
-                  size="lg"
-                  variant="gradient"
-                  className="px-8 py-4 text-lg font-semibold rounded-xl"
-                  onClick={connect}
-                >
-                  {isConnected ? `Connected: ${truncatedAddress}` : "Connect Wallet"}
-                </Button>
-
-                <Link href="/challenges">
+                <Link href="/create">
                   <Button
                     size="lg"
                     variant="gradient"
                     className="px-8 py-4 text-lg font-semibold rounded-xl"
+                  >
+                    🧠 Create AI Challenge
+                  </Button>
+                </Link>
+
+                <Link href="/challenges">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="px-8 py-4 text-lg font-semibold rounded-xl border-2 border-gold-500/50 hover:bg-gold-500/10"
                   >
                     🎯 Browse Challenges
                   </Button>
