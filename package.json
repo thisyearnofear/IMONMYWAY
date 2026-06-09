@@ -6,7 +6,7 @@
     "dev": "node server.js",
     "build": "next build",
     "start": "NODE_ENV=production node server.js",
-    "lint": "next lint",
+    "lint": "eslint src/",
     "compile": "npx hardhat compile",
     "deploy": "npx hardhat run scripts/deploy.cjs",
     "prepare": "husky"
@@ -26,12 +26,12 @@
     "gsap": "^3.13.0",
     "jsonwebtoken": "^9.0.2",
     "leaflet": "^1.9.4",
-    "next": "^15.5.6",
+    "next": "^16.2.0",
     "openai": "^6.8.1",
     "pg": "^8.16.3",
     "prisma": "^6.15.0",
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.7.5",
     "solc": "^0.8.30",
@@ -54,7 +54,7 @@
     "@types/uuid": "^10.0.0",
     "autoprefixer": "^10.4.21",
     "eslint": "^9.34.0",
-    "eslint-config-next": "^15.5.2",
+    "eslint-config-next": "^16.2.0",
     "hardhat": "^2.26.3",
     "husky": "^9.1.7",
     "lint-staged": "^17.0.7",
@@ -66,7 +66,7 @@
   "type": "module",
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
-      "next lint --fix --file"
+      "eslint --fix"
     ]
   }
 }
