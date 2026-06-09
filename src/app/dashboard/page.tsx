@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useWallet } from '@/hooks/useWallet';
 import { ContractService, type AgentCommitmentState, type AgentConfig } from '@/services/contractService';
 import { somniaReactivity, type AgentActivityEvent } from '@/lib/somnia-reactivity';
+import { useNotifications } from '@/lib/notifications';
 import { Card, CardContent, DataPanel, DataRow } from '@/components/ui/PremiumCard';
 import { Button, LoadingSpinner } from '@/components/ui/PremiumButton';
 import { AgentDecisionTimeline } from '@/components/agent/AgentDecisionTimeline';
@@ -18,6 +19,10 @@ const AGENT_ADDRESS = getContractAddresses().PunctualityAgent;
 
 export default function AgentDashboardPage() {
   const { address, isConnected, connect } = useWallet();
+  const { notifyCommitmentCreated, notifySettled } = useNotifications();
+
+  const notifyRef = useRef({ notifyCommitmentCreated, notifySettled });
+  notifyRef.current = { notifyCommitmentCreated, notifySettled };
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [agentConfig, setAgentConfig] = useState<AgentConfig | null>(null);
   const [activeCommitments, setActiveCommitments] = useState<string[]>([]);
@@ -77,6 +82,12 @@ export default function AgentDashboardPage() {
       }
       if (event.type === 'decision' || event.type === 'commitment_created' || event.type === 'commitment_settled') {
         setDecisions(prev => [event, ...prev].slice(0, 50));
+      }
+      if (event.type === 'commitment_created') {
+        notifyRef.current.notifyCommitmentCreated(event.commitmentId, event.data.pace || '0');
+      }
+      if (event.type === 'commitment_settled') {
+        notifyRef.current.notifySettled(event.commitmentId, !!event.data.success);
       }
     });
 
