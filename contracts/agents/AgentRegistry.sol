@@ -4,11 +4,12 @@ pragma solidity ^0.8.22;
 /**
  * @title AgentRegistry
  * @dev On-chain registry for agent discovery and counterparty matching.
- *      Agents list their active commitments here so other agents can find them.
- *      Designed for Somnia's Agentic L1 — agents subscribe to AgentListed events
- *      via on-chain reactivity to discover new counterparties autonomously.
+ *      Bounded storage, proposal TTL, functional getActiveListings.
  */
 contract AgentRegistry {
+
+    uint256 public constant MAX_COMMITMENTS_PER_PRINCIPAL = 10;
+    uint256 public constant PROPOSAL_TTL = 24 hours;
 
     struct AgentListing {
         address agentContract;
@@ -34,19 +35,14 @@ contract AgentRegistry {
 
     enum ProposalStatus { Pending, Accepted, Rejected, Expired }
 
-    // commitmentId => listing
     mapping(bytes32 => AgentListing) public listings;
-
-    // principal => list of commitment IDs
     mapping(address => bytes32[]) private _principalCommitments;
-
-    // commitmentId => list of proposals received
     mapping(bytes32 => Proposal[]) private _commitmentProposals;
-
-    // agent contract => principal (for verification)
     mapping(address => address) public agentToPrincipal;
 
-    // Events for reactivity subscriptions
+    // Active listings index for getActiveListings
+    bytes32[] private _activeListingIds;
+
     event AgentListed(
         bytes32 indexed commitmentId,
         address indexed principal,
@@ -64,7 +60,7 @@ contract AgentRegistry {
     event ProposalSent(
         bytes32 indexed targetCommitmentId,
         address indexed proposerAgent,
-        address proposerPrincipal,
+        address indexed proposerPrincipal,
         string message
     );
 
@@ -85,9 +81,6 @@ contract AgentRegistry {
     // LISTING
     // ──────────────────────────────────────────────
 
-    /**
-     * @dev List an agent's active commitment for discovery
-     */
     function listAgent(
         bytes32 commitmentId,
         address principal,
@@ -98,6 +91,10 @@ contract AgentRegistry {
         require(!listings[commitmentId].active || listings[commitmentId].agentContract == address(0),
             "Already listed");
         require(deadline > block.timestamp, "Deadline must be in the future");
+        require(
+            _principalCommitments[principal].length < MAX_COMMITMENTS_PER_PRINCIPAL,
+            "Max commitments reached"
+        );
 
         listings[commitmentId] = AgentListing({
             agentContract: msg.sender,
@@ -112,17 +109,16 @@ contract AgentRegistry {
 
         agentToPrincipal[msg.sender] = principal;
         _principalCommitments[principal].push(commitmentId);
+        _activeListingIds.push(commitmentId);
 
         emit AgentListed(commitmentId, principal, msg.sender, deadline, stakeAmount, context);
     }
 
-    /**
-     * @dev Remove a listing (commitment completed or cancelled)
-     */
     function delistAgent(bytes32 commitmentId) external {
         AgentListing storage listing = listings[commitmentId];
         require(listing.agentContract == msg.sender, "Only listing agent can delist");
         listing.active = false;
+        _removeActiveListing(commitmentId);
         emit AgentDelisted(commitmentId, listing.principal);
     }
 
@@ -130,14 +126,10 @@ contract AgentRegistry {
     // DISCOVERY
     // ──────────────────────────────────────────────
 
-    /**
-     * @dev Find the most recent active agent for a given principal
-     */
     function findAgentByPrincipal(
         address targetPrincipal
     ) external view returns (AgentListing memory) {
         bytes32[] memory commitments = _principalCommitments[targetPrincipal];
-        // Search from newest to oldest
         for (uint256 i = commitments.length; i > 0; i--) {
             AgentListing memory listing = listings[commitments[i - 1]];
             if (listing.active && listing.deadline > block.timestamp) {
@@ -148,23 +140,39 @@ contract AgentRegistry {
     }
 
     /**
-     * @dev Get all active listings (for frontend/off-chain indexing)
-     *      In production, use Data Streams or subgraph for this.
+     * @dev Get active listings with pagination.
      */
-    function getActiveListings(uint256 /* limit */, uint256 /* offset */)
+    function getActiveListings(uint256 limit, uint256 offset)
         external
-        pure
+        view
         returns (AgentListing[] memory results, uint256 total)
     {
-        // Placeholder — real implementation would use an indexed array
-        // For hackathon: track via events and off-chain indexing
-        results = new AgentListing[](0);
-        return (results, 0);
+        // Count active listings
+        uint256 count = 0;
+        for (uint256 i = 0; i < _activeListingIds.length; i++) {
+            if (listings[_activeListingIds[i]].active) count++;
+        }
+        total = count;
+
+        // Paginate
+        uint256 start = offset;
+        uint256 end = offset + limit;
+        if (end > count) end = count;
+        uint256 size = end > start ? end - start : 0;
+
+        results = new AgentListing[](size);
+        uint256 idx = 0;
+        for (uint256 i = 0; i < _activeListingIds.length && idx < size; i++) {
+            AgentListing storage listing = listings[_activeListingIds[i]];
+            if (listing.active && listing.deadline > block.timestamp) {
+                if (idx >= start - offset) {
+                    results[idx] = listing;
+                }
+                idx++;
+            }
+        }
     }
 
-    /**
-     * @dev Check if a principal has any active agent
-     */
     function hasActiveAgent(address principal) external view returns (bool) {
         bytes32[] memory commitments = _principalCommitments[principal];
         for (uint256 i = commitments.length; i > 0; i--) {
@@ -180,10 +188,6 @@ contract AgentRegistry {
     // AGENT-TO-AGENT PROPOSALS
     // ──────────────────────────────────────────────
 
-    /**
-     * @dev Send a proposal to a listed agent's counterparty
-     *      Called by an agent who discovered a listing and wants to negotiate
-     */
     function sendProposal(
         bytes32 targetCommitmentId,
         bytes32 proposerCommitmentId,
@@ -194,6 +198,9 @@ contract AgentRegistry {
     ) external {
         AgentListing memory target = listings[targetCommitmentId];
         require(target.active, "Target listing not active");
+
+        // Expire old proposals before adding new one
+        _expireStaleProposals(targetCommitmentId);
 
         _commitmentProposals[targetCommitmentId].push(Proposal({
             proposerAgent: msg.sender,
@@ -209,9 +216,6 @@ contract AgentRegistry {
         emit ProposalSent(targetCommitmentId, msg.sender, proposerPrincipal, message);
     }
 
-    /**
-     * @dev Respond to a proposal (accept/reject)
-     */
     function respondToProposal(
         bytes32 targetCommitmentId,
         uint256 proposalIndex,
@@ -223,6 +227,10 @@ contract AgentRegistry {
         Proposal[] storage proposals = _commitmentProposals[targetCommitmentId];
         require(proposalIndex < proposals.length, "Invalid proposal index");
         require(proposals[proposalIndex].status == ProposalStatus.Pending, "Proposal already resolved");
+        require(
+            block.timestamp <= proposals[proposalIndex].createdAt + PROPOSAL_TTL,
+            "Proposal expired"
+        );
 
         proposals[proposalIndex].status = accepted
             ? ProposalStatus.Accepted
@@ -244,9 +252,6 @@ contract AgentRegistry {
         }
     }
 
-    /**
-     * @dev Get proposals for a commitment
-     */
     function getProposals(bytes32 commitmentId)
         external
         view
@@ -255,9 +260,6 @@ contract AgentRegistry {
         return _commitmentProposals[commitmentId];
     }
 
-    /**
-     * @dev Get all commitment IDs for a principal
-     */
     function getPrincipalCommitments(address principal)
         external
         view
@@ -266,14 +268,35 @@ contract AgentRegistry {
         return _principalCommitments[principal];
     }
 
-    /**
-     * @dev Get listing details
-     */
     function getListing(bytes32 commitmentId)
         external
         view
         returns (AgentListing memory)
     {
         return listings[commitmentId];
+    }
+
+    // ──────────────────────────────────────────────
+    // INTERNAL
+    // ──────────────────────────────────────────────
+
+    function _removeActiveListing(bytes32 commitmentId) internal {
+        for (uint256 i = 0; i < _activeListingIds.length; i++) {
+            if (_activeListingIds[i] == commitmentId) {
+                _activeListingIds[i] = _activeListingIds[_activeListingIds.length - 1];
+                _activeListingIds.pop();
+                return;
+            }
+        }
+    }
+
+    function _expireStaleProposals(bytes32 commitmentId) internal {
+        Proposal[] storage proposals = _commitmentProposals[commitmentId];
+        for (uint256 i = 0; i < proposals.length; i++) {
+            if (proposals[i].status == ProposalStatus.Pending &&
+                block.timestamp > proposals[i].createdAt + PROPOSAL_TTL) {
+                proposals[i].status = ProposalStatus.Expired;
+            }
+        }
     }
 }

@@ -4,17 +4,16 @@ pragma solidity ^0.8.22;
 /**
  * @title IPunctualityProtocol
  * @dev Interface for the Punctuality Protocol contracts
- * Defines the core functions and events for punctuality betting
  */
 interface IPunctualityProtocol {
-    
+
     struct LocationData {
         int256 latitude;   // Scaled by 1e6 for precision
         int256 longitude;  // Scaled by 1e6 for precision
         uint256 accuracy;  // In meters
         uint256 timestamp;
     }
-    
+
     struct ETACommitment {
         address user;
         uint256 stakeAmount;
@@ -31,7 +30,6 @@ interface IPunctualityProtocol {
         uint256 totalBetsAgainst;
     }
 
-    // Events
     event CommitmentCreated(
         bytes32 indexed commitmentId,
         address indexed user,
@@ -40,7 +38,7 @@ interface IPunctualityProtocol {
         LocationData startLocation,
         LocationData targetLocation
     );
-    
+
     event CommitmentFulfilled(
         bytes32 indexed commitmentId,
         address indexed user,
@@ -48,7 +46,7 @@ interface IPunctualityProtocol {
         uint256 actualArrivalTime,
         uint256 rewardAmount
     );
-    
+
     event BetPlaced(
         bytes32 indexed commitmentId,
         address indexed bettor,
@@ -56,7 +54,6 @@ interface IPunctualityProtocol {
         bool bettingFor
     );
 
-    // Core functions
     function createCommitment(
         LocationData memory startLocation,
         LocationData memory targetLocation,
@@ -72,10 +69,8 @@ interface IPunctualityProtocol {
     ) external;
 
     function calculateDistance(
-        int256 lat1,
-        int256 lon1,
-        int256 lat2,
-        int256 lon2
+        int256 lat1, int256 lon1,
+        int256 lat2, int256 lon2
     ) external pure returns (uint256);
 
     function calculateETA(uint256 distance, uint256 pace) external pure returns (uint256);

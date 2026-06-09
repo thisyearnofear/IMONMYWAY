@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useWallet } from "@/hooks/useWallet";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/PremiumButton";
@@ -44,6 +45,7 @@ const STEPS = [
 
 export default function HomePage() {
   const { connect, isConnected, address } = useWallet();
+  const router = useRouter();
   const truncatedAddress = address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "";
 
   return (
@@ -52,7 +54,7 @@ export default function HomePage() {
         id="landing-hero"
         message="Deploy an AI agent that stakes, negotiates, and settles punctuality commitments on Somnia — no human intervention after setup."
         actionLabel="Get started →"
-        onAction={() => window.location.href = '/setup'}
+        onAction={() => router.push('/setup')}
       />
       {/* Hero Section */}
       <section className="relative pt-32 pb-20 px-4">
@@ -214,11 +216,13 @@ export default function HomePage() {
 
                 {/* Floating elements */}
                 <motion.div
+                  aria-hidden="true"
                   className="absolute -top-4 -right-4 w-8 h-8 bg-gold-500 rounded-full"
                   animate={{ y: [0, -10, 0], scale: [1, 1.1, 1] }}
                   transition={{ duration: 3, repeat: Infinity, delay: 0.5 }}
                 />
                 <motion.div
+                  aria-hidden="true"
                   className="absolute -bottom-4 -left-4 w-6 h-6 bg-violet-500 rounded-full"
                   animate={{ y: [0, 10, 0], scale: [1, 1.2, 1] }}
                   transition={{ duration: 2.5, repeat: Infinity, delay: 1 }}
@@ -332,13 +336,13 @@ export default function HomePage() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/setup">
+              <Link href={isConnected ? "/setup" : "/setup"}>
                 <Button
                   size="lg"
                   variant="gradient"
                   className="px-8 py-4 text-lg font-semibold rounded-xl"
                 >
-                  {isConnected ? `Connected: ${truncatedAddress}` : "Deploy Your Agent"}
+                  {isConnected ? "Configure Agent" : "Deploy Your Agent"}
                 </Button>
               </Link>
 

@@ -14,7 +14,6 @@ interface UIState {
   mapZoom: number
   isOnline: boolean
   isConnected: boolean
-  contractAddress: string
   networkMetrics: {
     lastTxSpeed: number | null
     isOnSomnia: boolean
@@ -42,7 +41,6 @@ export const useUIStore = create<UIState>((set, get) => ({
   mapZoom: 13,
   isOnline: true,
   isConnected: false,
-  contractAddress: '0xE93ECD999526BBBaCd35FA808E6F590BB1017246',
   networkMetrics: {
     lastTxSpeed: null,
     isOnSomnia: false,
@@ -51,7 +49,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   isLoadingSession: false,
 
   addToast: (toast) => {
-    const id = Math.random().toString(36).substr(2, 9)
+    const id = crypto.randomUUID?.() ?? Math.random().toString(36).slice(2, 11)
     const newToast = { ...toast, id }
 
     set((state) => ({

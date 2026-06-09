@@ -25,6 +25,7 @@ export default function LeaderboardPage() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isEmpty, setIsEmpty] = useState(false)
   const [filters, setFilters] = useState<LeaderboardFilters>({
     category: 'overall',
     limit: 50
@@ -36,12 +37,13 @@ export default function LeaderboardPage() {
     try {
       setIsLoading(true)
       setError(null)
+      setIsEmpty(false)
       
       const data = await leaderboardData.getLeaderboard(filters, address || undefined)
       setLeaderboard(data)
       
       if (data.length === 0) {
-        setError('No active users found. Complete sessions to appear in rankings.')
+        setIsEmpty(true)
       }
     } catch (err) {
       console.error('Error loading leaderboard:', err)
@@ -223,13 +225,13 @@ export default function LeaderboardPage() {
         {/* Error State */}
         {error && (
           <motion.div
-            className="p-6 rounded-xl mb-8 border border-red-500/30 bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10"
+            className="p-6 rounded-xl mb-8 border border-red-500/30 bg-gradient-to-br from-gold/5 to-violet/5"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
           >
             <div className="text-center">
               <div className="text-4xl mb-2">⚠️</div>
-              <h3 className="text-lg font-semibold text-white mb-2">No Data Available</h3>
+              <h3 className="text-lg font-semibold text-white mb-2">Something went wrong</h3>
               <p className="text-white/70">{error}</p>
               <PremiumButton
                 variant="primary"
@@ -237,6 +239,28 @@ export default function LeaderboardPage() {
                 onClick={loadLeaderboard}
               >
                 Try Again
+              </PremiumButton>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Empty State */}
+        {isEmpty && !isLoading && (
+          <motion.div
+            className="p-6 rounded-xl mb-8 border border-gold/10 bg-gradient-to-br from-gold/5 to-violet/5"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            <div className="text-center">
+              <div className="text-4xl mb-2">🏆</div>
+              <h3 className="text-lg font-semibold text-white mb-2">No Active Users Yet</h3>
+              <p className="text-white/70">Complete a punctuality session to appear in rankings.</p>
+              <PremiumButton
+                variant="primary"
+                className="mt-4"
+                onClick={() => window.location.href = '/setup'}
+              >
+                Deploy Your Agent
               </PremiumButton>
             </div>
           </motion.div>
@@ -310,12 +334,12 @@ export default function LeaderboardPage() {
                   <div className="text-right">
                     {entry.averagePace > 0 && (
                       <div className="text-white font-semibold">
-                        {entry.averagePace.toFixed(1)} min/mile
+                        {entry.averagePace.toFixed(1)} min/km
                       </div>
                     )}
                     {entry.totalDistance > 0 && (
                       <div className="text-green-400 text-sm">
-                        {entry.totalDistance.toFixed(1)} miles total
+                        {entry.totalDistance.toFixed(1)} km total
                       </div>
                     )}
                     <div className="text-white/60 text-sm capitalize">

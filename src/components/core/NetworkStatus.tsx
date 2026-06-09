@@ -2,6 +2,7 @@
 
 import { useUIStore } from "@/stores/uiStore";
 import { useWallet } from "@/hooks/useWallet";
+import { getContractAddresses } from "@/contracts/addresses";
 import { useState, useEffect, useRef } from "react";
 // Import gsap with require for better build compatibility
 const gsap = require('gsap').gsap;
@@ -17,8 +18,9 @@ interface SystemStatus {
 }
 
 export function NetworkStatus() {
-  const { contractAddress, networkMetrics, isOnline } = useUIStore();
+  const { networkMetrics, isOnline } = useUIStore();
   const { networkMetrics: walletMetrics, address, isConnected } = useWallet();
+  const contractAddress = getContractAddresses().PunctualityCore;
   const containerRef = useRef<HTMLDivElement>(null);
   const [systemStatus, setSystemStatus] = useState<SystemStatus>({
     protocol: "ACTIVE",

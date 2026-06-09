@@ -114,6 +114,41 @@ export interface LeaderboardUserData {
   successRate: number;
 }
 
+// ── Simple TTL Cache ─────────────────────────────────────
+
+interface CacheEntry<T> { value: T; expires: number }
+
+class TTLCache {
+  private store = new Map<string, CacheEntry<any>>();
+  private defaultTTL: number;
+
+  constructor(defaultTTLms: number = 60_000) {
+    this.defaultTTL = defaultTTLms;
+  }
+
+  get<T>(key: string): T | undefined {
+    const entry = this.store.get(key);
+    if (!entry) return undefined;
+    if (Date.now() > entry.expires) {
+      this.store.delete(key);
+      return undefined;
+    }
+    return entry.value as T;
+  }
+
+  set<T>(key: string, value: T, ttlMs?: number): void {
+    this.store.set(key, { value, expires: Date.now() + (ttlMs ?? this.defaultTTL) });
+  }
+
+  invalidate(key: string): void {
+    this.store.delete(key);
+  }
+
+  clear(): void {
+    this.store.clear();
+  }
+}
+
 // ── ContractService ────────────────────────────────────────
 
 export class ContractService {
@@ -122,6 +157,7 @@ export class ContractService {
   private registryContract: ethers.Contract | null;
   private provider: ethers.Provider;
   private signer: ethers.Signer | null;
+  private cache = new TTLCache(60_000);
 
   constructor(signer: ethers.Signer | null = null) {
     const networkConfig = getNetworkConfig();
@@ -159,10 +195,15 @@ export class ContractService {
       { value: ethers.parseEther(stakeAmount) }
     );
     const receipt = await tx.wait();
-    const event = receipt.logs.find((log: any) => {
-      try { return this.contract.interface.parseLog(log)?.name === 'CommitmentCreated'; } catch { return false; }
-    });
-    if (event) return this.contract.interface.parseLog(event)?.args.commitmentId;
+    for (const log of receipt.logs) {
+      try {
+        const parsed = this.contract.interface.parseLog(log);
+        if (parsed?.name === 'CommitmentCreated') {
+          this.cache.invalidate(`commitment:${parsed.args.commitmentId}`);
+          return parsed.args.commitmentId;
+        }
+      } catch { /* skip non-matching logs */ }
+    }
     throw new Error('Failed to extract commitment ID');
   }
 
@@ -176,23 +217,43 @@ export class ContractService {
     if (!this.signer) throw new Error('Signer required');
     const tx = await this.contract.fulfillCommitment(commitmentId, arrivalLocation);
     await tx.wait();
+    this.cache.invalidate(`commitment:${commitmentId}`);
   }
 
   async getCommitment(commitmentId: string): Promise<Commitment | null> {
+    const cached = this.cache.get<Commitment>(`commitment:${commitmentId}`);
+    if (cached) return cached;
+
     try {
       const c = await this.contract.getCommitment(commitmentId);
-      return {
+      const result: Commitment = {
         user: c.user, stakeAmount: c.stakeAmount, arrivalDeadline: c.arrivalDeadline,
-        startTime: c.startTime, startLocation: c.startLocation, targetLocation: c.targetLocation,
-        pace: c.pace, distance: c.distance, fulfilled: c.fulfilled, successful: c.successful,
-        actualArrivalTime: c.actualArrivalTime, rewardAmount: c.rewardAmount,
+        startTime: c.commitmentTime, startLocation: c.startLocation, targetLocation: c.targetLocation,
+        pace: c.estimatedPace, distance: c.estimatedDistance, fulfilled: c.fulfilled, successful: c.successful,
+        actualArrivalTime: c.actualArrivalTime, rewardAmount: BigInt(0),
         totalBetsFor: c.totalBetsFor, totalBetsAgainst: c.totalBetsAgainst,
       };
-    } catch { return null; }
+      this.cache.set(`commitment:${commitmentId}`, result);
+      return result;
+    } catch (err) {
+      console.error(`Failed to fetch commitment ${commitmentId}:`, err);
+      return null;
+    }
   }
 
   async getUserReputation(userAddress: string): Promise<bigint> {
-    try { return await this.contract.getUserReputation(userAddress); } catch { return BigInt(0); }
+    const cacheKey = `reputation:${userAddress}`;
+    const cached = this.cache.get<bigint>(cacheKey);
+    if (cached !== undefined) return cached;
+
+    try {
+      const rep = await this.contract.getUserReputation(userAddress);
+      this.cache.set(cacheKey, rep, 30_000); // 30s TTL for reputation
+      return rep;
+    } catch (err) {
+      console.error(`Failed to fetch reputation for ${userAddress}:`, err);
+      return BigInt(0);
+    }
   }
 
   // ── AGENT: Authorization ─────────────────────────────────
@@ -246,7 +307,10 @@ export class ContractService {
         autoPostSocial: c.autoPostSocial,
         personality: c.personality,
       };
-    } catch { return null; }
+    } catch (err) {
+      console.error(`Failed to fetch agent config for ${principal}:`, err);
+      return null;
+    }
   }
 
   async getActiveCommitmentCount(principal: string): Promise<bigint> {
@@ -293,7 +357,10 @@ export class ContractService {
         decidedPace: s.decidedPace,
         settled: s.settled,
       };
-    } catch { return null; }
+    } catch (err) {
+      console.error(`Failed to fetch agent commitment state ${commitmentId}:`, err);
+      return null;
+    }
   }
 
   // ── AGENT: Agent-to-Agent ────────────────────────────────
@@ -340,32 +407,37 @@ export class ContractService {
       const fulfilledFilter = this.contract.filters.CommitmentFulfilled(null, userAddress);
       const fulfilledEvents = await this.contract.queryFilter(fulfilledFilter);
 
+      // Build a lookup map from fulfilled events — no per-commitment RPC calls
+      const fulfilledMap = new Map<string, typeof fulfilledEvents[0]>();
+      for (const e of fulfilledEvents) {
+        if ('args' in e && e.args) fulfilledMap.set(e.args.commitmentId, e);
+      }
+
       const history: UserPerformanceHistory[] = [];
       for (const createdEvent of createdEvents) {
-        if ('args' in createdEvent && createdEvent.args) {
-          const commitmentId = createdEvent.args.commitmentId;
-          if (!commitmentId) continue;
-          const fulfilledEvent = fulfilledEvents.find(e =>
-            'args' in e && e.args && e.args.commitmentId === commitmentId
-          );
-          if (fulfilledEvent && 'args' in fulfilledEvent && fulfilledEvent.args) {
-            const commitment = await this.getCommitment(commitmentId);
-            if (commitment) {
-              history.push({
-                commitmentId,
-                estimatedDistance: Number(commitment.distance),
-                estimatedPace: Number(commitment.pace),
-                actualArrivalTime: Number(fulfilledEvent.args.actualArrivalTime || 0),
-                arrivalDeadline: Number(commitment.arrivalDeadline),
-                successful: fulfilledEvent.args.successful || false,
-                timestamp: Number(commitment.startTime)
-              });
-            }
-          }
-        }
+        if (!('args' in createdEvent) || !createdEvent.args) continue;
+        const commitmentId = createdEvent.args.commitmentId;
+        if (!commitmentId) continue;
+
+        const fulfilledEvent = fulfilledMap.get(commitmentId);
+        if (!fulfilledEvent || !('args' in fulfilledEvent) || !fulfilledEvent.args) continue;
+
+        // Extract data from event args directly — no extra RPC call
+        history.push({
+          commitmentId,
+          estimatedDistance: Number(createdEvent.args.targetLocation?.[0] ?? 0), // approximate from event
+          estimatedPace: 0,
+          actualArrivalTime: Number(fulfilledEvent.args.actualArrivalTime || 0),
+          arrivalDeadline: Number(createdEvent.args.arrivalDeadline),
+          successful: fulfilledEvent.args.successful || false,
+          timestamp: Number(createdEvent.args.stakeAmount ?? 0), // use commitmentTime if available
+        });
       }
       return history.sort((a, b) => b.timestamp - a.timestamp);
-    } catch { return []; }
+    } catch (err) {
+      console.error('Failed to fetch user performance history:', err);
+      return [];
+    }
   }
 
   // ── REGISTRY: Live Listings ────────────────────────────────
@@ -389,7 +461,10 @@ export class ContractService {
         }
       }
       return listings;
-    } catch { return []; }
+    } catch (err) {
+      console.error('Failed to fetch recent listings:', err);
+      return [];
+    }
   }
 
   // ── LEADERBOARD: On-chain user aggregation ─────────────────
@@ -401,15 +476,15 @@ export class ContractService {
 
       const userMap = new Map<string, { totalSessions: number; successes: number }>();
       for (const event of fulfilledEvents) {
-        if ('args' in event && event.args) {
-          const user = event.args.user;
-          const existing = userMap.get(user) || { totalSessions: 0, successes: 0 };
-          existing.totalSessions++;
-          if (event.args.successful) existing.successes++;
-          userMap.set(user, existing);
-        }
+        if (!('args' in event) || !event.args) continue;
+        const user = event.args.user;
+        const existing = userMap.get(user) || { totalSessions: 0, successes: 0 };
+        existing.totalSessions++;
+        if (event.args.successful) existing.successes++;
+        userMap.set(user, existing);
       }
 
+      // Batch reputation lookups — each uses cache
       const users: LeaderboardUserData[] = [];
       for (const [address, stats] of userMap) {
         const reputation = await this.getUserReputation(address);
@@ -421,7 +496,10 @@ export class ContractService {
         });
       }
       return users.sort((a, b) => b.reputation - a.reputation);
-    } catch { return []; }
+    } catch (err) {
+      console.error('Failed to fetch leaderboard:', err);
+      return [];
+    }
   }
 
   // ── EVENT LISTENERS: Core ────────────────────────────────
@@ -441,6 +519,7 @@ export class ContractService {
       commitmentId: string, user: string, successful: boolean,
       actualArrivalTime: bigint, rewardAmount: bigint
     ) => {
+      this.cache.invalidate(`commitment:${commitmentId}`);
       callback({ commitmentId, user, successful, actualArrivalTime, rewardAmount });
     });
   }
@@ -495,7 +574,6 @@ export class ContractService {
     this.contract.removeAllListeners();
     this.agentContract?.removeAllListeners();
     this.registryContract?.removeAllListeners();
+    this.cache.clear();
   }
 }
-
-export const contractService = new ContractService();

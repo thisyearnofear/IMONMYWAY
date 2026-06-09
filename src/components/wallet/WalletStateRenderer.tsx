@@ -1,9 +1,9 @@
 /**
  * Wallet State Renderer - Performance Optimized
- * Lazy loads wallet state components for better performance
+ * Lazy loads wallet state components with error boundary
  */
 
-import { memo, lazy, Suspense } from 'react';
+import { memo, lazy, Suspense, Component, type ReactNode, type ErrorInfo } from 'react';
 import { motion } from 'framer-motion';
 import type { HeroState } from '@/lib/wallet-utils';
 
@@ -36,6 +36,38 @@ const LoadingFallback = memo(function LoadingFallback() {
   );
 });
 
+class LazyErrorBoundary extends Component<
+  { children: ReactNode; fallback: ReactNode },
+  { hasError: boolean }
+> {
+  state = { hasError: false };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error('Wallet state component failed to load:', error, info);
+  }
+
+  render() {
+    if (this.state.hasError) return this.props.fallback;
+    return this.props.children;
+  }
+}
+
+const ErrorFallback = (
+  <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-center">
+    <p className="text-red-400 text-sm">Failed to load wallet component</p>
+    <button
+      onClick={() => window.location.reload()}
+      className="mt-2 text-xs text-white/50 hover:text-white/80 transition-colors"
+    >
+      Reload page
+    </button>
+  </div>
+);
+
 export const WalletStateRenderer = memo(function WalletStateRenderer({
   heroState,
   formattedAddress,
@@ -46,28 +78,30 @@ export const WalletStateRenderer = memo(function WalletStateRenderer({
   isConnecting,
 }: WalletStateRendererProps) {
   return (
-    <Suspense fallback={<LoadingFallback />}>
-      {heroState === 'CONNECT_WALLET' && (
-        <ConnectWalletState 
-          onConnect={onConnect}
-          isConnecting={isConnecting}
-          onLearnMore={onLearnMore}
-        />
-      )}
+    <LazyErrorBoundary fallback={ErrorFallback}>
+      <Suspense fallback={<LoadingFallback />}>
+        {heroState === 'CONNECT_WALLET' && (
+          <ConnectWalletState
+            onConnect={onConnect}
+            isConnecting={isConnecting}
+            onLearnMore={onLearnMore}
+          />
+        )}
 
-      {heroState === 'SWITCH_NETWORK' && (
-        <SwitchNetworkState 
-          onSwitchNetwork={onSwitchNetwork}
-          formattedAddress={formattedAddress}
-          networkName={networkName}
-        />
-      )}
+        {heroState === 'SWITCH_NETWORK' && (
+          <SwitchNetworkState
+            onSwitchNetwork={onSwitchNetwork}
+            formattedAddress={formattedAddress}
+            networkName={networkName}
+          />
+        )}
 
-      {heroState === 'READY_TO_USE' && (
-        <ReadyToUseState 
-          formattedAddress={formattedAddress}
-        />
-      )}
-    </Suspense>
+        {heroState === 'READY_TO_USE' && (
+          <ReadyToUseState
+            formattedAddress={formattedAddress}
+          />
+        )}
+      </Suspense>
+    </LazyErrorBoundary>
   );
 });

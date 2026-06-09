@@ -30,10 +30,16 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="min-h-screen bg-graphite-900 text-white antialiased" suppressHydrationWarning={true}>
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-gold-500 focus:text-graphite-900 focus:rounded-lg focus:font-semibold"
+        >
+          Skip to content
+        </a>
         <ToastProvider>
           <GlobalErrorBoundary enableRecovery={true} showErrorDetails={process.env.NODE_ENV === 'development'}>
             <PremiumNavigation />
-            <main className="relative pt-20">
+            <main id="main-content" className="relative pt-20">
               {children}
             </main>
             <ToastContainer />

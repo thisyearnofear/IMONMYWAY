@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useWallet } from '@/hooks/useWallet';
+import { useUIStore } from '@/stores/uiStore';
 import { ContractService } from '@/services/contractService';
 import { Card, CardContent } from '@/components/ui/PremiumCard';
 import { Button, LoadingSpinner } from '@/components/ui/PremiumButton';
@@ -34,6 +35,7 @@ export function AgentBettingView({
   agentReasoning,
 }: AgentBettingViewProps) {
   const { address, isConnected } = useWallet();
+  const { addToast } = useUIStore();
   const [betAmount, setBetAmount] = useState('');
   const [isBetting, setIsBetting] = useState(false);
   const [userBet, setUserBet] = useState<{ amount: string; prediction: 'success' | 'failure' } | null>(null);
@@ -45,6 +47,13 @@ export function AgentBettingView({
 
   const placeBet = async (prediction: 'success' | 'failure') => {
     if (!betAmount || !address) return;
+
+    const amount = parseFloat(betAmount);
+    if (isNaN(amount) || amount <= 0) {
+      addToast({ message: 'Enter a valid bet amount', type: 'warning' });
+      return;
+    }
+
     setIsBetting(true);
     try {
       const browserProvider = new ethers.BrowserProvider((window as any).ethereum);
@@ -53,8 +62,11 @@ export function AgentBettingView({
       await service.placeBet(commitmentId, prediction === 'success', betAmount);
       setUserBet({ amount: betAmount, prediction });
       setBetAmount('');
-    } catch (err) {
+      addToast({ message: `Bet placed: ${betAmount} STT on ${prediction}`, type: 'success' });
+    } catch (err: any) {
+      const message = err?.reason || err?.message || 'Bet failed';
       console.error('Bet failed:', err);
+      addToast({ message: `Bet failed: ${message}`, type: 'error' });
     } finally {
       setIsBetting(false);
     }

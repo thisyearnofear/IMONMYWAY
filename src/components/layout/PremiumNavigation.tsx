@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useWallet } from "@/hooks/useWallet";
-import { useLocationStore } from "@/stores/locationStore";
+import { useWalletStore } from "@/stores/walletStore";
 import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/PremiumButton";
 import { motion, AnimatePresence } from "framer-motion";
@@ -31,7 +31,7 @@ export function PremiumNavigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isWalletDropdownOpen, setIsWalletDropdownOpen] = useState(false);
   const { address, isConnected, connect, disconnect, balance, chainId, networkMetrics } = useWallet();
-  const { setWalletAddress, setWalletConnected } = useLocationStore();
+  const { setWalletAddress, setWalletConnected } = useWalletStore();
   const walletDropdownRef = useRef<HTMLDivElement>(null);
   
   const pageContext = getPageContext(pathname);
@@ -207,7 +207,7 @@ export function PremiumNavigation() {
                         <div className="space-y-3">
                           <div className="flex justify-between items-center">
                             <span className="text-gray-400">Balance:</span>
-                            <span className="text-white font-mono">{balance || '0.0000'} ETH</span>
+                            <span className="text-white font-mono">{balance || '0.0000'} STT</span>
                           </div>
                           <div className="flex justify-between items-center">
                             <span className="text-gray-400">Network:</span>
@@ -363,7 +363,7 @@ export function PremiumNavigation() {
                       <div className="space-y-2 text-sm">
                         <div className="flex justify-between">
                           <span className="text-gray-400">Balance:</span>
-                          <span className="text-white font-mono">{balance || '0.0000'} ETH</span>
+                          <span className="text-white font-mono">{balance || '0.0000'} STT</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-gray-400">Network:</span>

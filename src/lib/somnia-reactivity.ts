@@ -2,7 +2,7 @@
 // Uses WebSocket subscriptions to stream agent activity to the frontend
 
 import { getNetworkConfig } from '@/contracts/addresses';
-import { AGENT_ABI, REGISTRY_ABI } from '@/lib/contracts';
+import { AGENT_ABI } from '@/lib/contracts';
 import { ethers } from 'ethers';
 
 export interface AgentActivityEvent {
@@ -20,11 +20,14 @@ class SomniaReactivityService {
   private callbacks: Set<ActivityCallback> = new Set();
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
-  private contract: ethers.Contract | null = null;
+  private agentIface: ethers.Interface;
+  private _lastConnectedAddress: string | null = null;
 
-  /**
-   * Connect to Somnia WebSocket and subscribe to agent contract events
-   */
+  constructor() {
+    // Cache the interface once — avoids creating a new instance per message
+    this.agentIface = new ethers.Interface(AGENT_ABI);
+  }
+
   async connect(agentContractAddress: string): Promise<void> {
     const config = getNetworkConfig();
     const wsUrl = config.wsUrl;
@@ -33,6 +36,8 @@ class SomniaReactivityService {
       console.warn('WebSocket URL not configured — falling back to polling');
       return;
     }
+
+    this._lastConnectedAddress = agentContractAddress;
 
     try {
       this.ws = new WebSocket(wsUrl);
@@ -46,6 +51,13 @@ class SomniaReactivityService {
       this.ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
+
+          // Capture subscription ID from the subscription response
+          if (data.id === 1 && data.result) {
+            this.subscriptionId = data.result;
+            return;
+          }
+
           if (data.method === 'eth_subscription') {
             this.handleSubscriptionEvent(data.params);
           }
@@ -67,13 +79,9 @@ class SomniaReactivityService {
     }
   }
 
-  /**
-   * Subscribe to agent contract events via eth_subscribe
-   */
   private subscribe(contractAddress: string): void {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
 
-    // Subscribe to all logs from the agent contract
     const subscribeMsg = {
       jsonrpc: '2.0',
       id: 1,
@@ -82,7 +90,7 @@ class SomniaReactivityService {
         'logs',
         {
           address: contractAddress,
-          topics: [], // all events
+          topics: [],
         },
       ],
     };
@@ -90,19 +98,13 @@ class SomniaReactivityService {
     this.ws.send(JSON.stringify(subscribeMsg));
   }
 
-  /**
-   * Handle incoming subscription events and dispatch to callbacks
-   */
   private handleSubscriptionEvent(params: any): void {
     if (!params?.result) return;
 
     const log = params.result;
-    const config = getNetworkConfig();
 
-    // Parse the log using the agent ABI
     try {
-      const iface = new ethers.Interface(AGENT_ABI);
-      const parsed = iface.parseLog({
+      const parsed = this.agentIface.parseLog({
         topics: log.topics,
         data: log.data,
       });
@@ -118,11 +120,8 @@ class SomniaReactivityService {
     }
   }
 
-  /**
-   * Map a parsed Solidity event to our frontend event type
-   */
   private mapParsedEvent(parsed: ethers.LogDescription, log: any): AgentActivityEvent | null {
-    const timestamp = Math.floor(Date.now() / 1000); // WebSocket doesn't give block timestamp
+    const timestamp = Math.floor(Date.now() / 1000);
 
     switch (parsed.name) {
       case 'AgentDecisionMade':
@@ -176,9 +175,6 @@ class SomniaReactivityService {
     }
   }
 
-  /**
-   * Register a callback for agent activity events
-   */
   onActivity(callback: ActivityCallback): () => void {
     this.callbacks.add(callback);
     return () => {
@@ -187,11 +183,20 @@ class SomniaReactivityService {
   }
 
   /**
-   * Attempt reconnection with exponential backoff
+   * Restart the connection — resets the reconnect counter.
+   * Useful when maxReconnectAttempts was exhausted.
    */
+  restart(): void {
+    this.disconnect();
+    this.reconnectAttempts = 0;
+    if (this._lastConnectedAddress) {
+      this.connect(this._lastConnectedAddress);
+    }
+  }
+
   private attemptReconnect(contractAddress: string): void {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.error('Max reconnection attempts reached');
+      console.error('Max reconnection attempts reached — call restart() to retry');
       return;
     }
 
@@ -202,9 +207,6 @@ class SomniaReactivityService {
     setTimeout(() => this.connect(contractAddress), delay);
   }
 
-  /**
-   * Disconnect and clean up
-   */
   disconnect(): void {
     if (this.ws) {
       if (this.subscriptionId) {

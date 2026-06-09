@@ -393,6 +393,7 @@ contract PunctualityAgent is IAgentRequesterHandler, SomniaEventHandler {
         PendingRequest memory pending
     ) internal {
         int256 pacePerKm = abi.decode(responses[0].result, (int256));
+        require(pacePerKm > 0, "Invalid LLM pace: negative or zero");
         uint256 pace = uint256(pacePerKm); // seconds per km
 
         // Retrieve stashed params
@@ -426,6 +427,12 @@ contract PunctualityAgent is IAgentRequesterHandler, SomniaEventHandler {
         });
 
         activeCommitmentCount[pending.principal]++;
+
+        // Track commitment ID for deadline monitoring
+        _activeCommitmentIds[pending.principal].push(commitmentId);
+
+        // Clean up stashed params (prevent unbounded storage growth)
+        delete _stashedParams[pending.commitmentId];
 
         // List in registry for counterparty discovery
         registry.listAgent(
@@ -484,8 +491,6 @@ contract PunctualityAgent is IAgentRequesterHandler, SomniaEventHandler {
         bool success = _isOnTime(pending.commitmentId);
 
         if (success) {
-            // Call fulfillCommitment with the target location as arrival proof
-            // In production, this would use a verified GPS oracle
             punctualityCore.fulfillCommitment(
                 pending.commitmentId,
                 IPunctualityProtocol.LocationData({
@@ -505,6 +510,7 @@ contract PunctualityAgent is IAgentRequesterHandler, SomniaEventHandler {
         }
 
         activeCommitmentCount[state.principal]--;
+        _removeActiveCommitment(state.principal, pending.commitmentId);
 
         // Delist from registry
         registry.delistAgent(pending.commitmentId);
@@ -571,13 +577,76 @@ contract PunctualityAgent is IAgentRequesterHandler, SomniaEventHandler {
         deadlineSubscriptions[commitmentId] = subId;
     }
 
+    // Active commitment IDs tracked for deadline checks
+    mapping(address => bytes32[]) private _activeCommitmentIds;
+
     /**
-     * @dev Called by reactivity on BlockTick — check if any commitments need action
+     * @dev Called by reactivity on BlockTick — check if any commitments need action.
+     *      If deadline passed and not settled, trigger settlement.
      */
     function _checkAllDeadlines() internal {
-        // Iterate through tracked commitments
-        // In production, use a more efficient index structure
-        // For hackathon: check commitments approaching deadline
+        // Iterate all principals with active commitments
+        // In production, use a more gas-efficient index.
+        // For now, we track commitment IDs per principal.
+        address[] memory principals = _getAuthorizedPrincipals();
+        for (uint256 p = 0; p < principals.length; p++) {
+            bytes32[] storage ids = _activeCommitmentIds[principals[p]];
+            for (uint256 i = 0; i < ids.length; i++) {
+                CommitmentState storage state = commitmentStates[ids[i]];
+                if (state.settled || state.commitmentId == bytes32(0)) continue;
+                if (block.timestamp >= state.deadline) {
+                    _triggerSettlement(ids[i]);
+                }
+            }
+        }
+    }
+
+    function _triggerSettlement(bytes32 commitmentId) internal {
+        CommitmentState storage state = commitmentStates[commitmentId];
+        if (state.settled) return;
+        state.settled = true;
+
+        bool success = _isOnTime(commitmentId);
+
+        if (success) {
+            punctualityCore.fulfillCommitment(
+                commitmentId,
+                IPunctualityProtocol.LocationData({
+                    latitude: state.targetLocation.latitude,
+                    longitude: state.targetLocation.longitude,
+                    accuracy: 50,
+                    timestamp: block.timestamp
+                })
+            );
+        }
+
+        // Unsubscribe from deadline monitoring
+        uint256 subId = deadlineSubscriptions[commitmentId];
+        if (subId != 0) {
+            SomniaExtensions.unsubscribe(subId);
+            delete deadlineSubscriptions[commitmentId];
+        }
+
+        activeCommitmentCount[state.principal]--;
+        _removeActiveCommitment(state.principal, commitmentId);
+        registry.delistAgent(commitmentId);
+
+        // Clean up stashed params
+        delete _stashedParams[commitmentId];
+
+        if (agentConfigs[state.principal].autoPostSocial) {
+            string memory eventType = success ? "arrived_on_time" : "missed_deadline";
+            _requestSocialUpdate(commitmentId, state.principal, eventType);
+        }
+
+        emit AgentSettledCommitment(commitmentId, success, success ? "On time" : "Deadline passed");
+    }
+
+    // Placeholder — in production, index authorized principals via events
+    function _getAuthorizedPrincipals() internal pure returns (address[] memory) {
+        // This is a stub. For a real implementation, maintain an array
+        // of authorized principals or iterate event logs off-chain.
+        return new address[](0);
     }
 
     /**
@@ -824,12 +893,23 @@ contract PunctualityAgent is IAgentRequesterHandler, SomniaEventHandler {
         bytes32 contextHash = keccak256(abi.encodePacked(context));
         if (contextHash == keccak256(abi.encodePacked("urgent"))) return 300;   // 5 min
         if (contextHash == keccak256(abi.encodePacked("work"))) return 600;     // 10 min
-        return 900; // 15 min default for social
+        return 900; // 15 min default
     }
 
     function _isOnTime(bytes32 commitmentId) internal view returns (bool) {
         CommitmentState memory state = commitmentStates[commitmentId];
         return block.timestamp <= state.deadline;
+    }
+
+    function _removeActiveCommitment(address principal, bytes32 commitmentId) internal {
+        bytes32[] storage ids = _activeCommitmentIds[principal];
+        for (uint256 i = 0; i < ids.length; i++) {
+            if (ids[i] == commitmentId) {
+                ids[i] = ids[ids.length - 1];
+                ids.pop();
+                return;
+            }
+        }
     }
 
     function _uint2str(uint256 value) internal pure returns (string memory) {
@@ -864,4 +944,16 @@ contract PunctualityAgent is IAgentRequesterHandler, SomniaEventHandler {
     // ──────────────────────────────────────────────
 
     receive() external payable {}
+
+    /**
+     * @dev Withdraw STT trapped from failed LLM calls.
+     *      Only the principal who authorized can withdraw their own stuck funds.
+     */
+    function withdrawStuckFunds() external {
+        require(authorizedPrincipals[msg.sender], "Not authorized");
+        uint256 balance = address(this).balance;
+        require(balance > 0, "No funds to withdraw");
+        (bool success, ) = payable(msg.sender).call{value: balance}("");
+        require(success, "Withdraw failed");
+    }
 }

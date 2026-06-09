@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { DataPanel, DataRow } from '@/components/ui/PremiumCard';
 import { type AgentConfig } from '@/services/contractService';
 import { useLLM } from '@/hooks/useLLM';
@@ -16,15 +16,18 @@ interface AgentStatusViewProps {
 
 export function AgentStatusView({ config, balance, networkName, currency, reputationScore }: AgentStatusViewProps) {
   const balanceNum = parseFloat(balance);
-  const status = balanceNum > 32 ? 'online' : balanceNum > 0 ? 'warning' : 'offline';
+  const BALANCE_THRESHOLD = 32;
+  const status = balanceNum > BALANCE_THRESHOLD ? 'online' : balanceNum > 0 ? 'warning' : 'offline';
   const { generate, isThinking } = useLLM();
   const [insight, setInsight] = useState<string | null>(null);
+  const insightFetchedRef = useRef(false);
 
   useEffect(() => {
-    if (!config || !reputationScore) return;
+    if (!config || !reputationScore || insightFetchedRef.current) return;
     let cancelled = false;
 
     const fetchInsight = async () => {
+      insightFetchedRef.current = true;
       const messages = commitmentSummary({
         deadline: Math.floor(Date.now() / 1000) + 7200,
         stake: config.maxStake,
@@ -33,19 +36,19 @@ export function AgentStatusView({ config, balance, networkName, currency, reputa
       });
       const response = await generate(messages);
       if (!cancelled && response) {
-        setInsight(response.content);
+        setInsight(response.content.slice(0, 200));
       }
     };
 
     fetchInsight();
     return () => { cancelled = true; };
-  }, [config?.personality, config?.maxStake, balance, reputationScore]);
+  }, [config?.personality, config?.maxStake, balance, reputationScore, currency, generate]);
 
   return (
     <DataPanel title="Agent" status={status}>
       <DataRow label="Network" value={networkName} />
-      <DataRow label="Balance" value={`${parseFloat(balance).toFixed(1)} ${currency}`} status={balanceNum > 32 ? 'success' : 'warning'} />
-      <DataRow label="Reactivity" value={balanceNum >= 32 ? 'FUNDED' : 'UNDERFUNDED'} status={balanceNum >= 32 ? 'success' : 'error'} />
+      <DataRow label="Balance" value={`${parseFloat(balance).toFixed(1)} ${currency}`} status={balanceNum > BALANCE_THRESHOLD ? 'success' : 'warning'} />
+      <DataRow label="Reactivity" value={balanceNum >= BALANCE_THRESHOLD ? 'FUNDED' : 'UNDERFUNDED'} status={balanceNum >= BALANCE_THRESHOLD ? 'success' : 'error'} />
       {reputationScore !== undefined && reputationScore > 0 && (
         <DataRow
           label="Reputation"

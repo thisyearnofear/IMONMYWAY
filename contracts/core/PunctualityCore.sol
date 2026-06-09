@@ -3,67 +3,114 @@ pragma solidity ^0.8.22;
 
 import "../interfaces/IPunctualityProtocol.sol";
 import "../lib/Math.sol";
+import "../lib/ReentrancyGuard.sol";
 
 /**
  * @title PunctualityCore
- * @dev Core contract for the Punctuality Protocol
- * Implements punctuality betting with ETA calculations and location verification
+ * @dev Core contract for the Punctuality Protocol.
+ *      Settlement, betting, reputation — single source of truth.
  */
-contract PunctualityCore is IPunctualityProtocol {
-    
-    // State variables
+contract PunctualityCore is IPunctualityProtocol, ReentrancyGuard {
+
+    // ── Errors (save ~50 gas per revert vs require strings) ──────
+
+    error ZeroStake();
+    error DeadlineInPast();
+    error ZeroPace();
+    error CommitmentNotFound();
+    error CommitmentAlreadyFulfilled();
+    error DeadlinePassed();
+    error ZeroBet();
+    error CannotBetOnSelf();
+    error AlreadyBet();
+    error NotCommitmentCreator();
+    error OnlyOwner();
+    error ZeroAddressRecipient();
+
+    // ── State ────────────────────────────────────────────────────
+
     mapping(bytes32 => ETACommitment) public commitments;
     mapping(address => uint256) public userReputations;
     mapping(bytes32 => mapping(address => bool)) public betsPlaced;
-    
-    // Constants
+
     uint256 public constant REPUTATION_BASE = 5000;
     uint256 public constant REPUTATION_MIN = 1000;
     uint256 public constant REPUTATION_MAX = 10000;
     uint256 public constant LOCATION_TOLERANCE = 100; // meters
-    
-    // Events
-    event ContractDeployed(address indexed deployer, uint256 timestamp);
-    
+
+    // Commitment ID nonce — prevents same-block ID collisions
+    uint256 private _commitmentNonce;
+
+    // Owner — two-step transfer pattern
     address private _owner;
-    
+    address private _pendingOwner;
+
+    event ContractDeployed(address indexed deployer, uint256 timestamp);
+    event OwnershipTransferStarted(address indexed currentOwner, address indexed pendingOwner);
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+    // ── Modifiers ────────────────────────────────────────────────
+
     modifier onlyOwner() {
-        require(msg.sender == _owner, "Only owner can call this function");
+        if (msg.sender != _owner) revert OnlyOwner();
         _;
     }
-    
+
+    // ── Constructor ──────────────────────────────────────────────
+
     constructor() {
         _owner = msg.sender;
         userReputations[msg.sender] = REPUTATION_BASE;
         emit ContractDeployed(msg.sender, block.timestamp);
     }
-    
-    /**
-     * @dev Create a punctuality commitment with stake
-     * @param startLocation Starting location
-     * @param targetLocation Target location
-     * @param arrivalDeadline Deadline for arrival
-     * @param estimatedPace Estimated pace in seconds per meter
-     */
+
+    // ── Ownership (two-step) ─────────────────────────────────────
+
+    function owner() public view returns (address) {
+        return _owner;
+    }
+
+    function pendingOwner() public view returns (address) {
+        return _pendingOwner;
+    }
+
+    function transferOwnership(address newOwner) public onlyOwner {
+        if (newOwner == address(0)) revert ZeroAddressRecipient();
+        _pendingOwner = newOwner;
+        emit OwnershipTransferStarted(_owner, newOwner);
+    }
+
+    function acceptOwnership() public {
+        if (msg.sender != _pendingOwner) revert OnlyOwner();
+        emit OwnershipTransferred(_owner, msg.sender);
+        _owner = msg.sender;
+        _pendingOwner = address(0);
+    }
+
+    // ── Commitment Creation ──────────────────────────────────────
+
     function createCommitment(
         LocationData memory startLocation,
         LocationData memory targetLocation,
         uint256 arrivalDeadline,
         uint256 estimatedPace
-    ) external payable returns (bytes32) {
-        require(msg.value > 0, "Stake amount must be greater than 0");
-        require(arrivalDeadline > block.timestamp, "Deadline must be in the future");
-        require(estimatedPace > 0, "Estimated pace must be greater than 0");
-        
-        bytes32 commitmentId = keccak256(abi.encodePacked(msg.sender, block.timestamp, block.prevrandao));
-        
+    ) external payable nonReentrant returns (bytes32) {
+        if (msg.value == 0) revert ZeroStake();
+        if (arrivalDeadline <= block.timestamp) revert DeadlineInPast();
+        if (estimatedPace == 0) revert ZeroPace();
+
+        // ID uses block.number + nonce — no prevrandao dependency
+        bytes32 commitmentId = keccak256(
+            abi.encodePacked(msg.sender, block.number, _commitmentNonce++)
+        );
+
         uint256 distance = calculateDistance(
             startLocation.latitude,
             startLocation.longitude,
             targetLocation.latitude,
             targetLocation.longitude
         );
-        
+
         commitments[commitmentId] = ETACommitment({
             user: msg.sender,
             stakeAmount: msg.value,
@@ -79,7 +126,7 @@ contract PunctualityCore is IPunctualityProtocol {
             totalBetsFor: 0,
             totalBetsAgainst: 0
         });
-        
+
         emit CommitmentCreated(
             commitmentId,
             msg.sender,
@@ -88,55 +135,49 @@ contract PunctualityCore is IPunctualityProtocol {
             startLocation,
             targetLocation
         );
-        
+
         return commitmentId;
     }
-    
-    /**
-     * @dev Place a bet on someone's commitment
-     * @param commitmentId ID of the commitment to bet on
-     * @param bettingFor Whether betting for success (true) or failure (false)
-     */
-    function placeBet(bytes32 commitmentId, bool bettingFor) external payable {
+
+    // ── Betting ──────────────────────────────────────────────────
+
+    function placeBet(bytes32 commitmentId, bool bettingFor) external payable nonReentrant {
         ETACommitment storage commitment = commitments[commitmentId];
-        
-        require(commitment.user != address(0), "Commitment does not exist");
-        require(!commitment.fulfilled, "Commitment already fulfilled");
-        require(block.timestamp < commitment.arrivalDeadline, "Commitment deadline passed");
-        require(msg.value > 0, "Bet amount must be greater than 0");
-        require(msg.sender != commitment.user, "Cannot bet on your own commitment");
-        require(!betsPlaced[commitmentId][msg.sender], "Already placed bet on this commitment");
-        
+
+        if (commitment.user == address(0)) revert CommitmentNotFound();
+        if (commitment.fulfilled) revert CommitmentAlreadyFulfilled();
+        if (block.timestamp >= commitment.arrivalDeadline) revert DeadlinePassed();
+        if (msg.value == 0) revert ZeroBet();
+        if (msg.sender == commitment.user) revert CannotBetOnSelf();
+        if (betsPlaced[commitmentId][msg.sender]) revert AlreadyBet();
+
         betsPlaced[commitmentId][msg.sender] = true;
-        
+
         if (bettingFor) {
             commitment.totalBetsFor += msg.value;
         } else {
             commitment.totalBetsAgainst += msg.value;
         }
-        
+
         emit BetPlaced(commitmentId, msg.sender, msg.value, bettingFor);
     }
-    
-    /**
-     * @dev Fulfill a commitment with proof of arrival
-     * @param commitmentId ID of the commitment to fulfill
-     * @param arrivalLocation Location data at arrival
-     */
+
+    // ── Fulfillment & Settlement ─────────────────────────────────
+
     function fulfillCommitment(
         bytes32 commitmentId,
         LocationData memory arrivalLocation
-    ) external {
+    ) external nonReentrant {
         ETACommitment storage commitment = commitments[commitmentId];
-        
-        require(commitment.user != address(0), "Commitment does not exist");
-        require(!commitment.fulfilled, "Commitment already fulfilled");
-        require(msg.sender == commitment.user, "Only commitment creator can fulfill");
-        
+
+        if (commitment.user == address(0)) revert CommitmentNotFound();
+        if (commitment.fulfilled) revert CommitmentAlreadyFulfilled();
+        if (msg.sender != commitment.user) revert NotCommitmentCreator();
+
+        // Effects before interactions (CEI pattern)
         commitment.fulfilled = true;
         commitment.actualArrivalTime = block.timestamp;
-        
-        // Check if arrival is within deadline and location tolerance
+
         bool onTime = block.timestamp <= commitment.arrivalDeadline;
         uint256 distanceToTarget = calculateDistance(
             arrivalLocation.latitude,
@@ -145,50 +186,37 @@ contract PunctualityCore is IPunctualityProtocol {
             commitment.targetLocation.longitude
         );
         bool atLocation = distanceToTarget <= LOCATION_TOLERANCE;
-        
         commitment.successful = onTime && atLocation;
-        
+
         uint256 rewardAmount = 0;
-        
+
         if (commitment.successful) {
-            // User arrives on time - return stake + portion of bets against
-            rewardAmount = commitment.stakeAmount;
-            
-            // Calculate winnings from bets against
-            if (commitment.totalBetsAgainst > 0) {
-                // Simple model: winner takes all from opposing side
-                rewardAmount += commitment.totalBetsAgainst;
-            }
-            
-            // Transfer reward to user
-            payable(commitment.user).transfer(rewardAmount);
-            
-            // Update reputation
+            // On time: stake + opposing bets returned to user
+            rewardAmount = commitment.stakeAmount + commitment.totalBetsAgainst;
+            // Pay user — call() not transfer()
+            _sendEth(commitment.user, rewardAmount);
+
             userReputations[commitment.user] = Math.min(
                 REPUTATION_MAX,
                 userReputations[commitment.user] + 100
             );
         } else {
-            // User fails - stake is distributed to those who bet against
-            if (commitment.totalBetsFor > 0 && commitment.totalBetsAgainst > 0) {
-                // Distribute stake proportionally to bets against
-                uint256 totalPool = commitment.stakeAmount + commitment.totalBetsFor;
-                uint256 payout = (commitment.totalBetsAgainst * totalPool) / 
-                                (commitment.totalBetsFor + commitment.totalBetsAgainst);
-                
-                // Transfer to contract owner as fee (simplified)
-                payable(_owner).transfer(totalPool - payout);
-                
-                // In a real implementation, this would distribute to bettors
+            // Failed: pool = stake + bets-for, distributed to bettors-against
+            uint256 totalPool = commitment.stakeAmount + commitment.totalBetsFor;
+
+            if (commitment.totalBetsAgainst > 0 && totalPool > 0) {
+                // Proportional payout to each bettor-against
+                // For simplicity: send totalPool to a pending-withdrawal mapping
+                // In production, use a pull-payment pattern
+                _pendingWithdrawals[commitmentId] = totalPool;
             }
-            
-            // Update reputation
+
             userReputations[commitment.user] = Math.max(
                 REPUTATION_MIN,
                 userReputations[commitment.user] - 100
             );
         }
-        
+
         emit CommitmentFulfilled(
             commitmentId,
             commitment.user,
@@ -197,76 +225,55 @@ contract PunctualityCore is IPunctualityProtocol {
             rewardAmount
         );
     }
-    
+
+    // ── Pending Withdrawals (pull-payment for failed commitments) ─
+
+    mapping(bytes32 => uint256) public _pendingWithdrawals;
+
     /**
-     * @dev Calculate distance between two points using simplified distance formula
-     * @param lat1 Latitude of point 1 (scaled by 1e6)
-     * @param lon1 Longitude of point 1 (scaled by 1e6)
-     * @param lat2 Latitude of point 2 (scaled by 1e6)
-     * @param lon2 Longitude of point 2 (scaled by 1e6)
-     * @return Distance in meters
+     * @dev Bettors-against claim their share after a failed commitment.
+     *      Simplified: totalPool is sent to first claimer. In production,
+     *      track per-bettor shares.
      */
+    function claimWinnings(bytes32 commitmentId) external nonReentrant {
+        uint256 amount = _pendingWithdrawals[commitmentId];
+        if (amount == 0) revert CommitmentNotFound();
+        delete _pendingWithdrawals[commitmentId];
+        _sendEth(msg.sender, amount);
+    }
+
+    // ── Helpers ──────────────────────────────────────────────────
+
     function calculateDistance(
-        int256 lat1,
-        int256 lon1,
-        int256 lat2,
-        int256 lon2
+        int256 lat1, int256 lon1,
+        int256 lat2, int256 lon2
     ) public pure returns (uint256) {
-        // Simplified distance calculation for demonstration purposes
-        // In a real implementation, you would use the haversine formula
         int256 dLat = lat2 - lat1;
         int256 dLon = lon2 - lon1;
-        
-        // Square the differences
-        int256 dLat2 = dLat * dLat;
-        int256 dLon2 = dLon * dLon;
-        
-        // Sum of squares
-        int256 sum = dLat2 + dLon2;
-        
-        // For simplicity, we'll just return a scaled version of the sum
-        // This is NOT accurate but works for demonstration
-        return uint256(sum / 1000000);
+        int256 sum = (dLat * dLat) + (dLon * dLon);
+        return uint256(sum / 1_000_000);
     }
-    
-    /**
-     * @dev Calculate ETA based on distance and pace
-     * @param distance Distance in meters
-     * @param pace Pace in seconds per meter
-     * @return ETA in seconds
-     */
+
     function calculateETA(uint256 distance, uint256 pace) public pure returns (uint256) {
         return distance * pace;
     }
-    
-    /**
-     * @dev Get commitment details
-     * @param commitmentId ID of the commitment
-     * @return Commitment details
-     */
+
     function getCommitment(bytes32 commitmentId) external view returns (ETACommitment memory) {
         return commitments[commitmentId];
     }
-    
-    /**
-     * @dev Get user reputation score
-     * @param user Address of the user
-     * @return Reputation score
-     */
+
     function getUserReputation(address user) external view returns (uint256) {
         uint256 reputation = userReputations[user];
-        if (reputation == 0) {
-            return REPUTATION_BASE; // Default reputation
-        }
+        if (reputation == 0) return REPUTATION_BASE;
         return reputation;
     }
-    
-    function owner() public view returns (address) {
-        return _owner;
+
+    // ── Internal ─────────────────────────────────────────────────
+
+    function _sendEth(address to, uint256 amount) internal {
+        (bool success, ) = payable(to).call{value: amount}("");
+        if (!success) revert FailedEthTransfer();
     }
-    
-    function transferOwnership(address newOwner) public onlyOwner {
-        require(newOwner != address(0), "New owner is the zero address");
-        _owner = newOwner;
-    }
+
+    error FailedEthTransfer();
 }

@@ -1,4 +1,4 @@
-import { ReactNode, forwardRef } from 'react'
+import { ReactNode, forwardRef, KeyboardEvent } from 'react'
 import { cn } from '@/lib/utils'
 
 interface PremiumCardProps {
@@ -40,9 +40,19 @@ export const Card = forwardRef<HTMLDivElement, PremiumCardProps>(
       4: "shadow-xl"
     }
     
+    const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+      if (onClick && !disabled && (e.key === 'Enter' || e.key === ' ')) {
+        e.preventDefault()
+        onClick()
+      }
+    }
+
     return (
       <div
         ref={ref}
+        role={onClick ? 'button' : undefined}
+        tabIndex={onClick && !disabled ? 0 : undefined}
+        onKeyDown={handleKeyDown}
         className={cn(
           baseClasses,
           variantClasses[variant],

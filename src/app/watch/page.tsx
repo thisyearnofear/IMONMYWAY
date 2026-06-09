@@ -107,12 +107,13 @@ export default function WatchPage() {
           <div className="space-y-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-mono text-white/40">{listings.length} active listings</span>
-              <button
+              <PremiumButton
+                variant="ghost"
+                size="sm"
                 onClick={loadListings}
-                className="text-xs font-mono text-gold/60 hover:text-gold transition-colors"
               >
                 Refresh
-              </button>
+              </PremiumButton>
             </div>
             <AnimatePresence>
               {listings.map((listing, index) => {
