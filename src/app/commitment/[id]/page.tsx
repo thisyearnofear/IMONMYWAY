@@ -1,5 +1,7 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
+import "leaflet/dist/leaflet.css";
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/PremiumButton';
@@ -14,8 +16,6 @@ import { useRouter } from 'next/navigation';
 import { fulfillCommitmentAction } from './actions';
 import { somniaReactivity, type AgentActivityEvent } from '@/lib/somnia-reactivity';
 import { getContractAddresses } from '@/contracts/addresses';
-import { ethers } from 'ethers';
-import { ContractService } from '@/services/contractService';
 
 export default function CommitmentPage({ params }: any) {
   const [journey, setJourney] = useState<any>(null);
@@ -25,10 +25,23 @@ export default function CommitmentPage({ params }: any) {
   const [agentDecisions, setAgentDecisions] = useState<AgentActivityEvent[]>([]);
   const [agentSocialPosts, setAgentSocialPosts] = useState<AgentActivityEvent[]>([]);
   const [agentConnected, setAgentConnected] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState(0);
 
   const { addToast } = useUIStore();
   const { address, isConnected } = useWallet();
   const router = useRouter();
+
+  // Countdown timer
+  useEffect(() => {
+    if (!journey?.deadline) return;
+    const update = () => {
+      const remaining = Math.max(0, Math.floor((journey.deadline.getTime() - Date.now()) / 1000));
+      setTimeRemaining(remaining);
+    };
+    update();
+    const interval = setInterval(update, 1000);
+    return () => clearInterval(interval);
+  }, [journey?.deadline]);
 
   // Load commitment data from blockchain
   useEffect(() => {
@@ -36,6 +49,10 @@ export default function CommitmentPage({ params }: any) {
       if (!params.id) return;
       setIsLoading(true);
       try {
+        const [{ ethers }, { ContractService }] = await Promise.all([
+          import('ethers'),
+          import('@/services/contractService'),
+        ]);
         const service = new ContractService();
         const blockchainData = await service.getCommitment(params.id);
 
@@ -131,8 +148,6 @@ export default function CommitmentPage({ params }: any) {
       </div>
     );
   }
-
-  const timeRemaining = Math.max(0, Math.floor((journey.deadline.getTime() - Date.now()) / 1000));
 
   return (
     <div className="min-h-screen pb-16">

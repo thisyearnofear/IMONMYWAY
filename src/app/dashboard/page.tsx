@@ -1,9 +1,10 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useWallet } from '@/hooks/useWallet';
-import { ContractService, type AgentCommitmentState, type AgentConfig } from '@/services/contractService';
+import type { AgentCommitmentState, AgentConfig } from '@/services/contractService';
 import { somniaReactivity, type AgentActivityEvent } from '@/lib/somnia-reactivity';
 import { useNotifications } from '@/lib/notifications';
 import { Card, CardContent, DataPanel, DataRow } from '@/components/ui/PremiumCard';
@@ -12,7 +13,6 @@ import { AgentDecisionTimeline } from '@/components/agent/AgentDecisionTimeline'
 import { AgentStatusView } from '@/components/agent/AgentStatusView';
 import { AgentSocialFeed } from '@/components/agent/AgentSocialFeed';
 import { OnboardingTooltip } from '@/components/ui/OnboardingTooltip';
-import { ethers } from 'ethers';
 import { getContractAddresses, getNetworkConfig } from '@/contracts/addresses';
 
 const AGENT_ADDRESS = getContractAddresses().PunctualityAgent;
@@ -53,7 +53,9 @@ export default function AgentDashboardPage() {
   const { notifyCommitmentCreated, notifySettled } = useNotifications();
 
   const notifyRef = useRef({ notifyCommitmentCreated, notifySettled });
-  notifyRef.current = { notifyCommitmentCreated, notifySettled };
+  useEffect(() => {
+    notifyRef.current = { notifyCommitmentCreated, notifySettled };
+  });
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [agentConfig, setAgentConfig] = useState<AgentConfig | null>(null);
   const [activeCommitments, setActiveCommitments] = useState<string[]>([]);
@@ -70,6 +72,10 @@ export default function AgentDashboardPage() {
     if (!address || !AGENT_ADDRESS) return;
     setIsLoading(true);
     try {
+      const [{ ethers }, { ContractService }] = await Promise.all([
+        import('ethers'),
+        import('@/services/contractService'),
+      ]);
       const service = new ContractService();
       const authed = await service.isAgentAuthorized(address);
       setIsAuthorized(authed);
