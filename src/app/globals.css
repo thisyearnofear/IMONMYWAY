@@ -9,6 +9,113 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Dotted grid background */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: radial-gradient(circle, rgba(110, 43, 242, 0.08) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+body > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Glassmorphism card system */
+.glass-card {
+  position: relative;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.12),
+    0 8px 32px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+  transition: all 400ms cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.glass-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0.02) 40%,
+    transparent 60%
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+.glass-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1px solid transparent;
+  background: conic-gradient(
+    from -45deg at 50% 50%,
+    rgba(255, 255, 255, 0.12),
+    rgba(255, 255, 255, 0.02) 25%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.02) 75%,
+    rgba(255, 255, 255, 0.12)
+  ) border-box;
+  mask: linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  -webkit-mask-composite: xor;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.glass-card:hover {
+  box-shadow:
+    0 8px 24px rgba(110, 43, 242, 0.15),
+    0 16px 48px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+  border-color: rgba(110, 43, 242, 0.2);
+}
+
+.glass-card-violet {
+  box-shadow:
+    0 4px 16px rgba(110, 43, 242, 0.1),
+    0 8px 32px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.glass-card-gold {
+  border-color: rgba(234, 196, 108, 0.15);
+  box-shadow:
+    0 4px 16px rgba(234, 196, 108, 0.08),
+    0 8px 32px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.glass-card-gold:hover {
+  border-color: rgba(234, 196, 108, 0.3);
+  box-shadow:
+    0 8px 24px rgba(234, 196, 108, 0.15),
+    0 16px 48px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+/* Glass card content layer */
+.glass-card > * {
+  position: relative;
+  z-index: 3;
+}
+
 /* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 8px;

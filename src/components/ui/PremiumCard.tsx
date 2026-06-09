@@ -27,17 +27,17 @@ export const Card = forwardRef<HTMLDivElement, PremiumCardProps>(
     const baseClasses = "transition-all duration-500 ease-out"
     
     const variantClasses = {
-      premium: "bg-gradient-to-br from-gold/15 to-violet/15 border border-gold/30 rounded-xl",
-      enhanced: "bg-gradient-to-br from-gold/10 to-violet/10 border border-gold/20 rounded-xl", 
-      floating: "bg-gradient-to-br from-gold/10 to-violet/10 rounded-full",
-      minimal: "bg-gradient-to-br from-gold/15 to-violet/15 border border-gold/30 rounded-xl"
+      premium: "glass-card glass-card-gold",
+      enhanced: "glass-card",
+      floating: "glass-card glass-card-violet",
+      minimal: "glass-card"
     }
     
     const depthClasses = {
-      1: "shadow-sm",
-      2: "shadow-md", 
-      3: "shadow-lg",
-      4: "shadow-xl"
+      1: "",
+      2: "",
+      3: "glass-card-violet",
+      4: "glass-card-violet"
     }
     
     const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
@@ -57,9 +57,9 @@ export const Card = forwardRef<HTMLDivElement, PremiumCardProps>(
           baseClasses,
           variantClasses[variant],
           depthClasses[depth],
-          hover && !disabled && "hover:scale-[1.02] hover:-translate-y-2 hover:rotate-1",
-          glow && "ring-1 ring-blue-500/20 shadow-blue-500/10",
-          onClick && !disabled && "cursor-pointer active:scale-[0.98] active:rotate-0",
+          hover && !disabled && "hover:-translate-y-1",
+          glow && "ring-1 ring-violet-500/20",
+          onClick && !disabled && "cursor-pointer active:scale-[0.99]",
           disabled && "opacity-50 cursor-not-allowed",
           className
         )}

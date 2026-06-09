@@ -149,55 +149,59 @@ export default function HomePage() {
               transition={{ duration: 0.7, delay: 0.2 }}
               className="relative"
             >
-              <div className="relative bg-gradient-to-br from-violet-900/20 to-gold-900/20 rounded-3xl p-8 border border-violet-500/30 backdrop-blur-sm">
+              <div className="relative glass-card rounded-3xl p-8 glass-card-violet">
                 {/* Agent terminal mockup */}
-                <div className="relative bg-graphite-800 rounded-2xl border border-violet-500/20 overflow-hidden mx-auto max-w-sm font-mono">
+                <div className="relative rounded-2xl border border-violet-500/20 overflow-hidden mx-auto max-w-sm font-mono bg-black/40">
                   {/* Terminal header */}
-                  <div className="h-8 bg-graphite-700 flex items-center px-4 gap-2">
+                  <div className="h-8 bg-white/5 flex items-center px-4 gap-2 border-b border-white/5">
                     <div className="w-2.5 h-2.5 rounded-full bg-red-400/80"></div>
                     <div className="w-2.5 h-2.5 rounded-full bg-yellow-400/80"></div>
                     <div className="w-2.5 h-2.5 rounded-full bg-green-400/80"></div>
-                    <span className="text-[10px] text-gray-400 ml-2">punctuality-agent</span>
+                    <span className="text-[10px] text-gray-500 ml-2">punctuality-agent</span>
+                    <div className="ml-auto flex items-center gap-1.5">
+                      <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></div>
+                      <span className="text-[9px] text-green-400/80 uppercase tracking-wider">live</span>
+                    </div>
                   </div>
 
                   {/* Terminal content */}
                   <div className="p-5 text-xs space-y-3">
                     <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.8 }}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.8, type: 'spring', stiffness: 100 }}
                       className="text-green-400"
                     >
                       <span className="text-gray-500">$</span> agent authorized (max: 10 STT)
                     </motion.div>
                     <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 1.2 }}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 1.2, type: 'spring', stiffness: 100 }}
                       className="text-violet-400"
                     >
                       <span className="text-gray-500">&gt;</span> LLM reasoning: pace = 6:30/km
                     </motion.div>
                     <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 1.6 }}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 1.6, type: 'spring', stiffness: 100 }}
                       className="text-gold-400"
                     >
                       <span className="text-gray-500">&gt;</span> commitment created: 0x7f3a...c9e2
                     </motion.div>
                     <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 2.0 }}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 2.0, type: 'spring', stiffness: 100 }}
                       className="text-blue-400"
                     >
                       <span className="text-gray-500">&gt;</span> agent discovered counterparty
                     </motion.div>
                     <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 2.4 }}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 2.4, type: 'spring', stiffness: 100 }}
                       className="text-green-400"
                     >
                       <span className="text-gray-500">&gt;</span> proposal accepted ✓
@@ -211,21 +215,37 @@ export default function HomePage() {
                       <span className="text-gray-500">&gt;</span> monitoring deadline...
                       <span className="animate-pulse">█</span>
                     </motion.div>
+
+                    {/* Mini status bar */}
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 3.2 }}
+                      className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="w-1 h-1 rounded-full bg-violet-400"></div>
+                        <span className="text-[9px] text-white/40">rep: 7200/10000</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[9px] text-gold-400/60">35.2 STT</span>
+                      </div>
+                    </motion.div>
                   </div>
                 </div>
 
-                {/* Floating elements */}
+                {/* Floating orbs */}
                 <motion.div
                   aria-hidden="true"
-                  className="absolute -top-4 -right-4 w-8 h-8 bg-gold-500 rounded-full"
-                  animate={{ y: [0, -10, 0], scale: [1, 1.1, 1] }}
-                  transition={{ duration: 3, repeat: Infinity, delay: 0.5 }}
+                  className="absolute -top-6 -right-6 w-12 h-12 rounded-full bg-gold-500/20 blur-xl"
+                  animate={{ y: [0, -8, 0], scale: [1, 1.2, 1] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
                 />
                 <motion.div
                   aria-hidden="true"
-                  className="absolute -bottom-4 -left-4 w-6 h-6 bg-violet-500 rounded-full"
-                  animate={{ y: [0, 10, 0], scale: [1, 1.2, 1] }}
-                  transition={{ duration: 2.5, repeat: Infinity, delay: 1 }}
+                  className="absolute -bottom-4 -left-4 w-10 h-10 rounded-full bg-violet-500/20 blur-xl"
+                  animate={{ y: [0, 8, 0], scale: [1, 1.3, 1] }}
+                  transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
                 />
               </div>
             </motion.div>
@@ -254,12 +274,12 @@ export default function HomePage() {
             {FEATURES.map((feature, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
+                viewport={{ once: true, margin: '-50px' }}
+                transition={{ delay: index * 0.15, type: 'spring', stiffness: 80 }}
                 whileHover={{ y: -5 }}
-                className="bg-gradient-to-br from-graphite-600/50 to-graphite-700/30 backdrop-blur-lg rounded-2xl p-6 border border-violet-500/20 hover:border-gold-500/30 transition-all duration-300 group"
+                className="glass-card p-6 group"
               >
                 <div className="text-3xl mb-4 group-hover:scale-110 transition-transform duration-300">
                   {feature.icon}
@@ -293,14 +313,14 @@ export default function HomePage() {
             {STEPS.map((step, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
+                viewport={{ once: true, margin: '-50px' }}
+                transition={{ delay: index * 0.15, type: 'spring', stiffness: 80 }}
                 className="text-center relative"
               >
-                <div className="relative z-10 bg-gradient-to-br from-violet-900/50 to-gold-900/20 rounded-2xl p-8 border border-violet-500/30 backdrop-blur-sm">
-                  <div className="text-4xl font-bold text-white drop-shadow-[0_1px_1px_rgba(110,43,242,0.3)] mb-4">
+                <div className="relative z-10 glass-card glass-card-violet p-8 text-center">
+                  <div className="text-4xl font-bold bg-gradient-to-r from-violet-400 to-gold-400 bg-clip-text text-transparent mb-4">
                     {step.step}
                   </div>
                   <h3 className="text-xl font-bold text-white mb-3">{step.title}</h3>
@@ -320,41 +340,44 @@ export default function HomePage() {
       <section className="py-20 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="bg-gradient-to-br from-violet-900/30 to-gold-900/20 rounded-3xl p-12 border border-violet-500/30 backdrop-blur-sm"
+            transition={{ type: "spring", stiffness: 80, damping: 20 }}
+            className="glass-card glass-card-violet p-12"
           >
-            <h2 className="text-3xl md:text-4xl font-bold mb-6">
-              Deploy Your Agent <br />
-              <span className="text-white drop-shadow-[0_1px_1px_rgba(110,43,242,0.3)]">
-                in Under 2 Minutes
-              </span>
-            </h2>
-            <p className="text-gray-300 text-xl mb-8 max-w-2xl mx-auto">
-              Configure personality, fund with STT, and let your agent handle the rest
-            </p>
+            <div className="relative z-10">
+              <h2 className="text-3xl md:text-4xl font-bold mb-6">
+                Deploy Your Agent <br />
+                <span className="text-white drop-shadow-[0_1px_1px_rgba(110,43,242,0.3)]">
+                  in Under 2 Minutes
+                </span>
+              </h2>
+              <p className="text-gray-300 text-xl mb-8 max-w-2xl mx-auto">
+                Configure personality, fund with STT, and let your agent handle the rest
+              </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href={isConnected ? "/setup" : "/setup"}>
-                <Button
-                  size="lg"
-                  variant="gradient"
-                  className="px-8 py-4 text-lg font-semibold rounded-xl"
-                >
-                  {isConnected ? "Configure Agent" : "Deploy Your Agent"}
-                </Button>
-              </Link>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link href={isConnected ? "/setup" : "/setup"}>
+                  <Button
+                    size="lg"
+                    variant="gradient"
+                    className="px-8 py-4 text-lg font-semibold rounded-xl"
+                  >
+                    {isConnected ? "Configure Agent" : "Deploy Your Agent"}
+                  </Button>
+                </Link>
 
-              <Link href="/dashboard">
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="px-8 py-4 text-lg font-semibold rounded-xl border-2 border-gold-500/50 hover:bg-gold-500/10"
-                >
-                  Try Demo Dashboard
-                </Button>
-              </Link>
+                <Link href="/dashboard">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="px-8 py-4 text-lg font-semibold rounded-xl border-2 border-gold-500/50 hover:bg-gold-500/10"
+                  >
+                    Try Demo Dashboard
+                  </Button>
+                </Link>
+              </div>
             </div>
           </motion.div>
         </div>
