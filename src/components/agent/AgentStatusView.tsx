@@ -42,7 +42,7 @@ export function AgentStatusView({ config, balance, networkName, currency, reputa
 
     fetchInsight();
     return () => { cancelled = true; };
-  }, [config?.personality, config?.maxStake, balance, reputationScore, currency, generate]);
+  }, [config, config?.personality, config?.maxStake, balance, reputationScore, currency, generate]);
 
   return (
     <DataPanel title="Agent" status={status}>

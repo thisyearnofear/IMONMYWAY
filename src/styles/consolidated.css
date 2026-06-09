@@ -2,9 +2,6 @@
     TIMEPIECE DESIGN SYSTEM - Single Source of Truth
     ========================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
-
 /* ==========================================================================
     CSS Custom Properties - Timepiece Theme
     ========================================================================== */
@@ -70,9 +67,9 @@
     --depth-4: 0 12px 40px rgba(0, 0, 0, 0.25);
 
     /* Typography */
-    --font-mono: 'JetBrains Mono', 'Courier New', monospace;
-    --font-display: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: var(--font-jetbrains, 'JetBrains Mono'), 'Courier New', monospace;
+    --font-display: var(--font-inter, 'Inter'), -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-body: var(--font-inter, 'Inter'), -apple-system, BlinkMacSystemFont, sans-serif;
 
     /* Spacing & Layout */
     --border-radius: 0.75rem;

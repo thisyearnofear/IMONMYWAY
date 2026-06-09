@@ -171,7 +171,7 @@ export function useWallet(): UseWalletReturn {
       })
       setWalletState(prev => ({ ...prev, isConnecting: false }))
     }
-  }, [isMetaMaskInstalled, updateWalletState, addToast, walletState.address, provider])
+  }, [isMetaMaskInstalled, updateWalletState, addToast, provider])
 
   // Disconnect wallet
   const disconnect = useCallback(() => {

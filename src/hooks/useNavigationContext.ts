@@ -78,16 +78,17 @@ function useLocalStorage<T>(key: string, defaultValue: T) {
     }
   }, [key]);
 
-  const setStoredValue = (newValue: T) => {
+  const setStoredValue = (newValue: T | ((prev: T) => T)) => {
     try {
-      setValue(newValue);
-      window.localStorage.setItem(key, JSON.stringify(newValue));
+      const resolved = typeof newValue === 'function' ? (newValue as (prev: T) => T)(value) : newValue;
+      setValue(resolved);
+      window.localStorage.setItem(key, JSON.stringify(resolved));
     } catch (error) {
       console.warn(`Error setting localStorage key "${key}":`, error);
     }
   };
 
-  return [value, setStoredValue, isLoaded] as const;
+  return [value, setStoredValue, isLoaded] as [T, (newValue: T | ((prev: T) => T)) => void, boolean];
 }
 
 // Navigation flow definition
@@ -174,27 +175,24 @@ export function useNavigationContext(): NavigationContext {
       metadata: {}
     };
     
-    // Update previous step duration
-    const updatedSteps = [...journey.steps];
-    if (updatedSteps.length > 0) {
-      const lastStep = updatedSteps[updatedSteps.length - 1];
-      lastStep.duration = Date.now() - lastStep.timestamp;
-    }
-    
-    // Add current step
-    updatedSteps.push(currentStep);
-    
-    // Keep only last 20 steps to prevent storage bloat
-    const trimmedSteps = updatedSteps.slice(-20);
-    
-    setJourney({
-      ...journey,
-      steps: trimmedSteps,
-      lastActiveTimestamp: Date.now()
+    setJourney(prev => {
+      const updatedSteps = [...prev.steps];
+      if (updatedSteps.length > 0) {
+        const lastStep = updatedSteps[updatedSteps.length - 1];
+        lastStep.duration = Date.now() - lastStep.timestamp;
+      }
+      updatedSteps.push(currentStep);
+      const trimmedSteps = updatedSteps.slice(-20);
+      
+      setPreviousPath(prev.steps[prev.steps.length - 1]?.path);
+      
+      return {
+        ...prev,
+        steps: trimmedSteps,
+        lastActiveTimestamp: Date.now()
+      };
     });
-    
-    setPreviousPath(journey.steps[journey.steps.length - 1]?.path);
-  }, [pathname, journeyLoaded]);
+  }, [pathname, journeyLoaded, setJourney]);
   
   // Calculate current step in flow
   const currentFlow = NAVIGATION_FLOW[pathname as keyof typeof NAVIGATION_FLOW];

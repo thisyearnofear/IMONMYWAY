@@ -124,7 +124,7 @@ export default function CommitmentPage({ params }: any) {
         <Card variant="enhanced">
           <CardContent className="text-center py-12 px-16">
             <h2 className="text-xl font-bold mb-2">Commitment Not Found</h2>
-            <p className="text-white/60 mb-4 text-sm">This commitment doesn't exist or has expired.</p>
+            <p className="text-white/60 mb-4 text-sm">This commitment doesn&apos;t exist or has expired.</p>
             <Button variant="primary" onClick={() => router.push('/watch')}>Back to Watch</Button>
           </CardContent>
         </Card>
@@ -199,7 +199,7 @@ export default function CommitmentPage({ params }: any) {
         {isOwner && journey.status === 'active' && (
           <motion.div className="mt-6" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
             <Button onClick={handleFulfill} variant="primary" size="lg" className="w-full">
-              Fulfill Commitment (I've arrived)
+              Fulfill Commitment (I&apos;ve arrived)
             </Button>
           </motion.div>
         )}

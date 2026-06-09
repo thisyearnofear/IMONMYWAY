@@ -126,7 +126,7 @@ export default function AgentDashboardPage() {
       unsubscribe();
       somniaReactivity.disconnect();
     };
-  }, [AGENT_ADDRESS, isAuthorized]);
+  }, [isAuthorized]);
 
   const networkConfig = getNetworkConfig();
   const isDemo = !isConnected;
