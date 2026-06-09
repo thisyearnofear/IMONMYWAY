@@ -115,7 +115,7 @@ export default function HomePage() {
                     variant="outline"
                     className="px-8 py-4 text-lg font-semibold rounded-xl border-2 border-gold-500/50 hover:bg-gold-500/10"
                   >
-                    View Dashboard
+                    Try Demo Dashboard
                   </Button>
                 </Link>
               </motion.div>
@@ -352,7 +352,7 @@ export default function HomePage() {
                   variant="outline"
                   className="px-8 py-4 text-lg font-semibold rounded-xl border-2 border-gold-500/50 hover:bg-gold-500/10"
                 >
-                  View Live Agents
+                  Try Demo Dashboard
                 </Button>
               </Link>
             </div>
