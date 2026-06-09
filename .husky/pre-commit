@@ -37,7 +37,7 @@ if [ "$FOUND_SECRETS" -eq 1 ]; then
 fi
 
 # Run secretlint for known token formats
-npx secretlint "$STAGED_FILES"
+echo "$STAGED_FILES" | xargs npx secretlint
 
 # Run lint-staged for code linting
 npx lint-staged

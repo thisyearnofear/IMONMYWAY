@@ -223,6 +223,9 @@ contract PunctualityAgent is IAgentRequesterHandler, SomniaEventHandler {
     // Track active commitment count per principal
     mapping(address => uint256) public activeCommitmentCount;
 
+    // Index of authorized principals for iteration
+    address[] private _authorizedPrincipalsList;
+
     // ──────────────────────────────────────────────
     // EVENTS
     // ──────────────────────────────────────────────
@@ -265,6 +268,7 @@ contract PunctualityAgent is IAgentRequesterHandler, SomniaEventHandler {
 
         authorizedPrincipals[msg.sender] = true;
         agentConfigs[msg.sender] = config;
+        _authorizedPrincipalsList.push(msg.sender);
 
         emit AgentAuthorized(msg.sender, config.maxStake, config.personality);
     }
@@ -274,6 +278,7 @@ contract PunctualityAgent is IAgentRequesterHandler, SomniaEventHandler {
         require(activeCommitmentCount[msg.sender] == 0, "Active commitments exist");
 
         authorizedPrincipals[msg.sender] = false;
+        _removeFromAuthorizedList(msg.sender);
         emit AgentRevoked(msg.sender);
     }
 
@@ -642,11 +647,19 @@ contract PunctualityAgent is IAgentRequesterHandler, SomniaEventHandler {
         emit AgentSettledCommitment(commitmentId, success, success ? "On time" : "Deadline passed");
     }
 
-    // Placeholder — in production, index authorized principals via events
-    function _getAuthorizedPrincipals() internal pure returns (address[] memory) {
-        // This is a stub. For a real implementation, maintain an array
-        // of authorized principals or iterate event logs off-chain.
-        return new address[](0);
+    // Placeholder — now backed by _authorizedPrincipalsList
+    function _getAuthorizedPrincipals() internal view returns (address[] memory) {
+        return _authorizedPrincipalsList;
+    }
+
+    function _removeFromAuthorizedList(address principal) internal {
+        for (uint256 i = 0; i < _authorizedPrincipalsList.length; i++) {
+            if (_authorizedPrincipalsList[i] == principal) {
+                _authorizedPrincipalsList[i] = _authorizedPrincipalsList[_authorizedPrincipalsList.length - 1];
+                _authorizedPrincipalsList.pop();
+                return;
+            }
+        }
     }
 
     /**

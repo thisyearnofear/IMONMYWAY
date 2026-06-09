@@ -196,25 +196,20 @@ contract PunctualityCore is IPunctualityProtocol, ReentrancyGuard {
             // Pay user — call() not transfer()
             _sendEth(commitment.user, rewardAmount);
 
-            userReputations[commitment.user] = Math.min(
-                REPUTATION_MAX,
-                userReputations[commitment.user] + 100
-            );
+            uint256 rep = userReputations[commitment.user];
+            if (rep == 0) rep = REPUTATION_BASE;
+            userReputations[commitment.user] = Math.min(REPUTATION_MAX, rep + 100);
         } else {
             // Failed: pool = stake + bets-for, distributed to bettors-against
             uint256 totalPool = commitment.stakeAmount + commitment.totalBetsFor;
 
             if (commitment.totalBetsAgainst > 0 && totalPool > 0) {
-                // Proportional payout to each bettor-against
-                // For simplicity: send totalPool to a pending-withdrawal mapping
-                // In production, use a pull-payment pattern
                 _pendingWithdrawals[commitmentId] = totalPool;
             }
 
-            userReputations[commitment.user] = Math.max(
-                REPUTATION_MIN,
-                userReputations[commitment.user] - 100
-            );
+            uint256 rep = userReputations[commitment.user];
+            if (rep == 0) rep = REPUTATION_BASE;
+            userReputations[commitment.user] = Math.max(REPUTATION_MIN, rep - 100);
         }
 
         emit CommitmentFulfilled(
@@ -266,6 +261,10 @@ contract PunctualityCore is IPunctualityProtocol, ReentrancyGuard {
         uint256 reputation = userReputations[user];
         if (reputation == 0) return REPUTATION_BASE;
         return reputation;
+    }
+
+    function setReputation(address user, uint256 value) external onlyOwner {
+        userReputations[user] = value;
     }
 
     // ── Internal ─────────────────────────────────────────────────
