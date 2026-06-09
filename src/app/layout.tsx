@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { PremiumNavigation } from "@/components/layout/PremiumNavigation";
 import { GlobalErrorBoundary } from '@/components/core/GlobalErrorBoundary';
 import { ToastProvider, ToastContainer } from '@/components/unified/UnifiedToast';
 
-const inter = Inter({
+const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-inter",
+  variable: "--font-display",
   display: "swap",
 });
 
@@ -41,7 +41,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${spaceGrotesk.variable} ${jetbrainsMono.variable}`} suppressHydrationWarning>
       <body className="min-h-screen bg-graphite-900 text-white antialiased" suppressHydrationWarning={true}>
         <a
           href="#main-content"

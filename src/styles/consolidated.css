@@ -68,8 +68,8 @@
 
     /* Typography */
     --font-mono: var(--font-jetbrains, 'JetBrains Mono'), 'Courier New', monospace;
-    --font-display: var(--font-inter, 'Inter'), -apple-system, BlinkMacSystemFont, sans-serif;
-    --font-body: var(--font-inter, 'Inter'), -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-display: var(--font-display, 'Space Grotesk'), -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-body: var(--font-display, 'Space Grotesk'), -apple-system, BlinkMacSystemFont, sans-serif;
 
     /* Spacing & Layout */
     --border-radius: 0.75rem;

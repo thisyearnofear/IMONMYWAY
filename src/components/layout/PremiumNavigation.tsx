@@ -11,10 +11,10 @@ import { ClientOnly } from "@/components/core/ClientOnly";
 
 // Enhanced navigation items with contextual information
 const NAV_ITEMS = [
-  { href: "/setup", label: "Setup", icon: "⚙️", description: "Configure your agent" },
-  { href: "/dashboard", label: "Dashboard", icon: "🤖", description: "Agent activity" },
-  { href: "/watch", label: "Watch", icon: "👁️", description: "Live commitments" },
-  { href: "/rankings", label: "Rankings", icon: "🏆", description: "Agent reputation" }
+  { href: "/setup", label: "Setup", description: "Configure your agent" },
+  { href: "/dashboard", label: "Dashboard", description: "Agent activity" },
+  { href: "/watch", label: "Watch", description: "Live commitments" },
+  { href: "/rankings", label: "Rankings", description: "Agent reputation" }
 ];
 
 const getPageContext = (pathname: string) => {
@@ -91,15 +91,20 @@ export function PremiumNavigation() {
         <Link href="/" className="flex items-center gap-3 group">
           <div className="relative">
             <motion.div
-              className="w-10 h-10 bg-gradient-to-br from-gold-500 to-violet-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
+              className="w-10 h-10 bg-graphite-800 border border-gold-500/30 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
               whileHover={{ rotate: [0, 5, -5, 0] }}
               transition={{ duration: 0.5 }}
             >
-              <span className="text-xl font-bold text-white">∞</span>
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <circle cx="9" cy="9" r="7" stroke="#EAC46C" strokeWidth="1.5" />
+                <line x1="9" y1="9" x2="9" y2="4.5" stroke="#EAC46C" strokeWidth="1.5" strokeLinecap="round" />
+                <line x1="9" y1="9" x2="12" y2="9" stroke="rgba(255,255,255,0.6)" strokeWidth="1" strokeLinecap="round" />
+                <circle cx="9" cy="9" r="1" fill="#EAC46C" />
+              </svg>
             </motion.div>
           </div>
           <div className="hidden sm:block">
-            <h1 className="text-xl font-bold text-white drop-shadow-[0_1px_1px_rgba(110,43,242,0.3)]">
+            <h1 className="text-lg font-bold text-white tracking-tight">
               IMONMYWAY
             </h1>
           </div>
@@ -120,17 +125,12 @@ export function PremiumNavigation() {
                     variant={active ? "primary" : "ghost"}
                     size="sm"
                     className={`relative group rounded-lg px-4 py-2 transition-all duration-200 ${
-                      active 
-                        ? "text-white bg-gradient-to-r from-violet-600 to-purple-600 shadow-lg" 
+                      active
+                        ? "text-white bg-gradient-to-r from-violet-600 to-purple-600 shadow-lg"
                         : "text-gray-300 hover:text-white hover:bg-violet-500/10"
                     }`}
                   >
-                    <span className="flex items-center gap-2">
-                      <span className={`transition-transform ${active ? 'scale-110' : 'group-hover:scale-110'}`}>
-                        {item.icon}
-                      </span>
-                      {item.label}
-                    </span>
+                    <span>{item.label}</span>
                     {active && (
                       <motion.div
                         layoutId="activeNavIndicator"
@@ -235,7 +235,7 @@ export function PremiumNavigation() {
                               className="w-full justify-start border-violet-500/30 hover:bg-violet-500/10"
                               onClick={() => setIsWalletDropdownOpen(false)}
                             >
-                              🤖 View Dashboard
+                              View Dashboard
                             </Button>
                           </Link>
                           <Button
@@ -244,7 +244,7 @@ export function PremiumNavigation() {
                             className="w-full justify-start border-red-500/30 hover:bg-red-500/10 text-red-400 hover:text-red-300"
                             onClick={handleDisconnect}
                           >
-                            🔌 Disconnect Wallet
+                            Disconnect Wallet
                           </Button>
                         </div>
                       </div>
@@ -318,9 +318,6 @@ export function PremiumNavigation() {
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <span className={`text-lg transition-transform ${active ? 'scale-110' : ''}`} aria-hidden="true">
-                        {item.icon}
-                      </span>
                       <div>
                         <div className={`font-medium ${active ? 'text-white' : ''}`}>{item.label}</div>
                         <div className={`text-xs ${active ? 'text-violet-200' : 'text-gray-500'}`}>
@@ -383,7 +380,7 @@ export function PremiumNavigation() {
                           className="w-full justify-start border-violet-500/30 hover:bg-violet-500/10"
                           onClick={() => setIsMobileMenuOpen(false)}
                         >
-                          🤖 View Dashboard
+                          View Dashboard
                         </Button>
                       </Link>
                       <Button
@@ -394,7 +391,7 @@ export function PremiumNavigation() {
                           setIsMobileMenuOpen(false);
                         }}
                       >
-                        🔌 Disconnect Wallet
+                        Disconnect Wallet
                       </Button>
                     </div>
                   </>
