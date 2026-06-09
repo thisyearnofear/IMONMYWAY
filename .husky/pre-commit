@@ -13,7 +13,7 @@ fi
 FOUND_SECRETS=0
 
 # Check for hex private keys (0x + 64 hex chars)
-PRIV_KEY_HITS=$(echo "$STAGED_FILES" | xargs grep -lE '0x[0-9a-fA-F]{64}' 2>/dev/null)
+PRIV_KEY_HITS=$(echo "$STAGED_FILES" | xargs grep -lE '0x[0-9a-fA-F]{64}' 2>/dev/null || true)
 if [ -n "$PRIV_KEY_HITS" ]; then
   echo "🚨 BLOCKED: Possible private key found in staged files:"
   echo "$PRIV_KEY_HITS"
@@ -23,7 +23,7 @@ if [ -n "$PRIV_KEY_HITS" ]; then
 fi
 
 # Check for .env files with actual secret values
-ENV_HITS=$(echo "$STAGED_FILES" | grep -E '\.env' | xargs grep -lE '(PRIVATE_KEY|SECRET|PASSWORD|API_KEY)=.+' 2>/dev/null)
+ENV_HITS=$(echo "$STAGED_FILES" | grep -E '\.env' | xargs grep -lE '(PRIVATE_KEY|SECRET|PASSWORD|API_KEY)=.+' 2>/dev/null || true)
 if [ -n "$ENV_HITS" ]; then
   echo "🚨 BLOCKED: Possible secrets in env file:"
   echo "$ENV_HITS"
