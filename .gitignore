@@ -78,6 +78,21 @@ Thumbs.db
 # Certificates/keys
 # ===============
 *.pem
+*.key
+*.keystore
+*.json.key
+wallet*.json
+secrets.json
+credentials.json
+
+# ===============
+# Secrets & private keys
+# ===============
+.secret
+.secrets
+*.secret
+.env.local
+.env.*.local
 
 # ===============
 # Editors/IDE

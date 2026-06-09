@@ -1,68 +1,124 @@
 # IMONMYWAY Technical Documentation
 
-## 🏗️ **System Architecture**
+## System Architecture
 
-### **Clean & Focused Design**
-Following **AGGRESSIVE CONSOLIDATION** principles - minimal database, maximum blockchain leverage:
+### Agent-Native Design
+Built on Somnia's Agentic L1 — autonomous agents are first-class actors, not wrappers around a dApp.
 
 ```
-┌─────────────────────────────────────┐
-│        Social Integration           │
-│    (Farcaster/Twitter APIs)        │  ← Leverage existing networks
-├─────────────────────────────────────┤
-│         AI Engine                  │
-│   (On-chain Performance Analysis)   │  ← Trustless learning
-├─────────────────────────────────────┤
-│       Smart Contracts              │
-│      (Somnia Network)              │  ← Single source of truth
-├─────────────────────────────────────┤
-│        Frontend                    │
-│   (Next.js 14 + Real-time GPS)    │  ← Mobile-optimized PWA
-└─────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                      SOMNIA ON-CHAIN                            │
+│                                                                  │
+│  ┌────────────────┐  ┌──────────────────┐  ┌─────────────────┐ │
+│  │PunctualityCore │◄─┤ PunctualityAgent │◄─┤ AgentRegistry   │ │
+│  │(staking/settle)│  │(IAgentRequester  │  │(discovery/nego) │ │
+│  │                │  │ Handler)         │  │                 │ │
+│  └────────────────┘  └───────┬──────────┘  └─────────────────┘ │
+│                              │                                   │
+│         ┌────────────────────┼────────────────────┐             │
+│         ▼                    ▼                    ▼             │
+│  ┌──────────────┐  ┌───────────────┐  ┌─────────────────────┐  │
+│  │LLM Inference │  │JSON API Agent │  │On-Chain Reactivity  │  │
+│  │Agent (reason)│  │(traffic/data) │  │(BlockTick, events)  │  │
+│  └──────────────┘  └───────────────┘  └─────────────────────┘  │
+│                                                                  │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │              Data Streams (GPS state publishing)          │   │
+│  └──────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
+         │
+         ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    OFF-CHAIN / FRONTEND                          │
+│                                                                  │
+│  ┌──────────────────┐  ┌──────────────────┐  ┌───────────────┐ │
+│  │Agent Dashboard   │  │Off-Chain         │  │Venice AI      │ │
+│  │(spectator UI)    │  │Reactivity SDK    │  │(supplemental  │ │
+│  │Next.js 14        │  │(WebSocket stream)│  │ reasoning)    │ │
+│  └──────────────────┘  └──────────────────┘  └───────────────┘ │
+│                                                                  │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │       PostgreSQL + Prisma (agent state cache)            │   │
+│  └──────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-### **Key Innovation: Trustless AI Learning**
+### Key Innovation: Autonomous Agent Orchestration
 ```typescript
-// ❌ Traditional: Trust user input
-const userProfile = await database.getUserProfile(userId);
+// Agents reason autonomously using on-chain LLM inference
+const pacePayload = abi.encodeWithSelector(
+  ILLMAgent.inferNumber.selector,
+  pacePrompt,
+  systemPrompt,
+  minPace, maxPace,
+  true // chain-of-thought
+);
 
-// ✅ Our approach: Analyze blockchain truth
-const history = await contractService.getUserPerformanceHistory(address);
-const aiSuggestion = AICommitmentEngine.generateSuggestion(address, distance, context);
-```
+// Somnia validators execute independently, reach consensus
+const requestId = platform.createRequest{value: deposit}(
+  llmAgentId, address(this), this.handleResponse.selector, payload
+);
 
-## 🧠 **AI Engine Architecture**
-
-### **Core Components**
-
-#### **AICommitmentEngine** (`src/lib/ai-commitment-engine.ts`)
-```typescript
-class AICommitmentEngine {
-  // Analyzes actual blockchain performance
-  static async generateSuggestion(
-    userAddress: string,
-    distance: number,
-    context: 'work' | 'social' | 'urgent'
-  ): Promise<AICommitmentSuggestion>
-
-  // Generates viral social content
-  static generateSocialMessage(suggestion, destination, context): string
+// Callback delivers consensus-verified result
+function handleResponse(uint256 requestId, Response[] memory responses,
+    ResponseStatus status, Request memory details) external {
+    int256 pace = abi.decode(responses[0].result, (int256));
+    // Agent acts autonomously — no human needed
 }
 ```
 
-#### **SocialIntegrationService** (`src/lib/social-integration.ts`)
-```typescript
-class SocialIntegrationService {
-  // Cross-platform sharing
-  static async shareCommitmentCreation(commitment, platforms)
-  
-  // Social sentiment analysis
-  static async analyzeSocialSentiment(walletAddress): Promise<SocialReputation>
-  
-  // Viral potential calculation
-  static async getViralPotential(walletAddress): Promise<number>
+## AI Engine Architecture
+
+### On-Chain Agent Reasoning (Primary)
+
+The autonomous agent uses Somnia's LLM inference agent for all critical decisions. These calls are deterministic (fixed temperature) and consensus-verified across validator nodes.
+
+```solidity
+// In PunctualityAgent.sol — autonomous pace decision
+function _decidepace(address principal, uint256 distance, string calldata context)
+    internal returns (uint256 requestId)
+{
+    string memory prompt = string(abi.encodePacked(
+        "Principal reputation: ", _uint2str(reputation), "/10000. ",
+        "Distance: ", _uint2str(distance), "m. Context: ", context, ". ",
+        "Recommend pace in seconds per km."
+    ));
+
+    bytes memory payload = abi.encodeWithSelector(
+        ILLMAgent.inferNumber.selector,
+        prompt,
+        "You are a punctuality optimization agent. Be precise and conservative.",
+        int256(30),   // min sec/km
+        int256(300),  // max sec/km
+        true          // chain-of-thought
+    );
+
+    uint256 deposit = platform.getRequestDeposit() + (0.07 ether * 3);
+    return platform.createRequest{value: deposit}(
+        llmAgentId, address(this), this.handleResponse.selector, payload
+    );
 }
 ```
+
+### Off-Chain AI (Supplemental)
+
+The existing TypeScript AI services provide richer reasoning for the frontend dashboard. They do not drive autonomous decisions.
+
+#### AIService (`src/lib/ai-service.ts`)
+- Stake recommendations (off-chain supplement to agent decisions)
+- Reputation predictions (dashboard analytics)
+- Betting odds calculation (spectator display)
+- Contextual insights (user-facing explanations)
+
+#### AICommitmentEngine (`src/lib/ai-commitment-engine.ts`)
+- Historical performance analysis from on-chain data
+- Rule-based fallback when Venice AI unavailable
+- Social message generation (supplement to agent-generated posts)
+
+#### Venice AI Routes (`src/app/api/ai/`)
+- Enhanced pace recommendations with richer context
+- Reputation trend analysis
+- Dashboard enrichment — not autonomous decision-making
 
 ## 🗄️ **Database Architecture (Minimal)**
 
@@ -101,12 +157,28 @@ bets {
 }
 ```
 
-## 📜 **Smart Contract Architecture**
+## Smart Contract Architecture
 
-### **PunctualityCore.sol** (`contracts/core/PunctualityCore.sol`)
+### Contract Hierarchy
+
+```
+contracts/
+  core/
+    PunctualityCore.sol          # Commitment staking, betting, settlement
+  agents/
+    PunctualityAgent.sol         # Agent orchestration (IAgentRequesterHandler)
+    AgentRegistry.sol            # Agent discovery and counterparty matching
+  interfaces/
+    IPunctualityProtocol.sol     # Core protocol interface
+  lib/
+    Math.sol                     # Math utilities
+```
+
+### PunctualityCore (`contracts/core/PunctualityCore.sol`)
+The settlement layer — handles commitment lifecycle, staking, betting, and payout. **Unchanged** from original design; agents call its existing functions.
+
 ```solidity
 contract PunctualityCore {
-    // Core commitment structure
     struct ETACommitment {
         address user;
         uint256 stakeAmount;
@@ -122,51 +194,116 @@ contract PunctualityCore {
         uint256 totalBetsAgainst;
     }
 
-    // AI learns from these events
+    function createCommitment(...) external payable returns (bytes32);
+    function placeBet(bytes32 commitmentId, bool bettingFor) external payable;
+    function fulfillCommitment(bytes32 commitmentId, LocationData memory arrivalLocation) external;
+    function getUserReputation(address user) external view returns (uint256);
+
     event CommitmentCreated(bytes32 indexed commitmentId, address indexed user, ...);
     event CommitmentFulfilled(bytes32 indexed commitmentId, bool successful, ...);
+    event BetPlaced(bytes32 indexed commitmentId, address indexed bettor, ...);
 }
 ```
 
-### **Event-Driven AI Learning**
-```typescript
-// AI analyzes these blockchain events
-const createdEvents = await contract.queryFilter(contract.filters.CommitmentCreated(null, userAddress));
-const fulfilledEvents = await contract.queryFilter(contract.filters.CommitmentFulfilled(null, userAddress));
+### PunctualityAgent (`contracts/agents/PunctualityAgent.sol`)
+The agent orchestration layer — implements Somnia's `IAgentRequesterHandler` to receive agent responses and act autonomously.
 
-// Build performance history from trustless on-chain data
-const history = this.combineEvents(createdEvents, fulfilledEvents);
+Key responsibilities:
+- Invokes LLM inference agent for pace/deadline/settlement decisions
+- Invokes JSON API agent for traffic/weather context
+- Subscribes to on-chain reactivity (BlockTick for deadline monitoring)
+- Publishes state to Data Streams
+- Manages agent authorization and configuration per principal
+
+### AgentRegistry (`contracts/agents/AgentRegistry.sol`)
+On-chain registry for agent discovery — agents list their active commitments, counterparty agents find them.
+
+```solidity
+contract AgentRegistry {
+    function listAgent(bytes32 commitmentId, address principal, uint256 deadline) external;
+    function findCounterpartyAgent(address targetPrincipal) external view returns (AgentListing memory);
+
+    event AgentListed(bytes32 indexed commitmentId, address indexed principal, address agentContract);
+    event AgentMatched(bytes32 indexed commitmentA, bytes32 indexed commitmentB);
+}
+```
+
+### Somnia Integration Points
+
+```solidity
+// Platform contract addresses
+address constant SOMNIA_TESTNET_PLATFORM = 0x037Bb9C718F3f7fe5eCBDB0b600D607b52706776;
+address constant SOMNIA_MAINNET_PLATFORM = 0x5E5205CF39E766118C01636bED000A54D93163E6;
+
+// Reactivity precompile
+address constant REACTIVITY_PRECOMPILE = 0x0100;
+
+// Agent call pattern
+bytes memory payload = abi.encodeWithSelector(ILLMAgent.inferNumber.selector, prompt, system, min, max, true);
+uint256 deposit = platform.getRequestDeposit() + (costPerAgent * subcommitteeSize);
+platform.createRequest{value: deposit}(agentId, address(this), this.handleResponse.selector, payload);
 ```
 
 ## 🚀 **Deployment & Configuration**
 
-### **Environment Setup**
+### Environment Setup
 ```env
 # Blockchain
-SOMNIA_RPC_URL="https://rpc.somnia.network"
+SOMNIA_RPC_URL="https://api.infra.testnet.somnia.network"
+SOMNIA_WS_URL="wss://api.infra.testnet.somnia.network"
+SOMNIA_CHAIN_ID=50312
 PRIVATE_KEY="your_private_key_here"
 
-# Database (minimal usage)
+# Somnia Agent Platform
+SOMNIA_PLATFORM_ADDRESS="0x037Bb9C718F3f7fe5eCBDB0b600D607b52706776"
+LLM_AGENT_ID="your_registered_llm_agent_id"
+JSON_API_AGENT_ID="your_registered_json_api_agent_id"
+PARSE_WEBSITE_AGENT_ID="12875401142070969085"
+
+# Database (agent state cache)
 DATABASE_URL="postgresql://username:password@localhost:5432/punctuality_protocol"
+
+# Off-Chain AI (supplemental)
+VENICE_API_KEY="your_venice_key"
 
 # Social APIs (future integration)
 FARCASTER_API_KEY="your_farcaster_key"
 TWITTER_API_KEY="your_twitter_key"
 ```
 
-### **Build Commands**
+### Build Commands
 ```bash
 pnpm install              # Install dependencies
 pnpm build               # Production build
 pnpm dev                 # Development server
-npm run db:deploy        # Apply database migrations (minimal)
+npm run db:deploy        # Apply database migrations
 ```
 
-### **Smart Contract Deployment**
+### Smart Contract Deployment
 ```bash
-# Prerequisites: Node.js 18+, pnpm, wallet with STT tokens
-pnpm compile             # Compile contracts
-pnpm deploy --network somnia_testnet  # Deploy to Somnia
+# Compile all contracts
+npx hardhat compile
+
+# Deploy to Somnia testnet (chain 50312)
+npx hardhat run scripts/deploy.ts --network somnia_testnet
+
+# Verify contracts on explorer
+npx hardhat verify --network somnia_testnet <CONTRACT_ADDRESS> <CONSTRUCTOR_ARGS>
+
+# Register agent IDs via Somnia portal
+# https://agents.testnet.somnia.network
+```
+
+### Somnia Reactivity Setup
+```bash
+# Install reactivity contracts
+npm install @somnia-chain/reactivity-contracts
+
+# Install off-chain reactivity SDK
+npm install @somnia-chain/reactivity
+
+# Fund wallet for reactivity subscriptions (32 STT minimum balance)
+# Subscribe via contract constructor — see PunctualityAgent.sol
 ```
 
 ## 📊 **Performance & Optimization**

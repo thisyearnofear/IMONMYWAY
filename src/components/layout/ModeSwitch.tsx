@@ -10,16 +10,16 @@ export function ModeSwitch() {
   
   const modes = [
     {
-      path: '/plan',
-      label: 'Plan',
-      icon: '🗺️',
-      description: 'Set route & calculate ETA'
+      path: '/setup',
+      label: 'Setup',
+      icon: '⚙️',
+      description: 'Configure your agent'
     },
     {
-      path: '/create',
-      label: 'Create',
-      icon: '🧠',
-      description: 'Create AI challenge'
+      path: '/dashboard',
+      label: 'Dashboard',
+      icon: '🤖',
+      description: 'View agent activity'
     }
   ]
 

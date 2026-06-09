@@ -92,72 +92,48 @@ function useLocalStorage<T>(key: string, defaultValue: T) {
 
 // Navigation flow definition
 const NAVIGATION_FLOW = {
-  "/": { step: 0, next: "/challenges", label: "Browse Challenges" },
-  "/challenges": { step: 1, next: "/plan", label: "Plan Route" },
-  "/plan": { step: 2, next: "/create", label: "Create Challenge" },
-  "/create": { step: 3, next: "/profile", label: "Track Progress" },
-  "/profile": { step: 4, next: "/leaderboard", label: "View Rankings" },
-  "/leaderboard": { step: 5, next: "/challenges", label: "New Challenge" }
+  "/": { step: 0, next: "/setup", label: "Deploy Agent" },
+  "/setup": { step: 1, next: "/dashboard", label: "View Dashboard" },
+  "/dashboard": { step: 2, next: "/watch", label: "Watch Agents" },
+  "/watch": { step: 3, next: "/rankings", label: "View Rankings" },
+  "/rankings": { step: 4, next: "/setup", label: "Deploy Agent" }
 };
 
 // Smart suggestion logic based on user behavior
 const getSmartSuggestion = (journey: UserJourney, currentPath: string, timeOnPage: number) => {
   const recentSteps = journey.steps.slice(-3);
   const completedActions = journey.preferences.completedActions || [];
-  
-  // First-time user suggestions
+
   if (journey.steps.length <= 1) {
     if (currentPath === "/") {
       return {
-        path: "/challenges",
-        label: "Explore Challenges",
-        reason: "Perfect place to start your journey!",
-        icon: "🎯"
+        path: "/setup",
+        label: "Deploy Your Agent",
+        reason: "Start by configuring your autonomous agent",
+        icon: "⚙️"
       };
     }
   }
-  
-  // User has been on planning page for a while
-  if (currentPath === "/plan" && timeOnPage > 120000) { // 2 minutes
+
+  if (completedActions.includes("agent-authorized") && !completedActions.includes("dashboard-visited")) {
     return {
-      path: "/challenges",
-      label: "Browse Templates",
-      reason: "Need inspiration? Check out popular routes!",
-      icon: "💡"
+      path: "/dashboard",
+      label: "View Dashboard",
+      reason: "Watch your agent operate autonomously",
+      icon: "🤖"
     };
   }
-  
-  // User created challenges but hasn't checked progress
-  if (completedActions.includes("challenge-created") && !completedActions.includes("profile-visited")) {
-    return {
-      path: "/profile",
-      label: "Track Progress",
-      reason: "See how your challenges are performing!",
-      icon: "📊"
-    };
-  }
-  
-  // User engaged with social features
-  if (completedActions.includes("leaderboard-visited") && !completedActions.includes("challenge-shared")) {
-    return {
-      path: "/challenges",
-      label: "Create Viral Challenge",
-      reason: "Share your success with the community!",
-      icon: "🔥"
-    };
-  }
-  
-  // Default flow progression
+
   const currentFlow = NAVIGATION_FLOW[currentPath as keyof typeof NAVIGATION_FLOW];
   if (currentFlow) {
     return {
       path: currentFlow.next,
       label: currentFlow.label,
-      reason: "Continue your punctuality journey",
+      reason: "Continue exploring the protocol",
       icon: "➡️"
     };
   }
-  
+
   return undefined;
 };
 

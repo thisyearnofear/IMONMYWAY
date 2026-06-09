@@ -1,8 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useUIStore } from '@/stores/uiStore'
-import { cacheService } from '@/lib/cache-service'
 import { getNetworkConfig } from '@/contracts/addresses'
-import { useMetaMaskProvider } from './useMetaMaskProvider'
 
 const activeNetwork = getNetworkConfig()
 
@@ -49,7 +47,8 @@ export function useWallet(): UseWalletReturn {
   })
 
   const { addToast, updateNetworkMetrics } = useUIStore()
-  const { provider, isInstalled, isLoading } = useMetaMaskProvider()
+  const provider = typeof window !== 'undefined' ? (window as any).ethereum : null
+  const isInstalled = !!provider
 
   // Check if MetaMask is installed
   const isMetaMaskInstalled = useCallback(() => {
@@ -158,18 +157,7 @@ export function useWallet(): UseWalletReturn {
         },
       }))
 
-      // Create or update user in database
-      if (walletState.address) {
-        try {
-          const { dbService } = await import('@/lib/db-service')
-          await dbService.createUser(walletState.address)
-          await cacheService.invalidateUserProfile(walletState.address)
-          console.log(`✅ User profile created/updated for ${walletState.address}`)
-        } catch (dbError) {
-          console.error('Error creating user in database:', dbError)
-          // Don't fail the connection if database update fails
-        }
-      }
+      // Wallet connected — agent state is on-chain
 
       addToast({
         type: 'success',
@@ -290,7 +278,7 @@ export function useWallet(): UseWalletReturn {
 
   // Listen for account and chain changes
   useEffect(() => {
-    if (!isMetaMaskInstalled() || !provider || isLoading) return
+    if (!isMetaMaskInstalled() || !provider) return
 
     const handleAccountsChanged = (accounts: string[]) => {
       if (accounts.length === 0) {
@@ -316,7 +304,7 @@ export function useWallet(): UseWalletReturn {
         provider.removeListener('chainChanged', handleChainChanged)
       }
     }
-  }, [isMetaMaskInstalled, updateWalletState, disconnect, provider, isLoading])
+  }, [isMetaMaskInstalled, updateWalletState, disconnect, provider])
 
   // Track transaction speed for Somnia showcase
   const trackTransactionSpeed = useCallback(async (txHash: string) => {

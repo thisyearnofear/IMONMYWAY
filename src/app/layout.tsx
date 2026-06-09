@@ -7,17 +7,17 @@ import { GlobalErrorBoundary } from '@/components/core/GlobalErrorBoundary';
 import { ToastProvider, ToastContainer } from '@/components/unified/UnifiedToast';
 
 export const metadata: Metadata = {
-  title: "IMONMYWAY - Punctuality Protocol on Somnia",
+  title: "IMONMYWAY — Autonomous Punctuality Protocol on Somnia",
   description:
-    "Put your money where your mouth is. Stake tokens on punctuality commitments and let others bet on your success with real-time GPS verification on Somnia Network.",
+    "Deploy an AI agent that stakes, negotiates, and settles punctuality commitments autonomously on Somnia's Agentic L1. No human intervention after setup.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'),
   icons: {
     icon: '/IOMYfavicon.ico',
     apple: '/IOMYsquare.png',
   },
   openGraph: {
-  title: "IMONMYWAY - Punctuality Protocol",
-  description: "First punctuality accountability protocol on Somnia Network",
+  title: "IMONMYWAY — Autonomous Punctuality Protocol",
+  description: "Your AI agent bets on your punctuality. Autonomous staking, agent-to-agent negotiation, and real-time settlement on Somnia.",
   images: ['/IOMYbanner.png'],
   },
 };

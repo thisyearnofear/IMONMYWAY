@@ -11,21 +11,18 @@ import { ClientOnly } from "@/components/core/ClientOnly";
 
 // Enhanced navigation items with contextual information
 const NAV_ITEMS = [
-  { href: "/challenges", label: "Browse", icon: "🎯", description: "Discover challenges" },
-  { href: "/plan", label: "Plan", icon: "🗺️", description: "Plan your route" },
-  { href: "/create", label: "Create", icon: "🧠", description: "New challenge" },
-  { href: "/profile", label: "Profile", icon: "👤", description: "View your dashboard" },
-  { href: "/leaderboard", label: "Leaderboard", icon: "🏆", description: "See rankings" }
+  { href: "/setup", label: "Setup", icon: "⚙️", description: "Configure your agent" },
+  { href: "/dashboard", label: "Dashboard", icon: "🤖", description: "Agent activity" },
+  { href: "/watch", label: "Watch", icon: "👁️", description: "Live commitments" },
+  { href: "/rankings", label: "Rankings", icon: "🏆", description: "Agent reputation" }
 ];
 
-// Get contextual page info for better UX cohesion
 const getPageContext = (pathname: string) => {
-  if (pathname.startsWith('/challenges')) return { step: 1, nextStep: '/plan', nextLabel: 'Plan Route' };
-  if (pathname === '/plan') return { step: 2, nextStep: '/create', nextLabel: 'Create Challenge' };
-  if (pathname === '/create') return { step: 3, nextStep: '/profile', nextLabel: 'View Dashboard' };
-  if (pathname.startsWith('/profile')) return { step: 4, nextStep: '/leaderboard', nextLabel: 'View Rankings' };
-  if (pathname === '/leaderboard') return { step: 5, nextStep: '/challenges', nextLabel: 'New Challenge' };
-  return { step: 0, nextStep: '/challenges', nextLabel: 'Get Started' };
+  if (pathname.startsWith('/setup')) return { step: 1, nextStep: '/dashboard', nextLabel: 'View Dashboard' };
+  if (pathname.startsWith('/dashboard')) return { step: 2, nextStep: '/watch', nextLabel: 'Watch Agents' };
+  if (pathname.startsWith('/watch')) return { step: 3, nextStep: '/rankings', nextLabel: 'View Rankings' };
+  if (pathname === '/rankings') return { step: 4, nextStep: '/setup', nextLabel: 'Deploy Agent' };
+  return { step: 0, nextStep: '/setup', nextLabel: 'Get Started' };
 };
 
 export function PremiumNavigation() {
@@ -231,14 +228,14 @@ export function PremiumNavigation() {
 
                         {/* Action Buttons */}
                         <div className="pt-3 border-t border-violet-500/20 space-y-2">
-                          <Link href="/profile">
+                          <Link href="/dashboard">
                             <Button
                               variant="outline"
                               size="sm"
                               className="w-full justify-start border-violet-500/30 hover:bg-violet-500/10"
                               onClick={() => setIsWalletDropdownOpen(false)}
                             >
-                              👤 View Profile
+                              🤖 View Dashboard
                             </Button>
                           </Link>
                           <Button
@@ -380,13 +377,13 @@ export function PremiumNavigation() {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Link href="/profile">
+                      <Link href="/dashboard">
                         <Button
                           variant="outline"
                           className="w-full justify-start border-violet-500/30 hover:bg-violet-500/10"
                           onClick={() => setIsMobileMenuOpen(false)}
                         >
-                          👤 View Profile
+                          🤖 View Dashboard
                         </Button>
                       </Link>
                       <Button

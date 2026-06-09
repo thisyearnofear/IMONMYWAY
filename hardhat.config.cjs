@@ -1,34 +1,42 @@
 require("@nomicfoundation/hardhat-toolbox");
-require("dotenv/config");
-// Load .env.local specifically
-require('dotenv').config({ path: '.env.local' });
+require("dotenv").config({ path: ".env.local" });
+
+const PRIVATE_KEY = process.env.PRIVATE_KEY || process.env.DEPLOYER_PRIVATE_KEY || "";
 
 /** @type import('hardhat/config').HardhatUserConfig */
 const config = {
   solidity: {
-    version: "0.8.22",
-    settings: {
-      optimizer: {
-        enabled: true,
-        runs: 200
+    compilers: [
+      {
+        version: "0.8.22",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200
+          }
+        }
+      },
+      {
+        version: "0.8.30",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200
+          }
+        }
       }
-    }
+    ]
   },
   networks: {
     somniaMainnet: {
-      // RPCs:
-      // - https://api.infra.mainnet.somnia.network/ (official)
-      // - https://www.ankr.com/rpc/somnia (Ankr)
-      // - https://somnia.publicnode.com (Public Node)
-      // - https://somnia-json-rpc.stakely.io (Stakely)
       url: "https://api.infra.mainnet.somnia.network/",
       chainId: 5031,
-      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
     },
     somniaTestnet: {
-      url: "https://dream-rpc.somnia.network/",
+      url: "https://api.infra.testnet.somnia.network/",
       chainId: 50312,
-      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
     },
     localhost: {
       url: "http://127.0.0.1:8545",

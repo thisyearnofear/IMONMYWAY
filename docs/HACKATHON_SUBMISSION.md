@@ -1,145 +1,159 @@
-# IMONMYWAY - Somnia DeFi Mini Hackathon Submission
+# IMONMYWAY — Somnia Agentothon Submission
 
-## 🎯 **Project Summary**
+## Project Summary
 
-**IMONMYWAY** is the first punctuality protocol where AI learns from actual blockchain performance data instead of self-reported profiles. Users stake tokens on AI-generated commitments while leveraging existing social networks (Farcaster/Twitter) for viral sharing and peer validation.
+**IMONMYWAY** is an agent-native punctuality protocol where autonomous on-chain agents make, enforce, and settle punctuality commitments between people — no human intervention, no trust required. Built on Somnia's Agentic L1, it demonstrates true agent autonomy: agents reason with LLM inference, discover counterparties via an on-chain registry, react to on-chain events, and settle stakes through smart contracts.
 
-## 🧠 **Core Innovation: Trustless AI Learning**
+## How It Works
 
-### **The Problem**
-- Traditional apps rely on self-reported data (users can lie)
-- Building social proof systems requires complex infrastructure
-- No connection between AI recommendations and actual performance
+```
+User A authorizes agent          User B authorizes agent
+         │                                │
+         ▼                                ▼
+  Agent A creates commitment      Agent B discovers Agent A
+  (LLM decides pace/deadline)     (via AgentRegistry)
+         │                                │
+         ▼                                ▼
+  Agent A monitors progress       Agent B monitors Agent A
+  (Reactivity: BlockTick)         (Data Streams: GPS)
+         │                                │
+         ▼                                ▼
+  Agent A settles autonomously    Agent B settles bets
+  (GPS proof → PunctualityCore)   (LLM verdict → payout)
+         │                                │
+         ▼                                ▼
+  Agent A posts social update     Agent B posts social update
+  (LLM generates personality      (LLM generates personality
+   text, posted autonomously)      text, posted autonomously)
+```
 
-### **Our Solution**
+## Somnia Primitives Used
+
+### Somnia Agents (Decentralized Compute Containers)
+
+Our contracts invoke Somnia agents for autonomous reasoning and external data:
+
+| Agent Type | Usage | Cost (per validator) |
+|---|---|---|
+| **LLM Inference** (`inferNumber`, `inferString`) | Pace/deadline decisions, settlement verdicts, social post generation | 0.07 STT |
+| **JSON API** (`fetchUint`, `fetchString`) | Real-time traffic data, weather conditions for ETA adjustment | 0.03 STT |
+| **LLM Parse Website** (`ExtractString`) | Reputation signal extraction from public profiles | 0.10 STT |
+
+Agent calls go through Somnia's platform contract (testnet: `0x037Bb9C718F3f7fe5eCBDB0b600D607b52706776`) using `IAgentRequester.createRequest()` with ABI-encoded payloads. Responses delivered via `IAgentRequesterHandler.handleResponse()` callback.
+
+### On-Chain Reactivity
+
+Our `PunctualityAgent` contract subscribes to on-chain events and triggers autonomous actions:
+
+- **`BlockTick`** — periodic deadline monitoring for all active commitments (no off-chain cron needed)
+- **`CommitmentCreated`** — triggers agent to begin monitoring a new commitment
+- **`CommitmentFulfilled`** — triggers autonomous settlement
+- **`AgentListed`** — triggers counterparty agent to evaluate and negotiate
+
+Built using `@somnia-chain/reactivity-contracts` and the `SomniaEventHandler` pattern at precompile `0x0100`.
+
+### Data Streams
+
+GPS location updates published to Somnia Data Streams for high-frequency state that counterparty agents can read without expensive contract storage writes:
+
 ```typescript
-// Instead of trusting user input...
-const userClaims = await database.getUserProfile(userId); // ❌ Unreliable
-
-// We analyze blockchain truth
-const history = await contractService.getUserPerformanceHistory(address); // ✅ Trustless
-const aiSuggestion = AICommitmentEngine.generateSuggestion(address, distance, context);
+// Schema: LocationUpdate(address principal, int256 lat, int256 lng, uint256 timestamp, uint8 status)
+await sdk.streams.set([{ id: dataId, schemaId, data: encodedLocation }]);
 ```
 
-### **Key Differentiators**
-1. **On-Chain AI**: Learns from actual blockchain commitment history
-2. **Social Integration**: Leverages Farcaster/Twitter instead of building social features
-3. **Viral Mechanics**: AI-generated content with viral potential scoring
-4. **Financial Accountability**: Real money stakes on AI recommendations
+### Off-Chain Reactivity SDK
 
-## 🏗️ **Technical Architecture**
+Frontend streams real-time agent activity from on-chain events via WebSocket:
 
-### **Smart Contracts (Solidity)**
-- `PunctualityCore.sol`: Core commitment and betting logic
-- Event-driven architecture for AI data collection
-- Gas-optimized for Somnia Network
-
-### **AI Engine (TypeScript)**
-- `AICommitmentEngine`: Analyzes on-chain performance history
-- `SocialIntegrationService`: Farcaster/Twitter integration
-- Context-aware suggestions (work/social/urgent)
-
-### **Frontend (Next.js 14)**
-- Real-time GPS tracking with blockchain verification
-- AI-powered commitment creation interface
-- Social sharing with auto-generated viral content
-
-## 🎮 **User Experience Flow**
-
-1. **Connect Wallet** → Instant access, no profile setup needed
-2. **AI Analysis** → System analyzes your on-chain commitment history
-3. **Smart Suggestions** → AI recommends deadline/pace based on proven performance
-4. **Social Sharing** → Auto-generated viral content for Farcaster/Twitter
-5. **Live Tracking** → Real-time GPS with blockchain proof of arrival
-6. **Settlement** → Smart contract handles payouts automatically
-
-## 🚀 **Viral & Network Effects**
-
-### **Built-in Virality**
-- AI generates optimized social media posts
-- Viral potential scoring predicts shareability
-- Success/failure posts create engagement loops
-- Social proof through existing networks
-
-### **Network Effects**
-- More users = better AI training data
-- Social betting creates engagement
-- Farcaster/Twitter integration = instant reach
-- No need to build follower systems from scratch
-
-## 💰 **DeFi Integration**
-
-### **Somnia Network Benefits**
-- Fast, cheap transactions for micro-commitments
-- Real-time settlement for betting
-- Low gas costs enable small stakes
-- Perfect for high-frequency social interactions
-
-### **Tokenomics**
-- Users stake ETH on commitments
-- Winners get stake back + betting pool rewards
-- Protocol fee funds AI development
-- Social engagement rewards (future)
-
-## 🔧 **Technical Highlights**
-
-### **Clean Architecture**
-- **ENHANCEMENT FIRST**: Enhances blockchain data instead of creating new systems
-- **PREVENT BLOAT**: Minimal database, maximum blockchain leverage
-- **DRY**: Single source of truth (blockchain events)
-- **PERFORMANT**: Optimized for mobile and real-time use
-
-### **Innovation Stack**
-```
-┌─────────────────────────────────────┐
-│           Social Layer              │
-│     (Farcaster/Twitter APIs)       │
-├─────────────────────────────────────┤
-│            AI Engine               │
-│    (On-chain Performance Analysis)  │
-├─────────────────────────────────────┤
-│          Smart Contracts           │
-│        (Somnia Network)            │
-└─────────────────────────────────────┘
+```typescript
+const handle = await instance.watch({
+  eventContractSources: [PUNCTUALITY_AGENT_ADDRESS],
+  topicOverrides: [agentDecisionEventSignature],
+  push_changes_only: true,
+  onData: (payload) => updateAgentDashboard(payload.result),
+});
 ```
 
-## 🏆 **Why This Wins**
+## Technical Architecture
 
-### **Technical Innovation**
-- First AI that learns from blockchain performance data
-- Novel approach to social proof via existing networks
-- Clean architecture following DeFi best practices
+### Smart Contracts
 
-### **Market Potential**
-- Addresses real problem (punctuality accountability)
-- Viral mechanics built into core experience
-- Network effects from existing social platforms
-- Clear monetization through betting and stakes
+| Contract | Role | Somnia Integration |
+|---|---|---|
+| `PunctualityCore.sol` | Commitment staking, betting, settlement | Unchanged core logic — agents call its existing functions |
+| `PunctualityAgent.sol` | Agent orchestration, autonomous decisions | Implements `IAgentRequesterHandler`, invokes LLM/JSON agents |
+| `AgentRegistry.sol` | Agent discovery, counterparty matching | On-chain registry with reactivity subscriptions |
 
-### **Execution Quality**
-- Working prototype with full AI integration
-- Clean, maintainable codebase
-- Mobile-optimized PWA experience
-- Ready for production deployment
+### Agent Decision Flow
 
-## 🎯 **Demo Highlights**
+1. **Pace Decision** — LLM `inferNumber` agent analyzes reputation history → returns optimal seconds/km
+2. **Context Fetch** — JSON API `fetchUint` agent pulls traffic delay from maps API → adjusts deadline
+3. **Settlement Verdict** — LLM `inferString` agent evaluates GPS proof + deadline → returns "on_time" / "late"
+4. **Social Post** — LLM `inferString` agent generates personality-driven update text → emitted as event
 
-1. **AI in Action**: Show how AI analyzes blockchain history to generate suggestions
-2. **Social Integration**: Demonstrate auto-generated viral content
-3. **Real-time Tracking**: Live GPS with blockchain verification
-4. **Smart Settlements**: Automated payouts based on performance
+### Consensus & Trust
 
-## 🔗 **Links**
+All agent decisions go through Somnia's validator consensus (default: 3 validators, majority agreement). LLM inference uses deterministic models (fixed temperature/seed) so validators produce identical outputs. This means:
+- Agent decisions are **verifiable** — anyone can check the reasoning
+- Agent decisions are **trustless** — no single party controls the AI
+- Agent decisions are **auditable** — execution receipts available via Somnia receipts API
 
-- **Live Demo**: [https://imonmyway.netlify.app](https://imonmyway.netlify.app)
-- **GitHub**: [Repository Link]
-- **Smart Contracts**: [Somnia Network Explorer]
-- **Documentation**: [Technical Docs](./docs/)
+## Innovation: Agent-to-Agent Composability
 
-## 👥 **Team**
+The novel element is **two agents negotiating autonomously**:
 
-Built with passion for DeFi innovation and clean architecture principles. Focused on creating genuinely useful applications that leverage blockchain technology to solve real problems.
+1. Agent A lists commitment in `AgentRegistry`
+2. Agent B discovers Agent A via `findCounterpartyAgent()` (triggered by reactivity `AgentListed` event)
+3. Agent B invokes LLM agent to evaluate: "Should my principal accept this commitment? Counterparty reputation = 8200/10000"
+4. Agent B calls `acceptProposal()` on Agent A
+5. Both agents independently monitor, reason, and settle — never requiring human clicks
 
----
+This demonstrates **agent composability** — a core Somnia judging criterion — where neither agent operates in isolation.
 
-**IMONMYWAY: Where AI meets blockchain to make punctuality profitable and social.** 🚀
+## Judging Criteria Alignment
+
+### Functionality
+- Full commitment lifecycle deployed and running on Somnia testnet (chain 50312)
+- Agent creates, monitors, and settles commitments without human intervention
+- Error handling for agent failures, timeouts, and consensus failures
+- Frontend dashboard shows real-time agent activity
+
+### Agent-First Design
+- Agents are the primary actors, not wrappers around a dApp
+- `PunctualityAgent` implements `IAgentRequesterHandler` — native Somnia agent pattern
+- LLM inference drives autonomous decisions (not hardcoded rules)
+- Reactivity subscriptions trigger agent actions (not off-chain polling)
+- Data Streams enable agent-to-agent state sharing
+
+### Innovation & Technical Creativity
+- Agent-to-agent punctuality negotiation is a novel use of Somnia composability
+- LLM inference for real-world commitment terms (not toy examples)
+- On-chain reactivity for deadline monitoring replaces traditional cron/oracle patterns
+- Data Streams for high-frequency GPS state (avoids expensive contract storage)
+
+### Autonomous Performance
+- Zero human interaction after initial agent authorization
+- Agents run independently via reactivity subscriptions and scheduled checks
+- Settlement happens autonomously on arrival or deadline expiry
+- System maintains stability: handles timeouts, refunds unused gas, manages agent budgets
+
+## Demo Highlights
+
+1. **Agent Setup** (30s): User authorizes agent, sets max stake and personality — one transaction
+2. **Autonomous Creation** (30s): Agent invokes LLM to decide pace, creates commitment — no clicks
+3. **Agent-to-Agent** (60s): Two agents discover each other, negotiate terms via LLM reasoning
+4. **Live Monitoring** (60s): Dashboard shows agent decisions, GPS tracking, social posts in real-time
+5. **Autonomous Settlement** (30s): Agent settles on arrival, posts results, updates reputation
+6. **Architecture** (30s): Somnia primitives used, agent flow diagram, gas cost breakdown
+
+## Links
+
+- **Live Demo**: https://imonmyway.netlify.app
+- **GitHub**: [Repository]
+- **Smart Contracts**: [Somnia Testnet Explorer]
+- **Agent Portal**: https://agents.testnet.somnia.network
+- **Documentation**: See `docs/` directory
+
+## Team
+
+Built for the Somnia Agentothon — demonstrating that autonomous agents can solve real coordination problems, not just automate toy workflows.

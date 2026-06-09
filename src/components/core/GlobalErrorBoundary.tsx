@@ -8,7 +8,6 @@
 "use client";
 
 import { Component, ReactNode, ErrorInfo, useState } from 'react'
-import { GlobalErrorHandler } from '@/lib/engines/error-handling-engine'
 import { Button } from '@/components/ui/PremiumButton';
 
 // ============================================================================
@@ -35,17 +34,15 @@ interface GlobalErrorBoundaryProps {
 // ============================================================================
 
 export class GlobalErrorBoundary extends Component<GlobalErrorBoundaryProps, ErrorBoundaryState> {
-  private errorHandler: GlobalErrorHandler
 
   constructor(props: GlobalErrorBoundaryProps) {
     super(props)
-    this.state = { 
-      hasError: false, 
-      error: null, 
+    this.state = {
+      hasError: false,
+      error: null,
       errorInfo: null,
       errorId: null
     }
-    this.errorHandler = GlobalErrorHandler.getInstance()
   }
 
   static getDerivedStateFromError(error: Error): Partial<ErrorBoundaryState> {
@@ -73,13 +70,7 @@ export class GlobalErrorBoundary extends Component<GlobalErrorBoundaryProps, Err
       }
     }
 
-    this.errorHandler.handleError(error, context, {
-      logToConsole: true,
-      logToService: true,
-      showUserNotification: false, // We'll show our own UI
-      enableRecovery: this.props.enableRecovery !== false,
-      enableRetry: true
-    })
+    console.error('[ErrorBoundary] componentDidCatch:', error, context);
 
     // Call custom error handler if provided
     if (this.props.onError) {
@@ -329,7 +320,7 @@ export class ComponentErrorBoundary extends Component<
       }
     }
 
-    GlobalErrorHandler.getInstance().handleError(error, context)
+    console.error('[ErrorBoundary]', error, context)
     this.props.onError?.(error)
   }
 

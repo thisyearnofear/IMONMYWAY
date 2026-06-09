@@ -55,7 +55,7 @@ contract PunctualityCore is IPunctualityProtocol {
         require(arrivalDeadline > block.timestamp, "Deadline must be in the future");
         require(estimatedPace > 0, "Estimated pace must be greater than 0");
         
-        bytes32 commitmentId = keccak256(abi.encodePacked(msg.sender, block.timestamp, block.difficulty));
+        bytes32 commitmentId = keccak256(abi.encodePacked(msg.sender, block.timestamp, block.prevrandao));
         
         uint256 distance = calculateDistance(
             startLocation.latitude,
