@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 import { useWallet } from '@/hooks/useWallet';
 import type { AgentCommitmentState, AgentConfig } from '@/services/contractService';
 import { somniaReactivity, type AgentActivityEvent } from '@/lib/somnia-reactivity';
@@ -16,37 +17,6 @@ import { OnboardingTooltip } from '@/components/ui/OnboardingTooltip';
 import { getContractAddresses, getNetworkConfig } from '@/contracts/addresses';
 
 const AGENT_ADDRESS = getContractAddresses().PunctualityAgent;
-
-const now = Math.floor(Date.now() / 1000);
-
-const DEMO_CONFIG: AgentConfig = {
-  maxStake: '10',
-  minReputation: BigInt(5000),
-  autoAcceptProposals: true,
-  autoPostSocial: true,
-  personality: 'Motivational coach — encouraging, data-driven, celebrates small wins',
-};
-
-const DEMO_DECISIONS: AgentActivityEvent[] = [
-  { type: 'commitment_created' as const, commitmentId: '0x7f3a8b2c1d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f', timestamp: now - 3600, data: { principal: '0x1234567890abcdef1234567890abcdef12345678', pace: '390', reasoning: 'LLM chose pace: 390 sec/km, deadline in 2340 seconds' } },
-  { type: 'decision' as const, commitmentId: '0x7f3a8b2c1d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f', timestamp: now - 3500, data: { requestId: '42', requestType: 0, decision: 'Pace optimized for reputation 7200/10000' } },
-  { type: 'commitment_settled' as const, commitmentId: '0x7f3a8b2c1d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f', timestamp: now - 1800, data: { success: true, reasoning: 'On time — arrived 4 min early' } },
-  { type: 'decision' as const, commitmentId: '0xa1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1', timestamp: now - 900, data: { requestId: '43', requestType: 1, decision: 'Traffic delay: 180 seconds' } },
-  { type: 'commitment_created' as const, commitmentId: '0xa1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1', timestamp: now - 600, data: { principal: '0x1234567890abcdef1234567890abcdef12345678', pace: '420', reasoning: 'LLM chose pace: 420 sec/km, conservative for rain' } },
-];
-
-const DEMO_SOCIAL: AgentActivityEvent[] = [
-  { type: 'social_update' as const, commitmentId: '0x7f3a8b2c1d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f', timestamp: now - 3600, data: { eventType: 'commitment_created', message: 'Agent deployed! Staking 10 STT on a 5km run to the office. Pace: 6:30/km. Let\'s go! #IMONMYWAY' } },
-  { type: 'social_update' as const, commitmentId: '0x7f3a8b2c1d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f', timestamp: now - 1800, data: { eventType: 'arrived_on_time', message: 'Arrived 4 minutes early! Stake returned + 3 STT from bettors who doubted. Reputation climbing. #PunctualityPays' } },
-  { type: 'social_update' as const, commitmentId: '0xa1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1', timestamp: now - 600, data: { eventType: 'commitment_created', message: 'New commitment live: 3km walk in the rain. Playing it safe at 7:00/km. Weather-adjusted and reputation-aware. #SmartAgent' } },
-];
-
-const DEMO_ACTIVITY: AgentActivityEvent[] = [
-  ...DEMO_DECISIONS,
-  ...DEMO_SOCIAL,
-  { type: 'social_update' as const, commitmentId: '0x7f3a8b2c1d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f', timestamp: now - 2400, data: { eventType: 'halfway_check', message: 'Halfway there — 2.5km covered, on pace.' } },
-  { type: 'decision' as const, commitmentId: '0x7f3a8b2c1d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f', timestamp: now - 2000, data: { requestId: '44', requestType: 3, decision: 'Social update posted: halfway milestone' } },
-].sort((a, b) => b.timestamp - a.timestamp);
 
 export default function AgentDashboardPage() {
   const { address, isConnected, connect } = useWallet();
@@ -68,51 +38,37 @@ export default function AgentDashboardPage() {
   const [agentBalance, setAgentBalance] = useState<string>('0');
   const [reputationScore, setReputationScore] = useState<number>(0);
   const [lastEventTime, setLastEventTime] = useState<number>(0);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
 
-  const loadAgentData = useCallback(async () => {
-    if (!address || !AGENT_ADDRESS) return;
-    setIsLoading(true);
-    try {
-      const [{ ethers }, { ContractService }] = await Promise.all([
-        import('ethers'),
-        import('@/services/contractService'),
-      ]);
-      const service = new ContractService();
-      const authed = await service.isAgentAuthorized(address);
-      setIsAuthorized(authed);
+  // ── Read-only spectator: query historical events + stream live ──
 
-      if (authed) {
-        const cfg = await service.getAgentConfig(address);
-        setAgentConfig(cfg);
+  useEffect(() => {
+    if (!AGENT_ADDRESS) return;
 
-        const deposit = await service.getAgentDeposit();
-        setAgentBalance(ethers.formatEther(deposit));
+    let cancelled = false;
 
-        const count = await service.getActiveCommitmentCount(address);
-        // For now, show count only — full commitment list will come from events
+    const init = async () => {
+      const [{ ethers }] = await Promise.all([import('ethers')]);
+      const provider = new ethers.JsonRpcProvider(getNetworkConfig().rpcUrl);
 
-        const rep = await service.getUserReputation(address);
-        setReputationScore(Number(rep));
-      }
-    } catch (err) {
-      console.error('Failed to load agent data:', err);
-    } finally {
+      const history = await somniaReactivity.queryHistory(provider, AGENT_ADDRESS, { limit: 100 });
+      if (cancelled) return;
+
+      setActivityLog(history);
+      setDecisions(history.filter(e => e.type === 'decision' || e.type === 'commitment_created' || e.type === 'commitment_settled').slice(0, 50));
+      setSocialPosts(history.filter(e => e.type === 'social_update').slice(0, 50));
+      if (history.length > 0) setLastEventTime(Date.now());
+      setHistoryLoaded(true);
       setIsLoading(false);
-    }
-  }, [address]);
 
-  useEffect(() => {
-    if (address) loadAgentData();
-  }, [address, loadAgentData]);
+      // Start WebSocket for live events (wallet not required — read-only)
+      somniaReactivity.connect(AGENT_ADDRESS);
+      setReactivityConnected(true);
+    };
 
-  // Connect to Somnia reactivity for real-time events
-  useEffect(() => {
-    if (!AGENT_ADDRESS || !isAuthorized) return;
+    init();
 
-    somniaReactivity.connect(AGENT_ADDRESS);
-    setReactivityConnected(true);
-
-    const unsubscribe = somniaReactivity.onActivity((event) => {
+    const unsubscribeLive = somniaReactivity.onActivity((event) => {
       setActivityLog(prev => [event, ...prev].slice(0, 100));
       setLastEventTime(Date.now());
 
@@ -131,31 +87,49 @@ export default function AgentDashboardPage() {
     });
 
     return () => {
-      unsubscribe();
+      cancelled = true;
+      unsubscribeLive();
       somniaReactivity.disconnect();
     };
-  }, [isAuthorized]);
+  }, []);
+
+  // ── Wallet-connected: load personal agent config ──
+
+  const loadAgentData = useCallback(async () => {
+    if (!address || !AGENT_ADDRESS) return;
+    try {
+      const [{ ethers }, { ContractService }] = await Promise.all([
+        import('ethers'),
+        import('@/services/contractService'),
+      ]);
+      const service = new ContractService();
+      const authed = await service.isAgentAuthorized(address);
+      setIsAuthorized(authed);
+
+      if (authed) {
+        const cfg = await service.getAgentConfig(address);
+        setAgentConfig(cfg);
+
+        const deposit = await service.getAgentDeposit();
+        setAgentBalance(ethers.formatEther(deposit));
+
+        const rep = await service.getUserReputation(address);
+        setReputationScore(Number(rep));
+      }
+    } catch (err) {
+      console.error('Failed to load agent data:', err);
+    }
+  }, [address]);
+
+  useEffect(() => {
+    if (address) loadAgentData();
+  }, [address, loadAgentData]);
 
   const networkConfig = getNetworkConfig();
-  const isDemo = !isConnected;
+  const isSpectator = !historyLoaded;
+  const hasActivity = activityLog.length > 0;
 
-  // Synthetic demo pulse — makes the "alive" effect visible without wallet connection
-  useEffect(() => {
-    if (!isDemo) return;
-    const id = setInterval(() => {
-      setLastEventTime(Date.now());
-    }, 4000);
-    return () => clearInterval(id);
-  }, [isDemo]);
-
-  const displayConfig = isDemo ? DEMO_CONFIG : agentConfig;
-  const displayDecisions = isDemo ? DEMO_DECISIONS : decisions;
-  const displaySocial = isDemo ? DEMO_SOCIAL : socialPosts;
-  const displayActivity = isDemo ? DEMO_ACTIVITY : activityLog;
-  const displayBalance = isDemo ? '35' : agentBalance;
-  const displayReputation = isDemo ? 7200 : reputationScore;
-
-  if (!isDemo && isLoading) {
+  if (isSpectator) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
@@ -166,7 +140,7 @@ export default function AgentDashboardPage() {
     );
   }
 
-  if (!isDemo && !isAuthorized) {
+  if (isConnected && !isAuthorized) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
         <div className="text-center max-w-md">
@@ -188,7 +162,7 @@ export default function AgentDashboardPage() {
 
   return (
     <div className="min-h-screen pb-16">
-      {isDemo && (
+      {!isConnected && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -197,10 +171,12 @@ export default function AgentDashboardPage() {
           <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <span className="px-2 py-0.5 bg-violet-500/30 border border-violet-400/40 rounded text-[10px] font-mono uppercase tracking-wider text-violet-300">
-                Demo
+                {hasActivity ? 'Live' : 'Spectator'}
               </span>
               <p className="text-sm text-white/70">
-                You&apos;re viewing a simulated agent. Connect your wallet to deploy your own.
+                {hasActivity
+                  ? 'Viewing live agent activity from the contract. Connect to deploy your own.'
+                  : 'No on-chain activity yet. Connect your wallet to deploy an agent.'}
               </p>
             </div>
             <Button onClick={connect} variant="primary" size="sm">
@@ -210,12 +186,6 @@ export default function AgentDashboardPage() {
         </motion.div>
       )}
 
-      {!isDemo && (
-        <OnboardingTooltip
-          id="dashboard-intro"
-          message="This is your agent's brain. Watch its reasoning, commitment decisions, and social posts in real-time. Your agent operates fully autonomously."
-        />
-      )}
       <div className="max-w-4xl mx-auto px-4">
         {/* Header */}
         <motion.div
@@ -229,19 +199,21 @@ export default function AgentDashboardPage() {
                 Agent Dashboard
               </h1>
               <p className="text-white/70 text-sm mt-1">
-                Spectator view — your agent operates autonomously
+                {isConnected && isAuthorized
+                  ? 'Your agent operates autonomously'
+                  : 'Live on-chain agent activity'}
               </p>
             </div>
             <div className="flex items-center gap-2">
               <motion.div
                 key={lastEventTime}
-                className={`w-2 h-2 rounded-full ${isDemo ? 'bg-amber-400' : reactivityConnected ? 'bg-green-400' : 'bg-gray-400'}`}
+                className={`w-2 h-2 rounded-full ${reactivityConnected ? (hasActivity ? 'bg-green-400' : 'bg-amber-400') : 'bg-gray-400'}`}
                 initial={{ boxShadow: '0 0 0 0 rgba(234,196,108,0)' }}
                 animate={{ boxShadow: ['0 0 0 0 rgba(234,196,108,0)', '0 0 8px 2px rgba(234,196,108,0.6)', '0 0 0 0 rgba(234,196,108,0)'] }}
                 transition={{ duration: 0.6 }}
               />
-              <span className={`text-xs font-mono ${isDemo ? 'text-amber-400' : reactivityConnected ? 'text-green-400' : 'text-gray-400'}`}>
-                {isDemo ? 'DEMO' : reactivityConnected ? 'LIVE' : 'DISCONNECTED'}
+              <span className={`text-xs font-mono ${reactivityConnected ? (hasActivity ? 'text-green-400' : 'text-amber-400') : 'text-gray-400'}`}>
+                {reactivityConnected ? (hasActivity ? 'LIVE' : 'STANDBY') : 'DISCONNECTED'}
               </span>
             </div>
           </div>
@@ -251,11 +223,11 @@ export default function AgentDashboardPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
             <AgentStatusView
-              config={displayConfig}
-              balance={displayBalance}
+              config={agentConfig}
+              balance={agentBalance}
               networkName={networkConfig.name}
               currency={networkConfig.nativeCurrency.symbol}
-              reputationScore={displayReputation}
+              reputationScore={reputationScore}
             />
           </motion.div>
           <motion.div
@@ -264,7 +236,7 @@ export default function AgentDashboardPage() {
             transition={{ delay: 0.15 }}
             className="md:col-span-2"
           >
-            <AgentDecisionTimeline decisions={displayDecisions} />
+            <AgentDecisionTimeline decisions={decisions} />
           </motion.div>
         </div>
 
@@ -277,14 +249,14 @@ export default function AgentDashboardPage() {
           </div>
         </div>
 
-        {/* Social Feed — zone background */}
+        {/* Social Feed */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
           className="section-zone-gold rounded-xl"
         >
-          <AgentSocialFeed posts={displaySocial} />
+          <AgentSocialFeed posts={socialPosts} />
         </motion.div>
 
         {/* Divider */}
@@ -296,26 +268,36 @@ export default function AgentDashboardPage() {
           </div>
         </div>
 
-        {/* Raw Activity Log — zone background */}
+        {/* Raw Activity Log */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25 }}
           className="section-zone-violet rounded-xl"
         >
-          <DataPanel title="Activity Log" status={isDemo ? 'offline' : reactivityConnected ? 'online' : 'offline'}>
-            {displayActivity.length === 0 ? (
-              <p className="text-white/60 text-xs font-mono py-4 text-center">
-                Waiting for agent activity...
-              </p>
+          <DataPanel title="Activity Log" status={reactivityConnected ? 'online' : 'offline'}>
+            {activityLog.length === 0 ? (
+              <div className="text-center py-6">
+                <p className="text-white/60 text-xs font-mono mb-3">
+                  No on-chain activity yet
+                </p>
+                <p className="text-white/40 text-[10px] font-mono mb-4">
+                  Deploy an agent from the Setup page to see decisions, commitments, and social posts appear here in real-time.
+                </p>
+                <Link href={isConnected ? '/setup' : 'https://www.youtube.com/watch?v=demo'}>
+                  <Button variant="outline" size="sm">
+                    {isConnected ? 'Deploy Your Agent →' : 'Watch Demo Video →'}
+                  </Button>
+                </Link>
+              </div>
             ) : (
               <div className="max-h-64 overflow-y-auto space-y-1">
-                {displayActivity.map((event, i) => {
+                {activityLog.map((event, i) => {
                   const isSettlement = event.type === 'commitment_settled';
                   const isSuccess = isSettlement && event.data.success;
                   return (
                     <motion.div
-                      key={i}
+                      key={`${event.commitmentId}-${event.timestamp}-${i}`}
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: i * 0.03 }}

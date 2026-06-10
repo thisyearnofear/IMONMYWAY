@@ -224,6 +224,51 @@ class SomniaReactivityService {
     }
     this.callbacks.clear();
   }
+
+  /**
+   * Query historical agent events from the contract via RPC.
+   * Used to seed the UI on cold mount — then the WebSocket stream takes over.
+   */
+  async queryHistory(
+    provider: ethers.Provider,
+    contractAddress: string,
+    options?: { fromBlock?: number; toBlock?: number; limit?: number }
+  ): Promise<AgentActivityEvent[]> {
+    const { fromBlock = -10000, toBlock = 'latest', limit = 50 } = options ?? {};
+
+    const filter = {
+      address: contractAddress,
+      fromBlock,
+      toBlock,
+    };
+
+    try {
+      const logs = await provider.getLogs(filter);
+      const events: AgentActivityEvent[] = [];
+
+      for (const log of logs) {
+        try {
+          const parsed = this.agentIface.parseLog({
+            topics: log.topics as string[],
+            data: log.data as string,
+          });
+          if (!parsed) continue;
+
+          const event = this.mapParsedEvent(parsed, log);
+          if (event) events.push(event);
+        } catch {
+          continue;
+        }
+      }
+
+      return events
+        .sort((a, b) => b.timestamp - a.timestamp)
+        .slice(0, limit);
+    } catch (err) {
+      console.warn('Failed to query historical agent events:', err);
+      return [];
+    }
+  }
 }
 
 export const somniaReactivity = new SomniaReactivityService();

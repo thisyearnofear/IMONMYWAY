@@ -75,6 +75,19 @@ export default function HomePage() {
   const { isConnected } = useWallet();
   const router = useRouter();
   const blockCountdown = useBlockCountdown();
+  const [agentStatus, setAgentStatus] = useState<{ balance: string; commitments: number } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetch = async () => {
+      const { fetchAgentStatus } = await import('@/lib/rpc');
+      const status = await fetchAgentStatus();
+      if (!cancelled) setAgentStatus(status);
+    };
+    fetch();
+    const id = setInterval(fetch, 30_000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, []);
 
   // Scroll-driven accent color: violet → gold → violet
   useEffect(() => {
@@ -183,10 +196,31 @@ export default function HomePage() {
                   variant="outline"
                   className="px-8 py-4 text-lg font-semibold rounded-xl border-2 border-gold-500/60 hover:bg-gold-500/15"
                 >
-                  Try Demo Dashboard
+                  Watch Live Agent
                 </Button>
               </Link>
             </motion.div>
+
+            {/* Agent live status bar */}
+            {agentStatus && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.35 }}
+                className="flex items-center gap-3 mb-6 font-mono text-[11px]"
+              >
+                <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                <span className="text-green-400/80">Agent funded</span>
+                <span className="text-white/30">·</span>
+                <span className="text-white/50">{agentStatus.balance}</span>
+                {agentStatus.commitments > 0 && (
+                  <>
+                    <span className="text-white/30">·</span>
+                    <span className="text-gold-500/70">{agentStatus.commitments} active</span>
+                  </>
+                )}
+              </motion.div>
+            )}
 
             {/* Stats */}
             <motion.div
@@ -351,7 +385,7 @@ export default function HomePage() {
                   variant="outline"
                   className="px-10 py-4 text-lg font-semibold rounded-xl border-2 border-gold-500/60 hover:bg-gold-500/15"
                 >
-                  Try Demo Dashboard
+                  Watch Live Agent
                 </Button>
               </Link>
             </div>
