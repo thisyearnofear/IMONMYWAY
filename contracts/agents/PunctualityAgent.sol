@@ -170,6 +170,9 @@ contract PunctualityAgent is IAgentRequesterHandler, SomniaEventHandler {
     uint256 constant JSON_API_COST_PER_AGENT = 0.03 ether;
     uint256 constant SUBCOMMITTEE_SIZE = 3;
 
+    // Event signature for autonomous counterparty discovery via AgentRegistry
+    bytes32 constant AGENT_LISTED_SIG = keccak256("AgentListed(bytes32,address,address,uint256,uint256,string)");
+
     // Request tracking
     enum RequestType {
         PaceDecision,
@@ -226,6 +229,9 @@ contract PunctualityAgent is IAgentRequesterHandler, SomniaEventHandler {
 
     // Index of authorized principals for iteration
     address[] private _authorizedPrincipalsList;
+
+    // Registry event subscription ID (set via subscribeToRegistry)
+    uint256 public registrySubscriptionId;
 
     // ──────────────────────────────────────────────
     // EVENTS
@@ -287,6 +293,35 @@ contract PunctualityAgent is IAgentRequesterHandler, SomniaEventHandler {
     function updateConfig(AgentConfig calldata config) external {
         require(authorizedPrincipals[msg.sender], "Not authorized");
         agentConfigs[msg.sender] = config;
+    }
+
+    /**
+     * @dev Subscribe to AgentListed events from the registry for autonomous
+     *      counterparty discovery. One-time setup by owner after deployment.
+     *      Requires contract to hold >= 32 STT (Somnia subscription min balance).
+     */
+    function subscribeToRegistry() external {
+        require(msg.sender == owner, "Only owner");
+        require(registrySubscriptionId == 0, "Already subscribed");
+
+        SomniaExtensions.SubscriptionOptions memory opts = SomniaExtensions.defaultSubscriptionOptions();
+
+        SomniaExtensions.SubscriptionFilter memory filter = SomniaExtensions.SubscriptionFilter({
+            eventTopics: [
+                AGENT_LISTED_SIG,
+                bytes32(0),
+                bytes32(0),
+                bytes32(0)
+            ],
+            origin: address(0),
+            emitter: address(registry)
+        });
+
+        registrySubscriptionId = SomniaExtensions.subscribe(
+            address(this),
+            filter,
+            opts
+        );
     }
 
     // ──────────────────────────────────────────────
@@ -665,15 +700,52 @@ contract PunctualityAgent is IAgentRequesterHandler, SomniaEventHandler {
     }
 
     /**
-     * @dev Handle events from the AgentRegistry (counterparty discovered)
+     * @dev Handle AgentListed events from the AgentRegistry.
+     *      For each authorized principal with autoAcceptProposals enabled,
+     *      evaluate the counterparty's reputation and auto-send a proposal
+     *      if they meet minReputation threshold.
      */
     function _handleRegistryEvent(
         bytes32[] calldata eventTopics,
-        bytes calldata data
+        bytes calldata /* data */
     ) internal {
-        // Decode AgentListed event
-        // If auto-accept is enabled and counterparty reputation is acceptable,
-        // send a proposal automatically
+        if (eventTopics.length < 2 || eventTopics[0] != AGENT_LISTED_SIG) return;
+
+        bytes32 counterpartyCommitmentId = eventTopics[1];
+        address counterpartyPrincipal = address(uint160(uint256(eventTopics[2])));
+
+        // Don't propose to our own listings — that's not discovery
+        if (authorizedPrincipals[counterpartyPrincipal]) return;
+
+        uint256 counterpartyRep = punctualityCore.getUserReputation(counterpartyPrincipal);
+
+        // Iterate authorized principals to find compatible match
+        for (uint256 i = 0; i < _authorizedPrincipalsList.length; i++) {
+            address principal = _authorizedPrincipalsList[i];
+            AgentConfig memory config = agentConfigs[principal];
+
+            if (!config.autoAcceptProposals) continue;
+            if (counterpartyRep < config.minReputation) continue;
+
+            // Find an active (unsettled) commitment to pair with
+            bytes32[] storage ids = _activeCommitmentIds[principal];
+            for (uint256 j = 0; j < ids.length; j++) {
+                CommitmentState storage state = commitmentStates[ids[j]];
+                if (state.settled) continue;
+
+                registry.sendProposal(
+                    counterpartyCommitmentId,
+                    state.commitmentId,
+                    principal,
+                    state.deadline,
+                    state.stakeAmount,
+                    "Auto-proposal: compatible counterparty discovered via AgentRegistry"
+                );
+
+                emit AgentProposalHandled(counterpartyCommitmentId, address(this), true);
+                break;
+            }
+        }
     }
 
     // ──────────────────────────────────────────────

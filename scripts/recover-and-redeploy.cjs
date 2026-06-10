@@ -1,7 +1,7 @@
 const { ethers, network } = require("hardhat");
 const fs = require("fs");
 
-const OLD_AGENT_ADDRESS = "0x372f97600f9eD8f32505dC6b66FC8b05bB2c7211";
+const OLD_AGENT_ADDRESS = "0xFe1b279C5C4A867c849726E4735729D2a6A79726";
 const OLD_CORE_ADDRESS = "0x6Ba7C599F33fCBe1A9a5848FDE4D4EFA495A25c9";
 const REGISTRY_ADDRESS = "0x81F47d5BD7A79d75ee7d20F5a2cfcfDaf9d05775";
 
@@ -137,6 +137,20 @@ async function main() {
     jsonApiAgentId: JSON_API_AGENT_ID,
     platformAddress,
   };
+
+  // Subscribe to AgentListed events for autonomous discovery (needs >= 32 STT balance)
+  if (initialFunding >= ethers.parseEther("32")) {
+    console.log("\n── Subscribing to AgentRegistry events ──");
+    try {
+      const subTx = await newAgent.subscribeToRegistry();
+      await subTx.wait();
+      const subId = await newAgent.registrySubscriptionId();
+      console.log(`Registry subscription ID: ${subId}`);
+      deployment.registrySubscriptionId = subId.toString();
+    } catch (err) {
+      console.warn(`Registry subscription failed: ${err.message}`);
+    }
+  }
 
   const fileName = `deployment-${network.name}-${Date.now()}.json`;
   fs.writeFileSync(fileName, JSON.stringify(deployment, null, 2));

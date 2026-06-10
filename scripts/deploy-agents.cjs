@@ -142,6 +142,22 @@ async function main() {
   const registryHasAgent = await agentRegistry.hasActiveAgent(deployer.address);
   console.log(`Registry ready:   ${!registryHasAgent ? "✓ (empty, ready for listings)" : "✗"}`);
 
+  // ── Subscribe to AgentListed events for autonomous discovery ──
+
+  if (INITIAL_FUNDING >= TARGET_FUNDING) {
+    console.log("\n── Subscribing to AgentRegistry events ──");
+    try {
+      const tx = await punctualityAgent.subscribeToRegistry();
+      await tx.wait();
+      const subId = await punctualityAgent.registrySubscriptionId();
+      console.log(`✅ Registry subscription ID: ${subId}`);
+      deployment.registrySubscriptionId = subId.toString();
+    } catch (err) {
+      console.warn(`⚠️  Registry subscription failed: ${err.message}`);
+      console.warn(`   (May need more STT — minimum 32 STT balance required by Somnia)`);
+    }
+  }
+
   // ── Save deployment artifacts ─────────────────────────────
 
   console.log("\n── Artifacts ──");
@@ -184,6 +200,8 @@ PunctualityAgent: '${agentAddress}',
   console.log("  3. If agent IDs differ from placeholders, redeploy with correct IDs");
   console.log("  4. Fund the agent contract if balance is low");
   console.log("  5. Test: authorize agent → initiate commitment → watch autonomous flow");
+  console.log("  6. AgentRegistry subscription enables autonomous counterparty discovery:");
+  console.log("     When another agent lists, the contract auto-proposes if minReputation met");
 
   return deployment;
 }
