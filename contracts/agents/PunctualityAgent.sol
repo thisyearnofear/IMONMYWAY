@@ -156,6 +156,7 @@ contract PunctualityAgent is IAgentRequesterHandler, SomniaEventHandler {
     IAgentRequester public platform;
     IPunctualityProtocol public punctualityCore;
     AgentRegistry public registry;
+    address public immutable owner;
 
     // Somnia testnet platform: 0x037Bb9C718F3f7fe5eCBDB0b600D607b52706776
     // Somnia mainnet platform: 0x5E5205CF39E766118C01636bED000A54D93163E6
@@ -251,6 +252,7 @@ contract PunctualityAgent is IAgentRequesterHandler, SomniaEventHandler {
         uint256 _llmAgentId,
         uint256 _jsonApiAgentId
     ) payable {
+        owner = msg.sender;
         platform = IAgentRequester(_platform);
         punctualityCore = IPunctualityProtocol(_punctualityCore);
         registry = AgentRegistry(_registry);
@@ -964,6 +966,17 @@ contract PunctualityAgent is IAgentRequesterHandler, SomniaEventHandler {
      */
     function withdrawStuckFunds() external {
         require(authorizedPrincipals[msg.sender], "Not authorized");
+        uint256 balance = address(this).balance;
+        require(balance > 0, "No funds to withdraw");
+        (bool success, ) = payable(msg.sender).call{value: balance}("");
+        require(success, "Withdraw failed");
+    }
+
+    /**
+     * @dev Allow the contract deployer to recover stuck funds.
+     */
+    function ownerWithdraw() external {
+        require(msg.sender == owner, "Only owner");
         uint256 balance = address(this).balance;
         require(balance > 0, "No funds to withdraw");
         (bool success, ) = payable(msg.sender).call{value: balance}("");

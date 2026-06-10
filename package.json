@@ -12,7 +12,6 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "2": "3.0.0",
     "@coordinationlabs/megapot-ui-kit": "^0.0.50",
     "@prisma/client": "^6.15.0",
     "@react-three/drei": "^10.7.6",

@@ -46,7 +46,7 @@ Built for the [Somnia Agentothon](https://somnia.network).
 | Contract | Address | Explorer |
 |---|---|---|
 | PunctualityCore | `0x6Ba7C599F33fCBe1A9a5848FDE4D4EFA495A25c9` | [View](https://shannon-explorer.somnia.network/address/0x6Ba7C599F33fCBe1A9a5848FDE4D4EFA495A25c9) |
-| PunctualityAgent | `0x372f97600f9eD8f32505dC6b66FC8b05bB2c7211` | [View](https://shannon-explorer.somnia.network/address/0x372f97600f9eD8f32505dC6b66FC8b05bB2c7211) |
+| PunctualityAgent | `0xFe1b279C5C4A867c849726E4735729D2a6A79726` | [View](https://shannon-explorer.somnia.network/address/0xFe1b279C5C4A867c849726E4735729D2a6A79726) |
 | AgentRegistry | `0x81F47d5BD7A79d75ee7d20F5a2cfcfDaf9d05775` | [View](https://shannon-explorer.somnia.network/address/0x81F47d5BD7A79d75ee7d20F5a2cfcfDaf9d05775) |
 
 **Network**: Somnia Testnet (Chain ID 50312)
