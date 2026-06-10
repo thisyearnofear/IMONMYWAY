@@ -22,7 +22,7 @@ interface RouteMapProps {
 export function RouteMap({ stations, className = '' }: RouteMapProps) {
   const sectionRef = useRef<HTMLDivElement>(null)
   const trackRef = useRef<HTMLDivElement>(null)
-  const pathRef = useRef<SVGPathElement>(null)
+  const pathRef = useRef<SVGLineElement>(null)
   const stationRefs = useRef<(HTMLDivElement | null)[]>([])
 
   useEffect(() => {
@@ -107,10 +107,9 @@ export function RouteMap({ stations, className = '' }: RouteMapProps) {
         {/* SVG route path */}
         <svg className="absolute top-1/2 left-0 -translate-y-1/2 pointer-events-none" width="100%" height="4" style={{ zIndex: 0 }}>
           <line x1="0" y1="2" x2="100%" y2="2" stroke="rgba(255,255,255,0.06)" strokeWidth="2" />
-          <path
+          <line
             ref={pathRef}
-            d={`M 0 2 L ${stations.length * 100}vw 2`}
-            fill="none"
+            x1="0" y1="2" x2="100%" y2="2"
             stroke="#EAC46C"
             strokeWidth="2"
             strokeDasharray="8 12"

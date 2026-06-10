@@ -5,9 +5,12 @@ type JsonRpcResponse = { result?: unknown; error?: { message: string } };
 export async function rpcCall<T = unknown>(method: string, params: unknown[]): Promise<T | null> {
   const url = getNetworkConfig().rpcUrl;
   try {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), 10_000);
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      signal: controller.signal,
       body: JSON.stringify({
         jsonrpc: '2.0',
         id: 1,
@@ -15,6 +18,7 @@ export async function rpcCall<T = unknown>(method: string, params: unknown[]): P
         params,
       }),
     });
+    clearTimeout(id);
     const data: JsonRpcResponse = await res.json();
     if (data.error) {
       console.warn(`RPC error (${method}):`, data.error.message);

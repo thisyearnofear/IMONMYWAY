@@ -234,40 +234,42 @@ class SomniaReactivityService {
     contractAddress: string,
     options?: { fromBlock?: number; toBlock?: number; limit?: number }
   ): Promise<AgentActivityEvent[]> {
-    const { fromBlock = -10000, toBlock = 'latest', limit = 50 } = options ?? {};
+    const latest = await Promise.race([
+      provider.getBlockNumber(),
+      new Promise<number>(r => setTimeout(() => r(0), 5_000)),
+    ]);
+    const { fromBlock = Math.max(0, latest - 100), toBlock = 'latest', limit = 50 } = options ?? {};
 
-    const filter = {
-      address: contractAddress,
-      fromBlock,
-      toBlock,
-    };
-
+    const logPromise = provider.getLogs({ address: contractAddress, fromBlock, toBlock });
+    let logs: ethers.Log[];
     try {
-      const logs = await provider.getLogs(filter);
-      const events: AgentActivityEvent[] = [];
-
-      for (const log of logs) {
-        try {
-          const parsed = this.agentIface.parseLog({
-            topics: log.topics as string[],
-            data: log.data as string,
-          });
-          if (!parsed) continue;
-
-          const event = this.mapParsedEvent(parsed, log);
-          if (event) events.push(event);
-        } catch {
-          continue;
-        }
-      }
-
-      return events
-        .sort((a, b) => b.timestamp - a.timestamp)
-        .slice(0, limit);
-    } catch (err) {
-      console.warn('Failed to query historical agent events:', err);
+      logs = await Promise.race([
+        logPromise,
+        new Promise<never>((_, r) => setTimeout(() => r(new Error('getLogs timeout')), 10_000)),
+      ]);
+    } catch {
       return [];
     }
+    const events: AgentActivityEvent[] = [];
+
+    for (const log of logs) {
+      try {
+        const parsed = this.agentIface.parseLog({
+          topics: log.topics as string[],
+          data: log.data as string,
+        });
+        if (!parsed) continue;
+
+        const event = this.mapParsedEvent(parsed, log);
+        if (event) events.push(event);
+      } catch {
+        continue;
+      }
+    }
+
+    return events
+      .sort((a, b) => b.timestamp - a.timestamp)
+      .slice(0, limit);
   }
 }
 
