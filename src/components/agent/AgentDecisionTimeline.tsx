@@ -21,6 +21,7 @@ const DECISION_ICONS: Record<string, string> = {
   social_update: '💬',
   deadline_check: '⏰',
   proposal_handled: '🤝',
+  system: '⚡',
 };
 
 export function AgentDecisionTimeline({ decisions }: AgentDecisionTimelineProps) {
@@ -78,6 +79,8 @@ export function AgentDecisionTimeline({ decisions }: AgentDecisionTimelineProps)
                         ? 'Commitment Created'
                         : event.type === 'commitment_settled'
                         ? event.data.success ? 'Settled: SUCCESS' : 'Settled: FAILED'
+                        : event.type === 'system'
+                        ? event.data.label || 'System Event'
                         : event.type.replace('_', ' ')}
                     </span>
                     <span className="text-[10px] font-mono text-white/50">
@@ -87,6 +90,8 @@ export function AgentDecisionTimeline({ decisions }: AgentDecisionTimelineProps)
                   <p className="text-[11px] text-white/60 truncate mt-0.5 font-mono">
                     {event.data.reasoning || event.data.decision || event.data.pace
                       ? `${event.data.pace ? `Pace: ${Math.round(Number(event.data.pace) / 60)}:${String(Math.round(Number(event.data.pace) % 60)).padStart(2, '0')}/km` : ''} ${event.data.reasoning || ''}`
+                      : event.type === 'system'
+                      ? `Step ${event.data.step || ''} ${event.data.tx ? '—' : ''}`
                       : `ID: ${event.commitmentId.slice(0, 10)}...`}
                   </p>
                 </div>

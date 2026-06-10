@@ -126,6 +126,30 @@ export default function AgentSetupPage() {
           </p>
         </motion.div>
 
+        {/* 3-Step Guide */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="mb-8 grid grid-cols-1 md:grid-cols-3 gap-3"
+        >
+          {[
+            { step: 1, title: 'Configure', desc: 'Choose personality, set max stake per commitment, and fund the agent with STT.' },
+            { step: 2, title: 'Authorize', desc: 'Deploy the agent contract and authorize your wallet. One transaction, done.' },
+            { step: 3, title: 'Watch', desc: 'The agent calls the LLM, creates commitments, and settles them — all on-chain. No server needed.' },
+          ].map((s) => (
+            <div key={s.step} className="section-zone rounded-xl p-4 flex items-start gap-3">
+              <span className="flex-shrink-0 w-8 h-8 rounded-full bg-gold/20 border border-gold/30 flex items-center justify-center text-gold text-sm font-mono font-bold">
+                {s.step}
+              </span>
+              <div>
+                <h3 className="text-sm font-bold text-white/90 mb-0.5">{s.title}</h3>
+                <p className="text-xs text-white/60 leading-relaxed">{s.desc}</p>
+              </div>
+            </div>
+          ))}
+        </motion.div>
+
         {/* Contract deployment warning */}
         {!hasAgentContract && (
           <motion.div

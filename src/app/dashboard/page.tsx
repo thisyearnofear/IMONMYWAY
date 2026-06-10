@@ -59,7 +59,7 @@ export default function AgentDashboardPage() {
       const hasLive = history.length > 0;
       if (hasLive) {
         setActivityLog(history);
-        setDecisions(history.filter(e => e.type === 'decision' || e.type === 'commitment_created' || e.type === 'commitment_settled').slice(0, 50));
+          setDecisions(history.filter(e => e.type === 'decision' || e.type === 'commitment_created' || e.type === 'commitment_settled' || e.type === 'system').slice(0, 50));
         setSocialPosts(history.filter(e => e.type === 'social_update').slice(0, 50));
         setLastEventTime(Date.now());
       } else {
@@ -84,7 +84,7 @@ export default function AgentDashboardPage() {
       if (event.type === 'social_update') {
         setSocialPosts(prev => [event, ...prev].slice(0, 50));
       }
-      if (event.type === 'decision' || event.type === 'commitment_created' || event.type === 'commitment_settled') {
+      if (event.type === 'decision' || event.type === 'commitment_created' || event.type === 'commitment_settled' || event.type === 'system') {
         setDecisions(prev => [event, ...prev].slice(0, 50));
       }
       if (event.type === 'commitment_created') {
@@ -195,9 +195,15 @@ export default function AgentDashboardPage() {
                   ? 'Live agent idle — showing proven on-chain demo. '
                   : 'No on-chain activity yet. Connect your wallet to deploy an agent.'}
                 {isDemo && (
-                  <a href={DEMO_TXNS.callback} target="_blank" rel="noopener noreferrer" className="text-gold-500 underline hover:text-gold-400">
-                    View 5 explorer txns →
-                  </a>
+                  <div className="flex items-center gap-2">
+                    <a href={DEMO_TXNS.deploy} target="_blank" rel="noopener noreferrer" className="text-gold-500 underline hover:text-gold-400 text-xs">
+                      Deploy →
+                    </a>
+                    <span className="text-white/30">|</span>
+                    <a href={DEMO_TXNS.callback} target="_blank" rel="noopener noreferrer" className="text-gold-500 underline hover:text-gold-400 text-xs">
+                      LLM Callback →
+                    </a>
+                  </div>
                 )}
               </p>
             </div>
@@ -306,7 +312,7 @@ export default function AgentDashboardPage() {
                 <p className="text-white/40 text-[10px] font-mono mb-4">
                   Deploy an agent from the Setup page to see decisions, commitments, and social posts appear here in real-time.
                 </p>
-                <Link href={isConnected ? '/setup' : 'https://www.youtube.com/watch?v=demo'}>
+                <Link href="https://www.youtube.com/watch?v=demo">
                   <Button variant="outline" size="sm">
                     {isConnected ? 'Deploy Your Agent →' : 'Watch Demo Video →'}
                   </Button>
@@ -335,6 +341,7 @@ export default function AgentDashboardPage() {
                         event.type === 'commitment_created' ? 'bg-green-500/20 text-green-400' :
                         isSettlement ? (isSuccess ? 'bg-gold-500/20 text-gold-500' : 'bg-red-500/20 text-red-400') :
                         event.type === 'social_update' ? 'bg-gold-500/15 text-gold-400' :
+                        event.type === 'system' ? 'bg-blue-500/20 text-blue-400' :
                         'bg-white/10 text-white/60'
                       }`}>
                         {event.type.replace('_', ' ')}

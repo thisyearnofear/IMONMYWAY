@@ -6,7 +6,7 @@ import { AGENT_ABI } from '@/lib/contracts';
 import { ethers } from 'ethers';
 
 export interface AgentActivityEvent {
-  type: 'decision' | 'commitment_created' | 'commitment_settled' | 'social_update' | 'deadline_check' | 'proposal_handled';
+  type: 'decision' | 'commitment_created' | 'commitment_settled' | 'social_update' | 'deadline_check' | 'proposal_handled' | 'system';
   commitmentId: string;
   timestamp: number;
   data: Record<string, any>;
