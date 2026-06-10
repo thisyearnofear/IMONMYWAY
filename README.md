@@ -45,9 +45,9 @@ Built for the [Somnia Agentothon](https://somnia.network).
 
 | Contract | Address | Explorer |
 |---|---|---|
-| PunctualityCore | `0x81531CCdA5Ed9C22a5d57F4AF5A6B9612A81Cc5A` | [View](https://shannon-explorer.somnia.network/address/0x81531CCdA5Ed9C22a5d57F4AF5A6B9612A81Cc5A) |
-| PunctualityAgent | `0xFa96C7b16044D6e095214d8cb83C8d7CdE26FEc6` | [View](https://shannon-explorer.somnia.network/address/0xFa96C7b16044D6e095214d8cb83C8d7CdE26FEc6) |
-| AgentRegistry | `0x08D1Fc808f1983d2Ea7B63a28ECD4d8C885Cd02A` | [View](https://shannon-explorer.somnia.network/address/0x08D1Fc808f1983d2Ea7B63a28ECD4d8C885Cd02A) |
+| PunctualityCore | `0x6Ba7C599F33fCBe1A9a5848FDE4D4EFA495A25c9` | [View](https://shannon-explorer.somnia.network/address/0x6Ba7C599F33fCBe1A9a5848FDE4D4EFA495A25c9) |
+| PunctualityAgent | `0x372f97600f9eD8f32505dC6b66FC8b05bB2c7211` | [View](https://shannon-explorer.somnia.network/address/0x372f97600f9eD8f32505dC6b66FC8b05bB2c7211) |
+| AgentRegistry | `0x81F47d5BD7A79d75ee7d20F5a2cfcfDaf9d05775` | [View](https://shannon-explorer.somnia.network/address/0x81F47d5BD7A79d75ee7d20F5a2cfcfDaf9d05775) |
 
 **Network**: Somnia Testnet (Chain ID 50312)
 **Agent IDs**: LLM Inference `12847293847561029384`, JSON API `13174292974160097713`
