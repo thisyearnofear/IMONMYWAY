@@ -46,6 +46,12 @@ const AGENT_ADDRESS = getContractAddresses().PunctualityAgent;
 const ACTIVE_COMMITMENT_COUNT_SIG = '0xe64f2e9a';
 
 export async function fetchAgentStatus(): Promise<AgentStatus> {
+  // No agent deployed on this network — skip RPC calls that would fail
+  // with "invalid parameters" against an empty address.
+  if (!AGENT_ADDRESS) {
+    return { balance: 'Unknown', commitments: 0 };
+  }
+
   const balanceHex = await rpcCall<string>('eth_getBalance', [AGENT_ADDRESS, 'latest']);
   const balanceWei = balanceHex ? BigInt(balanceHex) : BigInt(0);
 

@@ -45,7 +45,16 @@ export default function AgentDashboardPage() {
   // ── Read-only spectator: query historical events + stream live ──
 
   useEffect(() => {
-    if (!AGENT_ADDRESS) return;
+    // No agent deployed on this network — show demo data instead of
+    // hanging on "Loading agent state..." forever.
+    if (!AGENT_ADDRESS) {
+      setActivityLog(DEMO_EVENTS);
+      setDecisions(DEMO_EVENTS);
+      setIsDemo(true);
+      setHistoryLoaded(true);
+      setIsLoading(false);
+      return;
+    }
 
     let cancelled = false;
 
