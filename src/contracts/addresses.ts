@@ -28,7 +28,7 @@ export const SOMNIA_MAINNET_CONTRACT_ADDRESSES: ContractAddresses = {
 export const SOMNIA_TESTNET_CONTRACT_ADDRESSES: ContractAddresses = {
   PunctualityCore: '0x6Ba7C599F33fCBe1A9a5848FDE4D4EFA495A25c9',
   AgentRegistry: '0x81F47d5BD7A79d75ee7d20F5a2cfcfDaf9d05775',
-  PunctualityAgent: '0xb2ae53E6F7C4F1F965B19741CB8E6Ac46Dd2392a',
+  PunctualityAgent: '0x24D16d61De02c29706c51C7a473410a88BF44663',
 };
 
 // Somnia agent IDs (registered at agents.somnia.network)
