@@ -416,10 +416,6 @@ contract PunctualityAgent is IAgentRequesterHandler, SomniaEventHandler {
 
         if (pending.requestType == RequestType.PaceDecision) {
             _handlePaceDecision(requestId, responses, pending);
-        } else if (pending.requestType == RequestType.ContextFetch) {
-            _handleContextFetch(requestId, responses, pending);
-        } else if (pending.requestType == RequestType.SettlementDecision) {
-            _handleSettlementDecision(requestId, responses, pending);
         } else if (pending.requestType == RequestType.SocialUpdate) {
             _handleSocialUpdate(requestId, responses, pending);
         }
@@ -448,11 +444,15 @@ contract PunctualityAgent is IAgentRequesterHandler, SomniaEventHandler {
         uint256 deadline = block.timestamp + baseTimeSec + bufferSec;
 
         // Create commitment on PunctualityCore
+        // Pass pace in sec/km directly — core only checks > 0,
+        // deadline is already computed on this side.
+        uint256 corePace = pace / 1000;
+        if (corePace == 0) corePace = 1;
         bytes32 commitmentId = punctualityCore.createCommitment{value: params.stakeAmount}(
             params.startLocation,
             params.targetLocation,
             deadline,
-            pace / 1000 // convert sec/km to sec/meter for the contract
+            corePace
         );
 
         // Store commitment state
@@ -499,71 +499,6 @@ contract PunctualityAgent is IAgentRequesterHandler, SomniaEventHandler {
         ));
 
         emit AgentCreatedCommitment(commitmentId, pending.principal, pace, reasoning);
-    }
-
-    function _handleContextFetch(
-        uint256 requestId,
-        Response[] memory responses,
-        PendingRequest memory pending
-    ) internal {
-        uint256 trafficDelay = abi.decode(responses[0].result, (uint256));
-
-        emit AgentDecisionMade(
-            requestId,
-            RequestType.ContextFetch,
-            pending.commitmentId,
-            string(abi.encodePacked("Traffic delay: ", _uint2str(trafficDelay), " seconds"))
-        );
-
-        // Could trigger deadline adjustment here in future iterations
-    }
-
-    function _handleSettlementDecision(
-        uint256 /* requestId */,
-        Response[] memory responses,
-        PendingRequest memory pending
-    ) internal {
-        string memory verdict = abi.decode(responses[0].result, (string));
-
-        CommitmentState storage state = commitmentStates[pending.commitmentId];
-        if (state.settled) return;
-
-        state.settled = true;
-
-        bool success = _isOnTime(pending.commitmentId);
-
-        if (success) {
-            punctualityCore.fulfillCommitment(
-                pending.commitmentId,
-                IPunctualityProtocol.LocationData({
-                    latitude: state.targetLocation.latitude,
-                    longitude: state.targetLocation.longitude,
-                    accuracy: 50,
-                    timestamp: block.timestamp
-                })
-            );
-        }
-
-        // Unsubscribe from deadline monitoring
-        uint256 subId = deadlineSubscriptions[pending.commitmentId];
-        if (subId != 0) {
-            SomniaExtensions.unsubscribe(subId);
-            delete deadlineSubscriptions[pending.commitmentId];
-        }
-
-        activeCommitmentCount[state.principal]--;
-        _removeActiveCommitment(state.principal, pending.commitmentId);
-
-        // Delist from registry
-        registry.delistAgent(pending.commitmentId);
-
-        // Post settlement social update
-        if (agentConfigs[state.principal].autoPostSocial) {
-            string memory eventType = success ? "arrived_on_time" : "missed_deadline";
-            _requestSocialUpdate(pending.commitmentId, state.principal, eventType);
-        }
-
-        emit AgentSettledCommitment(pending.commitmentId, success, verdict);
     }
 
     function _handleSocialUpdate(
@@ -650,17 +585,16 @@ contract PunctualityAgent is IAgentRequesterHandler, SomniaEventHandler {
 
         bool success = _isOnTime(commitmentId);
 
-        if (success) {
-            punctualityCore.fulfillCommitment(
-                commitmentId,
-                IPunctualityProtocol.LocationData({
-                    latitude: state.targetLocation.latitude,
-                    longitude: state.targetLocation.longitude,
-                    accuracy: 50,
-                    timestamp: block.timestamp
-                })
-            );
-        }
+        // Always call fulfillCommitment — core handles both on-time and late
+        punctualityCore.fulfillCommitment(
+            commitmentId,
+            IPunctualityProtocol.LocationData({
+                latitude: state.targetLocation.latitude,
+                longitude: state.targetLocation.longitude,
+                accuracy: 50,
+                timestamp: block.timestamp
+            })
+        );
 
         // Unsubscribe from deadline monitoring
         uint256 subId = deadlineSubscriptions[commitmentId];
@@ -672,9 +606,6 @@ contract PunctualityAgent is IAgentRequesterHandler, SomniaEventHandler {
         activeCommitmentCount[state.principal]--;
         _removeActiveCommitment(state.principal, commitmentId);
         registry.delistAgent(commitmentId);
-
-        // Clean up stashed params
-        delete _stashedParams[commitmentId];
 
         if (agentConfigs[state.principal].autoPostSocial) {
             string memory eventType = success ? "arrived_on_time" : "missed_deadline";
@@ -854,40 +785,18 @@ contract PunctualityAgent is IAgentRequesterHandler, SomniaEventHandler {
     // ──────────────────────────────────────────────
 
     /**
-     * @dev Fetch real-time traffic/distance data from an external API
-     *      to inform deadline adjustments
+     * @dev Public fallback to settle a specific commitment manually.
+     *      Called by an authorized principal when the Schedule subscription
+     *      (Somnia platform) hasn't fired within a reasonable time.
      */
-    function fetchRouteContext(
-        bytes32 commitmentId,
-        string calldata mapsApiUrl,
-        string calldata jsonSelector
-    ) external payable {
-        CommitmentState memory state = commitmentStates[commitmentId];
+    function settleCommitment(bytes32 commitmentId) external {
+        CommitmentState storage state = commitmentStates[commitmentId];
         require(state.principal != address(0), "Unknown commitment");
+        require(authorizedPrincipals[msg.sender], "Not authorized");
+        require(block.timestamp >= state.deadline, "Deadline not reached");
+        require(!state.settled, "Already settled");
 
-        bytes memory payload = abi.encodeWithSelector(
-            IJsonApiAgent.fetchUint.selector,
-            mapsApiUrl,
-            jsonSelector,
-            uint8(0) // no decimal scaling
-        );
-
-        uint256 deposit = platform.getRequestDeposit() + (JSON_API_COST_PER_AGENT * SUBCOMMITTEE_SIZE);
-        uint256 requestId = platform.createRequest{value: deposit}(
-            jsonApiAgentId,
-            address(this),
-            this.handleResponse.selector,
-            payload
-        );
-
-        pendingRequests[requestId] = PendingRequest({
-            requestType: RequestType.ContextFetch,
-            commitmentId: commitmentId,
-            principal: state.principal,
-            exists: true
-        });
-
-        emit AgentRequestSent(requestId, RequestType.ContextFetch, commitmentId);
+        _triggerSettlement(commitmentId);
     }
 
     // ──────────────────────────────────────────────

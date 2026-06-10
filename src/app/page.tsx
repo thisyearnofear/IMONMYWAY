@@ -14,42 +14,42 @@ import { useState, useEffect } from "react";
 const FEATURES = [
   {
     label: "Station 01",
-    title: "Autonomous Agents",
+    title: "On-Chain Event Loop",
     description:
-      "Your AI agent stakes tokens, decides pace and deadlines, and executes commitments on-chain — no human clicks after setup.",
+      "No cron. No server. Somnia Reactivity subscriptions wake your agent contract when registry events fire — the chain drives the entire lifecycle.",
   },
   {
     label: "Station 02",
-    title: "Agent-to-Agent Negotiation",
+    title: "Agent-to-Agent Discovery",
     description:
-      "Agents discover each other via an on-chain registry, evaluate counterparty reputation, and negotiate terms autonomously.",
+      "Agents find each other through an on-chain registry, evaluate reputations, and negotiate stakes — all autonomously, all on-chain.",
   },
   {
     label: "Station 03",
-    title: "Real-Time Settlement",
+    title: "Proactive Settlement",
     description:
-      "On-chain reactivity monitors deadlines and GPS data. Agents settle stakes and post social updates the moment conditions are met.",
+      "The deadline fires the settlement — not a human clicking a button. On-chain reactivity closes the loop without any keeper infrastructure.",
   },
 ];
 
 const STEPS = [
   {
     number: "01",
-    title: "Setup",
+    title: "Deploy",
     description:
-      "Configure your agent's personality, risk tolerance, and max stake. Fund it with STT for autonomous operation.",
+      "Configure your agent's personality, risk tolerance, and max stake. Fund it with STT and deploy — no infrastructure needed.",
   },
   {
     number: "02",
     title: "Autonomous",
     description:
-      "Your agent creates commitments, negotiates with other agents, monitors progress, and settles stakes — entirely on its own.",
+      "On-chain reactivity wakes your agent. It discovers counterparties, negotiates terms, and creates commitments — no server involved.",
   },
   {
     number: "03",
     title: "Results",
     description:
-      "Watch your agent's reasoning, track record, and social posts build an on-chain reputation — all without lifting a finger.",
+      "History builds on-chain. Reputation grows. The same pattern replaces every off-chain keeper — automated market makers, Liquidations, oracles.",
   },
 ];
 
@@ -130,7 +130,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-graphite-900 text-white overflow-hidden">
       <OnboardingTooltip
         id="landing-hero"
-        message="Deploy an AI agent that stakes, negotiates, and settles punctuality commitments on Somnia — no human intervention after setup."
+        message="Deploy an autonomous agent on Somnia — it wakes itself up, negotiates on-chain, and settles without any server infrastructure."
         actionLabel="Get started →"
         onAction={() => router.push("/setup")}
       />
@@ -147,7 +147,7 @@ export default function HomePage() {
               className="inline-block mb-6"
             >
               <span className="font-mono text-xs text-gold-500 uppercase tracking-[0.2em]">
-                Autonomous Punctuality Protocol
+                Autonomous Agent Framework
               </span>
             </motion.div>
 
@@ -157,9 +157,9 @@ export default function HomePage() {
               transition={{ duration: 0.6 }}
               className="text-4xl md:text-6xl font-bold mb-6 leading-[1.1] tracking-tight"
             >
-              <span className="block">Your Agent</span>
+              <span className="block">Smart Contracts That</span>
               <span className="block text-gold-500">
-                Bets on Your Punctuality
+                Wake Themselves Up
               </span>
             </motion.h1>
 
@@ -167,11 +167,21 @@ export default function HomePage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.15 }}
-              className="text-lg text-gray-300 mb-8 max-w-lg leading-relaxed"
+              className="text-lg text-gray-300 mb-4 max-w-lg leading-relaxed"
             >
-              Deploy an AI agent that stakes, negotiates with other agents, and
-              settles punctuality commitments autonomously on Somnia. No human
-              intervention after setup.
+              No server. No keeper. No cron. Somnia Reactivity lets your
+              contract wake itself — the first autonomous agent framework where
+              the chain is the runtime.
+            </motion.p>
+
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="text-base text-gray-400 mb-8 max-w-lg leading-relaxed"
+            >
+              Stakes, negotiations, and settlements happen on-chain, triggered
+              by on-chain events not off-chain servers.
             </motion.p>
 
             <motion.div
