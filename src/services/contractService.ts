@@ -471,8 +471,15 @@ export class ContractService {
 
   async getLeaderboardUsers(): Promise<LeaderboardUserData[]> {
     try {
+      const rpc = getNetworkConfig().rpcUrl;
+      const latestBlock = await Promise.race([
+        new ethers.JsonRpcProvider(rpc).getBlockNumber(),
+        new Promise<number>(r => setTimeout(() => r(0), 5_000)),
+      ]);
+      if (latestBlock === 0) return [];
+
       const fulfilledFilter = this.contract.filters.CommitmentFulfilled();
-      const fulfilledEvents = await this.contract.queryFilter(fulfilledFilter);
+      const fulfilledEvents = await this.contract.queryFilter(fulfilledFilter, Math.max(0, latestBlock - 5000), latestBlock);
 
       const userMap = new Map<string, { totalSessions: number; successes: number }>();
       for (const event of fulfilledEvents) {

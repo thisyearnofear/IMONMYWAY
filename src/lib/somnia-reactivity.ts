@@ -234,10 +234,15 @@ class SomniaReactivityService {
     contractAddress: string,
     options?: { fromBlock?: number; toBlock?: number; limit?: number }
   ): Promise<AgentActivityEvent[]> {
-    const latest = await Promise.race([
-      provider.getBlockNumber(),
-      new Promise<number>(r => setTimeout(() => r(0), 5_000)),
-    ]);
+    let latest: number;
+    try {
+      latest = await Promise.race([
+        provider.getBlockNumber(),
+        new Promise<number>(r => setTimeout(() => r(0), 5_000)),
+      ]);
+    } catch {
+      latest = 0;
+    }
     const { fromBlock = Math.max(0, latest - 100), toBlock = 'latest', limit = 50 } = options ?? {};
 
     const logPromise = provider.getLogs({ address: contractAddress, fromBlock, toBlock });
