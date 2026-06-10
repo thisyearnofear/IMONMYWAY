@@ -6,62 +6,80 @@ An autonomous agent framework where Somnia Reactivity subscriptions wake the con
 
 The chain is the runtime. Built for the [Somnia Agentothon](https://somnia.network).
 
-## Core Insight
+## Why This Matters
 
-Most "autonomous" contracts rely on off-chain bots, keepers, or cron jobs. IMONMYWAY uses **Somnia Reactivity** — on-chain event subscriptions — so the contract wakes itself. When a new agent is registered, the agent contract is notified immediately. When a deadline fires, settlement triggers automatically. No server runs the loop.
+Smart contracts can't fetch APIs or run AI. For a decade the fix was **oracles** — bolt a centralized service onto a trustless contract. IMONMYWAY uses **Somnia Agents** instead: validator-verified, consensus-checked LLM inference and API calls, all on-chain. The contract calls the agent like any other contract, gets the result back via callback, and acts on it — no oracle, no keeper, no cron.
+
+## Reliability Architecture: The Escalation Ladder
 
 ```
-┌──────────────┐    ┌───────────────────┐    ┌──────────────────┐
-│  On-Chain    │───>│ PunctualityAgent  │───>│ PunctualityCore  │
-│  Event       │    │ (wakes itself)    │    │ (settlement)     │
-└──────────────┘    └────────┬──────────┘    └──────────────────┘
-                             │                        │
-                    ┌────────▼──────────┐    ┌────────▼──────────┐
-                    │ Somnia LLM Agent  │    │ AgentRegistry     │
-                    │ (pace decisions)  │    │ (agent discovery) │
-                    └───────────────────┘    └───────────────────┘
+Layer 1  On-chain Reactivity (Schedule subscription)
+         Contract wakes itself at deadline. Zero infrastructure.
+         → Unreliable on prototype testnet; designed for mainnet stability.
+
+Layer 2  Permissionless settleCommitment()
+         Anyone can settle any past-deadline commitment. Gas ≈ $0.001.
+         → No authorization, no reward needed. Opportunistic keepers.
+
+Layer 3  Off-chain Poller (optional, for demo reliability)
+         Free-tier server polls every 30s, settles anything past deadline.
+         → scripts/settlement-poller.cjs — deploy in 5 minutes.
 ```
 
-1. **Deploy Agent** — Connect wallet, choose a personality, fund with STT
-2. **Events Wake the Agent** — When `AgentListed` fires on the registry, the reactivity subscription triggers `_handleRegistryEvent`, which evaluates the counterparty and sends a proposal
-3. **On-Chain Settlement** — The agent creates a commitment on PunctualityCore, subscribes to deadline events, and settles when conditions are met — all without human intervention
+The chain is the runtime. Layer 1 alone suffices on mainnet. Layers 2 + 3 are defence-in-depth for the Agentothon demo period.
+
+## Proving the Autonomy Loop
+
+The agent was deployed on Somnia Testnet and executed its full lifecycle autonomously:
+
+1. **Deploy** — Agent registered on-chain
+2. **Subscribe** — Agent subscribes to reactivity events
+3. **Authorize** — Deployer authorized to trigger commitments
+4. **Initiate** — Agent calls Somnia's LLM agent (Qwen3-30B) for a pace decision
+5. **Callback** — LLM responds on-chain with pace=200s/km → `AgentCreatedCommitment` emitted
+
+[5 explorer transactions proving the loop](explorer-urls-demo-video.txt)
+
+No server touched any of these. No cron job fired. The chain ran the entire loop.
 
 ## Architecture
 
 | Contract | Role |
 |---|---|
 | `PunctualityCore` | Settlement contract — stakes, deadlines, GPS verification, reputation tracking. Example use case. |
-| `PunctualityAgent` | Autonomous orchestrator. Reacts to on-chain events, calls LLM agents, creates commitments, manages subscriptions. The pattern. |
-| `AgentRegistry` | Somnia's canonical registry for agent-to-agent discovery and counterparty matching. |
-| Somnia Platform | Somnia's agent execution layer — dispatches LLM and JSON API requests to validator subcommittees. |
+| `PunctualityAgent` | Autonomous orchestrator. Calls LLM agents, creates commitments, manages self-settlement. **The reusable pattern.** |
+| `AgentRegistry` | Somnia's canonical registry for agent discovery and counterparty matching. |
+| Somnia Platform | Agent execution layer — dispatches LLM and JSON API requests to validator subcommittees. |
 
-**Proof of Concept: Agent Personalities** (stored on-chain, used as LLM system prompts for punctuality commitments):
-- **Disciplined** — No excuses. Optimizes for fastest reliable pace.
-- **Encouraging** — Supportive coach. Adds buffer for lower-reputation principals.
-- **Competitive** — Results-driven. References top performers for social pressure.
-- **Philosophical** — Stoic principles. Moderate pace, character over speed.
-- **Aggressive Commuter** — Speed above all. Assumes running and shortcuts.
-- **Zen Walker** — Mindful pace. Journey over destination. Generous buffers.
+**Agent Personalities** (on-chain system prompts for LLM pace decisions):
+- **Disciplined** / **Encouraging** / **Competitive** / **Philosophical** / **Aggressive Commuter** / **Zen Walker**
 
 ## Live on Somnia Testnet
 
 | Contract | Address | Explorer |
 |---|---|---|
 | PunctualityCore | `0x6Ba7C599F33fCBe1A9a5848FDE4D4EFA495A25c9` | [View](https://shannon-explorer.somnia.network/address/0x6Ba7C599F33fCBe1A9a5848FDE4D4EFA495A25c9) |
-| PunctualityAgent | `0xb2ae53E6F7C4F1F965B19741CB8E6Ac46Dd2392a` | [View](https://shannon-explorer.somnia.network/address/0xb2ae53E6F7C4F1F965B19741CB8E6Ac46Dd2392a) |
+| PunctualityAgent | `0x24D16d61De02c29706c51C7a473410a88BF44663` | [View](https://shannon-explorer.somnia.network/address/0x24D16d61De02c29706c51C7a473410a88BF44663) |
 | AgentRegistry | `0x81F47d5BD7A79d75ee7d20F5a2cfcfDaf9d05775` | [View](https://shannon-explorer.somnia.network/address/0x81F47d5BD7A79d75ee7d20F5a2cfcfDaf9d05775) |
 
 **Network**: Somnia Testnet (Chain ID 50312)
 **Agent IDs**: LLM Inference `12847293847561029384`, JSON API `13174292974160097713`
-**Reactivity Subscription**: `5982115` — agent auto-wakes on `AgentListed` events
 
 ## How to Try It
 
-1. **Connect wallet** — MetaMask on Somnia Testnet ([faucet](https://faucet.somnia.network/))
-2. **Setup** (`/setup`) — Choose a personality, set max stake, fund the agent
-3. **Dashboard** (`/dashboard`) — Watch the autonomous lifecycle: event subscription fires, agent proposes, counterparty negotiates, deadline settles — all via WebSocket
-4. **Live Commitments** (`/watch`) — Browse active agent listings from the on-chain registry
-5. **Rankings** (`/rankings`) — On-chain reputation leaderboard built from `CommitmentFulfilled` events
+1. **Spectator mode** (`/dashboard`) — Watch live on-chain agent activity. No wallet needed.
+2. **Connect wallet** — MetaMask on Somnia Testnet ([faucet](https://faucet.somnia.network/))
+3. **Setup** (`/setup`) — Choose a personality, set max stake, fund the agent
+4. **Watch settleCommitment** — If deadline passes without on-chain reactivity, anyone can call `settleCommitment(id)` to trigger settlement. Permissionless, gas ≈ $0.001.
+
+### Run the Off-Chain Poller (optional, for demo reliability)
+
+```bash
+cp .env.example .env.local   # Add PRIVATE_KEY + AGENT address
+node scripts/settlement-poller.cjs
+```
+
+Runs on any free-tier server (Render, Railway, fly.io). Polls every 30s, settles anything past deadline.
 
 ## Tech Stack
 

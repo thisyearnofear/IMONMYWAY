@@ -26,9 +26,15 @@ const FEATURES = [
   },
   {
     label: "Station 03",
-    title: "Proactive Settlement",
+    title: "LLM Agents Respond",
     description:
-      "The deadline fires the settlement — not a human clicking a button. On-chain reactivity closes the loop without any keeper infrastructure.",
+      "The contract calls Somnia's LLM agent for decisions — pace, risk, stake. The response comes back on-chain, consensus-verified by validators.",
+  },
+  {
+    label: "Station 04",
+    title: "Self-Settlement",
+    description:
+      "On-chain reactivity fires at deadline. If it misses, settleCommitment() lets anyone settle — permissionless, gas ≈ $0.001. Three layers of defense, zero infrastructure.",
   },
 ];
 

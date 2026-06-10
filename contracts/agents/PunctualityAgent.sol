@@ -785,14 +785,17 @@ contract PunctualityAgent is IAgentRequesterHandler, SomniaEventHandler {
     // ──────────────────────────────────────────────
 
     /**
-     * @dev Public fallback to settle a specific commitment manually.
-     *      Called by an authorized principal when the Schedule subscription
-     *      (Somnia platform) hasn't fired within a reasonable time.
+     * @dev Permissionless settlement fallback.
+     *      Anyone can settle a past-deadline commitment when the Schedule
+     *      subscription hasn't fired. Gas is paid by the caller — no reward
+     *      needed because the cost is negligible (< $0.001).
+     *
+     *      This enables an "open keeper" pattern: anyone (or a free-tier poller)
+     *      can ensure commitments settle on time without authorization.
      */
     function settleCommitment(bytes32 commitmentId) external {
         CommitmentState storage state = commitmentStates[commitmentId];
         require(state.principal != address(0), "Unknown commitment");
-        require(authorizedPrincipals[msg.sender], "Not authorized");
         require(block.timestamp >= state.deadline, "Deadline not reached");
         require(!state.settled, "Already settled");
 
