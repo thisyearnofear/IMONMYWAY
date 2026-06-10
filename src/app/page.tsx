@@ -76,6 +76,43 @@ export default function HomePage() {
   const router = useRouter();
   const blockCountdown = useBlockCountdown();
 
+  // Scroll-driven accent color: violet → gold → violet
+  useEffect(() => {
+    const updateAccent = () => {
+      const scrollY = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      if (docHeight <= 0) return;
+      const t = Math.min(1, scrollY / docHeight);
+
+      // Violet #6E2BF2 → Gold #EAC46C → Violet #6E2BF2
+      let r: number, g: number, b: number;
+      if (t < 0.5) {
+        const p = t * 2;
+        r = Math.round(110 + (234 - 110) * p);
+        g = Math.round(43 + (196 - 43) * p);
+        b = Math.round(242 + (108 - 242) * p);
+      } else {
+        const p = (t - 0.5) * 2;
+        r = Math.round(234 + (110 - 234) * p);
+        g = Math.round(196 + (43 - 196) * p);
+        b = Math.round(108 + (242 - 108) * p);
+      }
+
+      document.documentElement.style.setProperty(
+        '--section-accent',
+        `rgb(${r}, ${g}, ${b})`
+      );
+      document.documentElement.style.setProperty(
+        '--section-accent-rgb',
+        `${r}, ${g}, ${b}`
+      );
+    };
+
+    window.addEventListener('scroll', updateAccent, { passive: true });
+    updateAccent();
+    return () => window.removeEventListener('scroll', updateAccent);
+  }, []);
+
   return (
     <div className="min-h-screen bg-graphite-900 text-white overflow-hidden">
       <OnboardingTooltip
@@ -96,7 +133,7 @@ export default function HomePage() {
               transition={{ delay: 0.2 }}
               className="inline-block mb-6"
             >
-              <span className="font-mono text-xs text-gold-500/70 uppercase tracking-[0.2em]">
+              <span className="font-mono text-xs text-gold-500 uppercase tracking-[0.2em]">
                 Autonomous Punctuality Protocol
               </span>
             </motion.div>
@@ -117,7 +154,7 @@ export default function HomePage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.15 }}
-              className="text-lg text-gray-400 mb-8 max-w-lg leading-relaxed"
+              className="text-lg text-gray-300 mb-8 max-w-lg leading-relaxed"
             >
               Deploy an AI agent that stakes, negotiates with other agents, and
               settles punctuality commitments autonomously on Somnia. No human
@@ -144,7 +181,7 @@ export default function HomePage() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="px-8 py-4 text-lg font-semibold rounded-xl border-2 border-gold-500/40 hover:bg-gold-500/10"
+                  className="px-8 py-4 text-lg font-semibold rounded-xl border-2 border-gold-500/60 hover:bg-gold-500/15"
                 >
                   Try Demo Dashboard
                 </Button>
@@ -160,21 +197,21 @@ export default function HomePage() {
             >
               <div>
                 <div className="text-white font-bold text-lg">Somnia L1</div>
-                <div className="text-gray-500 text-xs uppercase tracking-wider">
+                <div className="text-white/60 text-xs uppercase tracking-wider">
                   Agentic chain
                 </div>
               </div>
-              <div className="w-px h-8 bg-white/10" />
+              <div className="w-px h-8 bg-white/20" />
               <div>
                 <div className="text-white font-bold text-lg">~1.6 STT</div>
-                <div className="text-gray-500 text-xs uppercase tracking-wider">
+                <div className="text-white/60 text-xs uppercase tracking-wider">
                   Per cycle
                 </div>
               </div>
-              <div className="w-px h-8 bg-white/10" />
+              <div className="w-px h-8 bg-white/20" />
               <div>
                 <div className="text-white font-bold text-lg">&lt;1s</div>
-                <div className="text-gray-500 text-xs uppercase tracking-wider">
+                <div className="text-white/60 text-xs uppercase tracking-wider">
                   Finality
                 </div>
               </div>
@@ -190,7 +227,7 @@ export default function HomePage() {
           >
             {/* Ambient glow behind clock */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-[300px] h-[300px] rounded-full bg-violet-500/5 blur-3xl" />
+              <div className="w-[300px] h-[300px] rounded-full blur-3xl" style={{ backgroundColor: 'rgba(var(--section-accent-rgb), 0.25)' }} />
             </div>
 
             <ClockFace
@@ -204,7 +241,7 @@ export default function HomePage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 1.2 }}
-              className="absolute bottom-4 left-4 right-4 font-mono text-[10px] text-gray-500 space-y-1"
+              className="absolute bottom-4 left-4 right-4 font-mono text-[10px] text-white/60 space-y-1"
             >
               <div className="flex items-center gap-2">
                 <div className="w-1 h-1 rounded-full bg-green-400 animate-pulse" />
@@ -219,14 +256,14 @@ export default function HomePage() {
       </section>
 
       {/* Features — The Route Map */}
-      <section className="relative h-screen">
+      <section className="relative h-screen zone-accent">
         <div className="absolute top-8 left-0 right-0 z-10 text-center px-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <span className="font-mono text-xs text-gold-500/60 uppercase tracking-[0.2em] block mb-2">
+            <span className="font-mono text-xs text-gold-500/80 uppercase tracking-[0.2em] block mb-2">
               How IMONMYWAY Works
             </span>
             <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
@@ -238,8 +275,17 @@ export default function HomePage() {
         <RouteMap stations={FEATURES} className="h-full" />
       </section>
 
+      {/* Divider */}
+      <div className="px-4 py-2">
+        <div className="max-w-7xl mx-auto divider">
+          <div className="line" />
+          <div className="dot" />
+          <div className="line" />
+        </div>
+      </div>
+
       {/* Steps — The Agent Dial */}
-      <section className="py-32 px-4">
+      <section className="py-32 px-4 zone-accent">
         <div className="max-w-7xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -247,7 +293,7 @@ export default function HomePage() {
             viewport={{ once: true }}
             className="text-center mb-20"
           >
-            <span className="font-mono text-xs text-gold-500/60 uppercase tracking-[0.2em] block mb-2">
+            <span className="font-mono text-xs text-gold-500/80 uppercase tracking-[0.2em] block mb-2">
               Three Steps to Autonomy
             </span>
             <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
@@ -259,8 +305,17 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Divider */}
+      <div className="px-4 py-2">
+        <div className="max-w-7xl mx-auto divider">
+          <div className="line" />
+          <div className="dot" />
+          <div className="line" />
+        </div>
+      </div>
+
       {/* CTA — Deploy */}
-      <section className="py-32 px-4">
+      <section className="py-32 px-4 zone-accent">
         <div className="max-w-3xl mx-auto text-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -271,11 +326,11 @@ export default function HomePage() {
             <h2 className="text-3xl md:text-5xl font-bold mb-4 tracking-tight">
               Deploy Your Agent
             </h2>
-            <p className="text-gray-400 text-lg mb-3">
+            <p className="text-gray-300 text-lg mb-3">
               Configure personality, fund with STT, and let your agent handle
               the rest.
             </p>
-            <div className="font-mono text-xs text-gold-500/50 mb-10">
+            <div className="font-mono text-xs text-gold-500/70 mb-10">
               next block in {blockCountdown}s
             </div>
 
@@ -294,7 +349,7 @@ export default function HomePage() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="px-10 py-4 text-lg font-semibold rounded-xl border-2 border-gold-500/40 hover:bg-gold-500/10"
+                  className="px-10 py-4 text-lg font-semibold rounded-xl border-2 border-gold-500/60 hover:bg-gold-500/15"
                 >
                   Try Demo Dashboard
                 </Button>
@@ -304,9 +359,9 @@ export default function HomePage() {
 
           {/* Animated route line */}
           <div className="mt-16 flex items-center justify-center gap-2">
-            <div className="h-px w-16 bg-gradient-to-r from-transparent to-gold-500/30" />
-            <div className="w-1.5 h-1.5 rounded-full bg-gold-500/40" />
-            <div className="h-px w-16 bg-gradient-to-l from-transparent to-gold-500/30" />
+            <div className="h-px w-16 bg-gradient-to-r from-transparent to-gold-500/50" />
+            <div className="w-1.5 h-1.5 rounded-full bg-gold-500/60" />
+            <div className="h-px w-16 bg-gradient-to-l from-transparent to-gold-500/50" />
           </div>
         </div>
       </section>

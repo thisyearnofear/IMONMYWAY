@@ -7,7 +7,7 @@ import { useWallet } from '@/hooks/useWallet';
 import type { AgentCommitmentState, AgentConfig } from '@/services/contractService';
 import { somniaReactivity, type AgentActivityEvent } from '@/lib/somnia-reactivity';
 import { useNotifications } from '@/lib/notifications';
-import { Card, CardContent, DataPanel, DataRow } from '@/components/ui/PremiumCard';
+import { DataPanel } from '@/components/ui/PremiumCard';
 import { Button, LoadingSpinner } from '@/components/ui/PremiumButton';
 import { AgentDecisionTimeline } from '@/components/agent/AgentDecisionTimeline';
 import { AgentStatusView } from '@/components/agent/AgentStatusView';
@@ -67,6 +67,7 @@ export default function AgentDashboardPage() {
   const [reactivityConnected, setReactivityConnected] = useState(false);
   const [agentBalance, setAgentBalance] = useState<string>('0');
   const [reputationScore, setReputationScore] = useState<number>(0);
+  const [lastEventTime, setLastEventTime] = useState<number>(0);
 
   const loadAgentData = useCallback(async () => {
     if (!address || !AGENT_ADDRESS) return;
@@ -113,6 +114,7 @@ export default function AgentDashboardPage() {
 
     const unsubscribe = somniaReactivity.onActivity((event) => {
       setActivityLog(prev => [event, ...prev].slice(0, 100));
+      setLastEventTime(Date.now());
 
       if (event.type === 'social_update') {
         setSocialPosts(prev => [event, ...prev].slice(0, 50));
@@ -137,6 +139,15 @@ export default function AgentDashboardPage() {
   const networkConfig = getNetworkConfig();
   const isDemo = !isConnected;
 
+  // Synthetic demo pulse — makes the "alive" effect visible without wallet connection
+  useEffect(() => {
+    if (!isDemo) return;
+    const id = setInterval(() => {
+      setLastEventTime(Date.now());
+    }, 4000);
+    return () => clearInterval(id);
+  }, [isDemo]);
+
   const displayConfig = isDemo ? DEMO_CONFIG : agentConfig;
   const displayDecisions = isDemo ? DEMO_DECISIONS : decisions;
   const displaySocial = isDemo ? DEMO_SOCIAL : socialPosts;
@@ -148,7 +159,7 @@ export default function AgentDashboardPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <LoadingSpinner size="lg" color="purple" />
+          <LoadingSpinner size="lg" color="violet" />
           <p className="text-white/60 text-sm">Loading agent state...</p>
         </div>
       </div>
@@ -157,20 +168,20 @@ export default function AgentDashboardPage() {
 
   if (!isDemo && !isAuthorized) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card variant="enhanced">
-          <CardContent className="text-center py-12 px-16">
-            <div className="text-4xl mb-4">⚙️</div>
-            <h2 className="text-xl font-bold mb-2">No Active Agent</h2>
-            <p className="text-white/60 mb-6 text-sm">Configure and authorize your agent first</p>
-            <a
-              href="/setup"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-gold/20 border border-gold/40 rounded-lg text-sm text-white hover:bg-gold/30 transition-all"
-            >
-              Go to Setup →
-            </a>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <div className="text-center max-w-md">
+          <div className="w-16 h-16 mx-auto mb-6 rounded-full border border-violet-500/30 flex items-center justify-center" style={{ background: 'radial-gradient(circle, rgba(110,43,242,0.15) 0%, transparent 70%)' }}>
+            <span className="text-2xl">⚙️</span>
+          </div>
+          <h2 className="text-xl font-bold mb-2">No Active Agent</h2>
+          <p className="text-white/70 mb-8 text-sm">Configure and authorize your agent first</p>
+          <a
+            href="/setup"
+            className="inline-flex items-center gap-2 px-6 py-3 border border-gold-500/40 rounded-lg text-sm text-gold-500 hover:bg-gold-500/10 transition-all font-mono"
+          >
+            Go to Setup →
+          </a>
+        </div>
       </div>
     );
   }
@@ -214,15 +225,21 @@ export default function AgentDashboardPage() {
         >
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-gold via-violet to-gold bg-clip-text text-transparent">
+              <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-gold via-violet to-gold bg-clip-text text-transparent">
                 Agent Dashboard
               </h1>
-              <p className="text-white/50 text-sm mt-1">
+              <p className="text-white/70 text-sm mt-1">
                 Spectator view — your agent operates autonomously
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${isDemo ? 'bg-amber-400' : reactivityConnected ? 'bg-green-400 animate-pulse' : 'bg-gray-400'}`} />
+              <motion.div
+                key={lastEventTime}
+                className={`w-2 h-2 rounded-full ${isDemo ? 'bg-amber-400' : reactivityConnected ? 'bg-green-400' : 'bg-gray-400'}`}
+                initial={{ boxShadow: '0 0 0 0 rgba(234,196,108,0)' }}
+                animate={{ boxShadow: ['0 0 0 0 rgba(234,196,108,0)', '0 0 8px 2px rgba(234,196,108,0.6)', '0 0 0 0 rgba(234,196,108,0)'] }}
+                transition={{ duration: 0.6 }}
+              />
               <span className={`text-xs font-mono ${isDemo ? 'text-amber-400' : reactivityConnected ? 'text-green-400' : 'text-gray-400'}`}>
                 {isDemo ? 'DEMO' : reactivityConnected ? 'LIVE' : 'DISCONNECTED'}
               </span>
@@ -251,48 +268,79 @@ export default function AgentDashboardPage() {
           </motion.div>
         </div>
 
-        {/* Social Feed */}
+        {/* Divider */}
+        <div className="px-4 py-2">
+          <div className="divider divider-gold">
+            <div className="line" />
+            <div className="dot" />
+            <div className="line" />
+          </div>
+        </div>
+
+        {/* Social Feed — zone background */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
+          className="section-zone-gold rounded-xl"
         >
           <AgentSocialFeed posts={displaySocial} />
         </motion.div>
 
-        {/* Raw Activity Log */}
+        {/* Divider */}
+        <div className="px-4 py-2">
+          <div className="divider">
+            <div className="line" />
+            <div className="dot" />
+            <div className="line" />
+          </div>
+        </div>
+
+        {/* Raw Activity Log — zone background */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25 }}
-          className="mt-6"
+          className="section-zone-violet rounded-xl"
         >
           <DataPanel title="Activity Log" status={isDemo ? 'offline' : reactivityConnected ? 'online' : 'offline'}>
             {displayActivity.length === 0 ? (
-              <p className="text-white/40 text-xs font-mono py-4 text-center">
+              <p className="text-white/60 text-xs font-mono py-4 text-center">
                 Waiting for agent activity...
               </p>
             ) : (
               <div className="max-h-64 overflow-y-auto space-y-1">
-                {displayActivity.map((event, i) => (
-                  <div key={i} className="flex items-start gap-2 py-1.5 border-b border-white/5 last:border-0">
-                    <span className="text-[10px] font-mono text-white/30 whitespace-nowrap mt-0.5">
-                      {new Date(event.timestamp * 1000).toLocaleTimeString()}
-                    </span>
-                    <span className={`text-[10px] font-mono uppercase px-1.5 py-0.5 rounded ${
-                      event.type === 'decision' ? 'bg-blue-500/20 text-blue-400' :
-                      event.type === 'commitment_created' ? 'bg-green-500/20 text-green-400' :
-                      event.type === 'commitment_settled' ? 'bg-purple-500/20 text-purple-400' :
-                      event.type === 'social_update' ? 'bg-yellow-500/20 text-yellow-400' :
-                      'bg-white/10 text-white/60'
-                    }`}>
-                      {event.type.replace('_', ' ')}
-                    </span>
-                    <span className="text-xs text-white/70 truncate flex-1">
-                      {event.data.reasoning || event.data.message || event.data.decision || event.commitmentId.slice(0, 10)}
-                    </span>
-                  </div>
-                ))}
+                {displayActivity.map((event, i) => {
+                  const isSettlement = event.type === 'commitment_settled';
+                  const isSuccess = isSettlement && event.data.success;
+                  return (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.03 }}
+                      className={`flex items-start gap-2 py-1.5 border-b border-white/5 last:border-0 ${
+                        isSettlement ? (isSuccess ? 'bg-gold-500/5' : 'bg-red-500/5') : ''
+                      }`}
+                    >
+                      <span className="text-[10px] font-mono text-white/50 whitespace-nowrap mt-0.5">
+                        {new Date(event.timestamp * 1000).toLocaleTimeString()}
+                      </span>
+                      <span className={`text-[10px] font-mono uppercase px-1.5 py-0.5 rounded ${
+                        event.type === 'decision' ? 'bg-violet-500/20 text-violet-400' :
+                        event.type === 'commitment_created' ? 'bg-green-500/20 text-green-400' :
+                        isSettlement ? (isSuccess ? 'bg-gold-500/20 text-gold-500' : 'bg-red-500/20 text-red-400') :
+                        event.type === 'social_update' ? 'bg-gold-500/15 text-gold-400' :
+                        'bg-white/10 text-white/60'
+                      }`}>
+                        {event.type.replace('_', ' ')}
+                      </span>
+                      <span className="text-xs text-white/70 truncate flex-1 font-mono">
+                        {event.data.reasoning || event.data.message || event.data.decision || event.commitmentId.slice(0, 10)}
+                      </span>
+                    </motion.div>
+                  );
+                })}
               </div>
             )}
           </DataPanel>

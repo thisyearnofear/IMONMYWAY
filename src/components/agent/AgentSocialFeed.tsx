@@ -27,15 +27,15 @@ const EVENT_ICONS: Record<string, string> = {
 
 export function AgentSocialFeed({ posts }: AgentSocialFeedProps) {
   return (
-    <div className="bg-gradient-to-br from-gold/10 to-violet/10 border border-gold/20 rounded-xl p-4">
+    <div className="p-2">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-bold text-white/90 uppercase tracking-wider">Agent Social Feed</h3>
-        <span className="text-xs font-mono text-white/40">{posts.length} posts</span>
+        <span className="text-xs font-mono text-white/60">{posts.length} posts</span>
       </div>
 
       {posts.length === 0 ? (
         <div className="text-center py-8">
-          <p className="text-white/40 text-xs font-mono">
+          <p className="text-white/60 text-xs font-mono">
             Agent will post social updates as it manages commitments autonomously
           </p>
         </div>
@@ -91,13 +91,13 @@ function SocialPostCard({ post, index }: { post: AgentActivityEvent; index: numb
       className="bg-white/5 border border-white/10 rounded-lg p-3"
     >
       <div className="flex items-start gap-3">
-        <div className="w-8 h-8 bg-gradient-to-br from-gold/20 to-violet/20 border border-gold/30 rounded-lg flex items-center justify-center text-sm flex-shrink-0">
+        <div className="w-8 h-8 border border-gold-500/20 rounded-lg flex items-center justify-center text-sm flex-shrink-0">
           {EVENT_ICONS[post.data.eventType] || '💬'}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs font-bold text-gold/80">@punctuality_agent</span>
-            <span className="text-[10px] font-mono text-white/30">
+            <span className="text-[10px] font-mono text-white/50">
               {new Date(post.timestamp * 1000).toLocaleString()}
             </span>
           </div>
@@ -111,18 +111,18 @@ function SocialPostCard({ post, index }: { post: AgentActivityEvent; index: numb
                   ? 'bg-green-500/20 text-green-400'
                   : post.data.eventType?.includes('failure') || post.data.eventType?.includes('missed') || post.data.eventType?.includes('rejected')
                     ? 'bg-red-500/20 text-red-400'
-                    : 'bg-white/10 text-white/50'
+                    : 'bg-white/10 text-white/70'
               }`}>
                 {post.data.eventType?.replace(/_/g, ' ') || 'update'}
               </span>
-              <span className="text-[10px] font-mono text-white/30 truncate">
+              <span className="text-[10px] font-mono text-white/50 truncate">
                 {post.commitmentId.slice(0, 10)}...
               </span>
             </div>
             <div className="flex items-center gap-1">
               <button
                 onClick={handlePostToX}
-                className="text-[10px] font-mono text-white/30 hover:text-blue-400 transition-colors px-1.5 py-0.5 rounded hover:bg-white/5"
+                className="text-[10px] font-mono text-white/50 hover:text-blue-400 transition-colors px-1.5 py-0.5 rounded hover:bg-white/5"
                 aria-label="Post to X"
               >
                 post
@@ -130,7 +130,7 @@ function SocialPostCard({ post, index }: { post: AgentActivityEvent; index: numb
               <button
                 onClick={handleShare}
                 disabled={isSharing}
-                className="text-[10px] font-mono text-white/30 hover:text-gold transition-colors px-1.5 py-0.5 rounded hover:bg-white/5"
+                className="text-[10px] font-mono text-white/50 hover:text-gold transition-colors px-1.5 py-0.5 rounded hover:bg-white/5"
                 aria-label="Share this update"
               >
                 {isSharing ? '...' : 'share'}

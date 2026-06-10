@@ -385,7 +385,7 @@ export function NetworkStatus() {
               </div>
 
               {/* Interaction Hint */}
-              <div className="text-center mt-3 text-white/40 text-xs">
+              <div className="text-center mt-3 text-white/60 text-xs">
                 Click for effects • Hover to interact
               </div>
             </>

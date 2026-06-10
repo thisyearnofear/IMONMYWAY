@@ -88,7 +88,7 @@
 
 body {
     color: var(--foreground);
-    background: linear-gradient(135deg, var(--background) 0%, #1a1a2d 100%);
+    background: var(--background);
     font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;
     min-height: 100vh;

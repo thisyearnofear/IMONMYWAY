@@ -120,7 +120,7 @@ export function StatusIndicator({
   if (premium) {
     return (
       <div className={cn(
-        'bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 rounded-xl flex items-center border transition-all duration-300',
+        'border border-gold-500/20 rounded-xl flex items-center transition-all duration-300',
         sizeConfig.container,
         sizeConfig.padding,
         config.borderColor,

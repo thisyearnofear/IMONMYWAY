@@ -22,7 +22,7 @@ export const ReadyToUseState = memo(function ReadyToUseState({
       transition={{ duration: 0.6 }}
     >
       <Link href="/setup">
-        <button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-6 rounded-xl font-bold text-xl shadow-2xl transform hover:scale-105 transition-all duration-300">
+        <button className="w-full bg-gradient-to-r from-violet-600 to-gold-500 text-white py-6 rounded-xl font-bold text-xl shadow-2xl transform hover:scale-105 transition-all duration-300">
           ⚙️ Deploy Your Agent
         </button>
       </Link>

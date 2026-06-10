@@ -69,7 +69,7 @@ export function OnboardingTooltip({
               </div>
               <button
                 onClick={dismiss}
-                className="text-white/40 hover:text-white/70 text-sm flex-shrink-0"
+                className="text-white/60 hover:text-white/70 text-sm flex-shrink-0"
               >
                 ✕
               </button>

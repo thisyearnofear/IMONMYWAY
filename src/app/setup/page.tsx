@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useWallet } from '@/hooks/useWallet';
 import { useContractService } from '@/hooks/useContractService';
 import { ContractService } from '@/services/contractService';
-import { Card, CardContent, DataPanel, DataRow } from '@/components/ui/PremiumCard';
+import { DataPanel, DataRow } from '@/components/ui/PremiumCard';
 import { Button, LoadingSpinner } from '@/components/ui/PremiumButton';
 import { OnboardingTooltip } from '@/components/ui/OnboardingTooltip';
 import { useLLM } from '@/hooks/useLLM';
@@ -118,7 +118,7 @@ export default function AgentSetupPage() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center py-8"
         >
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-gold via-violet to-gold bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-gold via-violet to-gold bg-clip-text text-transparent">
             Agent Configuration
           </h1>
           <p className="text-white/60 mt-2">
@@ -144,24 +144,21 @@ export default function AgentSetupPage() {
 
         {/* Wallet Connection */}
         {!isConnected ? (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            <Card variant="enhanced">
-              <CardContent className="text-center py-12">
-                <div className="text-4xl mb-4">🔗</div>
-                <h2 className="text-xl font-bold mb-2">Connect Wallet</h2>
-                <p className="text-white/60 mb-6 text-sm">
-                  Connect your wallet to configure and authorize your agent
-                </p>
-                <Button onClick={connect} variant="primary" size="lg">
-                  Connect MetaMask
-                </Button>
-              </CardContent>
-            </Card>
-          </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="text-center py-16 section-zone-violet rounded-xl"
+            >
+              <div className="text-4xl mb-4">🔗</div>
+              <h2 className="text-xl font-bold mb-2">Connect Wallet</h2>
+              <p className="text-white/60 mb-6 text-sm">
+                Connect your wallet to configure and authorize your agent
+              </p>
+              <Button onClick={connect} variant="primary" size="lg">
+                Connect MetaMask
+              </Button>
+            </motion.div>
         ) : (
           <div className="space-y-6">
             {/* Current Status */}
@@ -197,9 +194,8 @@ export default function AgentSetupPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
+                className="section-zone rounded-xl"
               >
-                <Card variant="enhanced">
-                  <CardContent>
                     <h3 className="text-lg font-bold mb-4">Agent Parameters</h3>
 
                     {/* Max Stake */}
@@ -273,7 +269,7 @@ export default function AgentSetupPage() {
                               <span>{preset.icon}</span>
                               <span className="text-sm font-medium">{preset.label}</span>
                             </div>
-                            <p className="text-[10px] text-white/40 leading-tight">{preset.tagline}</p>
+                            <p className="text-[10px] text-white/60 leading-tight">{preset.tagline}</p>
                           </button>
                         ))}
                       </div>
@@ -308,12 +304,12 @@ export default function AgentSetupPage() {
                           className="mt-2 p-3 bg-white/5 border border-white/10 rounded-lg"
                         >
                           <div className="flex items-center gap-4 mb-1">
-                            <span className="text-xs text-white/50">Pace: <span className="text-white font-mono">{paceResult.pace_min_per_km} min/km</span></span>
-                            <span className="text-xs text-white/50">Buffer: <span className="text-white font-mono">+{paceResult.buffer_minutes}m</span></span>
+                            <span className="text-xs text-white/70">Pace: <span className="text-white font-mono">{paceResult.pace_min_per_km} min/km</span></span>
+                            <span className="text-xs text-white/70">Buffer: <span className="text-white font-mono">+{paceResult.buffer_minutes}m</span></span>
                             <span className={`text-xs font-mono ${paceResult.confidence >= 70 ? 'text-green-400' : 'text-yellow-400'}`}>{paceResult.confidence}%</span>
                           </div>
                           <p className="text-xs text-white/60 italic">{paceResult.reasoning}</p>
-                          <p className="text-[10px] text-white/30 mt-1">Preview only — actual decision happens on-chain via Somnia LLM agent</p>
+                          <p className="text-[10px] text-white/50 mt-1">Preview only — actual decision happens on-chain via Somnia LLM agent</p>
                         </motion.div>
                       )}
                     </div>
@@ -331,7 +327,7 @@ export default function AgentSetupPage() {
                         min="32"
                         step="1"
                       />
-                      <p className="text-xs text-white/40 mt-1">
+                      <p className="text-xs text-white/60 mt-1">
                         32 {getNetworkConfig().nativeCurrency.symbol} minimum for reactivity subscriptions + gas for agent calls
                       </p>
                     </div>
@@ -352,8 +348,6 @@ export default function AgentSetupPage() {
                         'Authorize Agent'
                       )}
                     </Button>
-                  </CardContent>
-                </Card>
               </motion.div>
             )}
 
@@ -365,8 +359,7 @@ export default function AgentSetupPage() {
                 transition={{ delay: 0.2 }}
                 className="space-y-4"
               >
-                <Card variant="premium">
-                  <CardContent>
+                <div className="section-zone-gold rounded-xl p-4">
                     <h3 className="text-lg font-bold mb-2">Active Configuration</h3>
                     <div className="space-y-1 text-sm">
                       <p className="text-white/60">Personality: <span className="text-white">{existingConfig.personality}</span></p>
@@ -374,19 +367,18 @@ export default function AgentSetupPage() {
                     <div className="mt-4 flex gap-3">
                       <a
                         href="/dashboard"
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-gold/20 border border-gold/40 rounded-lg text-sm text-white hover:bg-gold/30 transition-all"
+                        className="inline-flex items-center gap-2 px-4 py-2 border border-gold-500/40 rounded-lg text-sm text-gold-500 hover:bg-gold-500/10 transition-all font-mono"
                       >
                         View Dashboard →
                       </a>
                       <button
                         onClick={handleRevoke}
-                        className="px-4 py-2 bg-red-500/10 border border-red-500/30 rounded-lg text-sm text-red-400 hover:bg-red-500/20 transition-all"
+                        className="px-4 py-2 border border-red-500/30 rounded-lg text-sm text-red-400 hover:bg-red-500/10 transition-all"
                       >
                         Revoke Agent
                       </button>
                     </div>
-                  </CardContent>
-                </Card>
+                </div>
               </motion.div>
             )}
 

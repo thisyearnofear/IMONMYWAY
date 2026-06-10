@@ -94,7 +94,7 @@ export function CardHeader({
     <div className={cn('flex items-center justify-between mb-6', className)}>
       <div className="flex items-center gap-3">
         {icon && (
-          <div className="w-12 h-12 bg-gradient-to-br from-gold/15 to-violet/15 border border-gold/30 rounded-xl flex items-center justify-center text-xl">
+          <div className="w-12 h-12 border border-gold-500/20 rounded-xl flex items-center justify-center text-xl">
             {icon}
           </div>
         )}
@@ -103,7 +103,7 @@ export function CardHeader({
         </div>
       </div>
       {badge && (
-        <div className="bg-gradient-to-br from-gold/15 to-violet/15 border border-gold/30 rounded-xl p-1">
+        <div className="border border-gold-500/20 rounded-xl p-1">
           {badge}
         </div>
       )}
@@ -126,7 +126,7 @@ export function CardTitle({
     <h3 className={cn(
       'text-xl font-bold tracking-tight',
       gradient 
-        ? 'bg-gradient-to-r from-blue-400 via-purple-400 to-green-400 bg-clip-text text-transparent'
+        ? 'bg-gradient-to-r from-gold via-violet to-gold bg-clip-text text-transparent'
         : 'text-white',
       className
     )}>
@@ -262,7 +262,7 @@ export function DataRow({ label, value, status = 'neutral' }: DataRowProps) {
         {label}
       </span>
       <span className={cn(
-        'text-xs font-bold font-mono',
+        'text-sm font-bold font-mono',
         statusColors[status]
       )}>
         {value}

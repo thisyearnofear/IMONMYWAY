@@ -61,7 +61,7 @@ const ErrorFallback = (
     <p className="text-red-400 text-sm">Failed to load wallet component</p>
     <button
       onClick={() => window.location.reload()}
-      className="mt-2 text-xs text-white/50 hover:text-white/80 transition-colors"
+      className="mt-2 text-xs text-white/70 hover:text-white/80 transition-colors"
     >
       Reload page
     </button>

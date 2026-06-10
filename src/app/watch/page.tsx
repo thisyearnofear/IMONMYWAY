@@ -55,7 +55,7 @@ export default function WatchPage() {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-gold via-violet to-gold bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-gold via-violet to-gold bg-clip-text text-transparent">
             Live Agent Commitments
           </h1>
           <p className="text-white/60 mt-2 text-sm">
@@ -63,10 +63,19 @@ export default function WatchPage() {
           </p>
         </motion.div>
 
+        {/* Divider */}
+        <div className="px-4 py-2 mb-6">
+          <div className="divider">
+            <div className="line" />
+            <div className="dot" />
+            <div className="line" />
+          </div>
+        </div>
+
         {isLoading ? (
           <div className="flex flex-col items-center gap-4 py-16">
-            <LoadingSpinner size="lg" color="purple" />
-            <p className="text-white/40 text-sm font-mono">Querying registry contract...</p>
+            <LoadingSpinner size="lg" color="violet" />
+            <p className="text-white/60 text-sm font-mono">Querying registry contract...</p>
           </div>
         ) : error ? (
           <motion.div
@@ -81,7 +90,7 @@ export default function WatchPage() {
           </motion.div>
         ) : listings.length === 0 ? (
           <motion.div
-            className="bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 p-8 rounded-xl text-center max-w-md mx-auto"
+            className="p-8 rounded-xl text-center max-w-md mx-auto section-zone-violet"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
@@ -106,7 +115,7 @@ export default function WatchPage() {
         ) : (
           <div className="space-y-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-mono text-white/40">{listings.length} active listings</span>
+              <span className="text-xs font-mono text-white/60">{listings.length} active listings</span>
               <PremiumButton
                 variant="ghost"
                 size="sm"
@@ -126,8 +135,8 @@ export default function WatchPage() {
                     transition={{ delay: index * 0.05 }}
                     className={`p-5 rounded-xl border transition-all hover:scale-[1.01] ${
                       isActive
-                        ? 'bg-gradient-to-br from-gold/5 to-violet/5 border-gold/20 hover:border-gold/40'
-                        : 'bg-white/5 border-white/10 opacity-60'
+                        ? 'border-gold-500/20 hover:border-gold-500/40'
+                        : 'border-white/5 opacity-60'
                     }`}
                   >
                     <Link href={`/commitment/${listing.commitmentId}`}>
@@ -138,16 +147,16 @@ export default function WatchPage() {
                             <span className="text-sm font-bold text-white">
                               {formatAddress(listing.principal)}
                             </span>
-                            <span className="text-[10px] font-mono text-white/30">
+                            <span className="text-[10px] font-mono text-white/50">
                               principal
                             </span>
                           </div>
                           {listing.context && (
-                            <p className="text-xs text-white/50 mb-2 max-w-sm truncate">
+                            <p className="text-xs text-white/70 mb-2 max-w-sm truncate">
                               {listing.context}
                             </p>
                           )}
-                          <div className="flex items-center gap-4 text-xs text-white/40">
+                          <div className="flex items-center gap-4 text-xs text-white/60">
                             <span>
                               {ethers.formatEther(listing.stakeAmount)} {networkConfig.nativeCurrency.symbol}
                             </span>
@@ -164,7 +173,7 @@ export default function WatchPage() {
                           }`}>
                             {isActive ? getTimeRemaining(listing.deadline) : 'Expired'}
                           </span>
-                          <div className="text-[10px] font-mono text-white/30 mt-1">
+                          <div className="text-[10px] font-mono text-white/50 mt-1">
                             {listing.commitmentId.slice(0, 10)}...
                           </div>
                         </div>

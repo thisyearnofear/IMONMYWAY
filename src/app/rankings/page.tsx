@@ -107,12 +107,12 @@ export default function LeaderboardPage() {
 
   const getTierColor = (tier: LeaderboardEntry['tier']) => {
     switch (tier) {
-      case 'legendary': return 'from-yellow-400 to-orange-500'
-      case 'expert': return 'from-blue-400 to-purple-500'
-      case 'skilled': return 'from-green-400 to-blue-500'
-      case 'developing': return 'from-purple-400 to-pink-500'
-      case 'newcomer': return 'from-gray-400 to-gray-600'
-      default: return 'from-gray-400 to-gray-600'
+      case 'legendary': return 'from-gold-400 to-gold-600'
+      case 'expert': return 'from-violet-400 to-violet-600'
+      case 'skilled': return 'from-violet-300 to-gold-400'
+      case 'developing': return 'from-graphite-300 to-graphite-500'
+      case 'newcomer': return 'from-graphite-400 to-graphite-600'
+      default: return 'from-graphite-400 to-graphite-600'
     }
   }
 
@@ -123,12 +123,11 @@ export default function LeaderboardPage() {
   if (!isConnected) {
     return (
       <div className="min-h-screen relative">
-        <WebGLParticleSystem count={800} color="#60a5fa" size={0.015} />
-        <div className="fixed inset-0 bg-gradient-to-br from-indigo-950/50 via-purple-950/30 to-pink-950/15" />
+        <WebGLParticleSystem count={800} color="#6E2BF2" size={0.015} />
         
         <main className="relative z-10 min-h-screen flex items-center justify-center px-4">
           <motion.div
-            className="p-8 rounded-xl text-center max-w-md bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10"
+            className="p-8 rounded-xl text-center max-w-md section-zone-violet"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
@@ -148,8 +147,7 @@ export default function LeaderboardPage() {
 
   return (
     <div className="min-h-screen relative">
-      <WebGLParticleSystem count={800} color="#60a5fa" size={0.015} />
-      <div className="fixed inset-0 bg-gradient-to-br from-indigo-950/50 via-purple-950/30 to-pink-950/15" />
+      <WebGLParticleSystem count={800} color="#6E2BF2" size={0.015} />
 
       <main className="relative z-10 container mx-auto px-4 py-8">
         {/* Header */}
@@ -159,8 +157,8 @@ export default function LeaderboardPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-            🏆 Punctuality Leaderboard
+           <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4 bg-gradient-to-r from-gold via-violet to-gold bg-clip-text text-transparent">
+            Punctuality Leaderboard
           </h1>
           <p className="text-lg text-white/80 max-w-2xl mx-auto">
             Real user rankings based on reputation scores, session success rates, and activity levels.
@@ -169,13 +167,13 @@ export default function LeaderboardPage() {
           {/* User Rank Display */}
           {userRank && (
             <motion.div
-              className="mt-4 p-4 rounded-xl inline-block bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10"
+              className="mt-4 p-4 rounded-xl inline-block border border-gold-500/20"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.3 }}
             >
               <span className="text-white/80">Your Rank: </span>
-              <span className="text-blue-400 font-bold">#{userRank.rank}</span>
+              <span className="text-gold-500 font-bold font-mono text-xl numeral">#{userRank.rank}</span>
               <span className="text-white/60"> of {userRank.total}</span>
             </motion.div>
           )}
@@ -183,7 +181,7 @@ export default function LeaderboardPage() {
           {/* Real-time Activity Indicator */}
           {realtimeIndicator && (
             <motion.div
-              className="mt-4 p-3 rounded-xl inline-block border border-green-400/30 bg-green-500/10 bg-gradient-to-br from-gold/5 to-violet/5"
+              className="mt-4 p-3 rounded-xl inline-block border border-green-400/30"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
@@ -196,9 +194,18 @@ export default function LeaderboardPage() {
           )}
         </motion.div>
 
+        {/* Divider */}
+        <div className="px-4 py-2 mb-6">
+          <div className="divider">
+            <div className="line" />
+            <div className="dot" />
+            <div className="line" />
+          </div>
+        </div>
+
         {/* Filters */}
         <motion.div
-          className="p-6 rounded-xl mb-8 bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10"
+          className="p-6 rounded-xl mb-8 section-zone"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
@@ -225,7 +232,7 @@ export default function LeaderboardPage() {
         {/* Error State */}
         {error && (
           <motion.div
-            className="p-6 rounded-xl mb-8 border border-red-500/30 bg-gradient-to-br from-gold/5 to-violet/5"
+            className="p-6 rounded-xl mb-8 border border-red-500/30"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
           >
@@ -247,7 +254,7 @@ export default function LeaderboardPage() {
         {/* Empty State */}
         {isEmpty && !isLoading && (
           <motion.div
-            className="p-6 rounded-xl mb-8 border border-gold/10 bg-gradient-to-br from-gold/5 to-violet/5"
+            className="p-6 rounded-xl mb-8 border border-gold-500/20 section-zone-gold"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
           >
@@ -270,7 +277,7 @@ export default function LeaderboardPage() {
         {isLoading && (
           <div className="space-y-4">
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="p-6 rounded-xl animate-pulse bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10">
+              <div key={i} className="p-6 rounded-xl animate-pulse border border-white/5">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-white/10 rounded-full"></div>
                   <div className="flex-1">
@@ -294,8 +301,8 @@ export default function LeaderboardPage() {
             {leaderboard.map((entry, index) => (
               <motion.div
                 key={entry.walletAddress}
-                className={`p-6 rounded-xl transition-all duration-300 hover:scale-[1.02] bg-gradient-to-br from-gold/5 to-violet/5 border border-gold/10 ${
-                  entry.isCurrentUser ? 'ring-2 ring-blue-400/50 bg-blue-500/10' : ''
+                className={`p-6 rounded-xl transition-all duration-300 hover:scale-[1.02] border border-white/5 hover:border-gold-500/20 ${
+                  entry.isCurrentUser ? 'ring-2 ring-gold-500/40 border-gold-500/30' : ''
                 }`}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -305,7 +312,7 @@ export default function LeaderboardPage() {
                   {/* Rank and User Info */}
                   <div className="flex items-center gap-4">
                     {/* Rank */}
-                    <div className={`w-12 h-12 rounded-full bg-gradient-to-r ${getTierColor(entry.tier)} flex items-center justify-center font-bold text-white text-lg`}>
+                    <div className={`w-12 h-12 rounded-full bg-gradient-to-r ${getTierColor(entry.tier)} flex items-center justify-center font-bold font-mono text-white text-xl numeral`}>
                       {entry.rank <= 3 ? ['🥇', '🥈', '🥉'][entry.rank - 1] : entry.rank}
                     </div>
 
@@ -317,7 +324,7 @@ export default function LeaderboardPage() {
                         </span>
                         <span className="text-lg">{getTierIcon(entry.tier)}</span>
                         {entry.isCurrentUser && (
-                          <span className="px-2 py-1 bg-blue-500/20 text-blue-400 text-xs rounded-full">
+                          <span className="px-2 py-1 bg-gold-500/20 text-gold-500 text-xs rounded-full border border-gold-500/30">
                             You
                           </span>
                         )}

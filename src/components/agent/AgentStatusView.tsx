@@ -65,7 +65,7 @@ export function AgentStatusView({ config, balance, networkName, currency, reputa
       )}
       {(isThinking || insight) && (
         <div className="mt-2 pt-2 border-t border-white/5">
-          <p className="text-[10px] text-white/30 uppercase tracking-wider font-mono mb-1">Agent Insight</p>
+          <p className="text-[10px] text-white/50 uppercase tracking-wider font-mono mb-1">Agent Insight</p>
           <p className="text-xs text-white/60 italic">
             {isThinking ? 'Analyzing...' : insight}
           </p>

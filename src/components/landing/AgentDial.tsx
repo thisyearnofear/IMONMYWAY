@@ -164,13 +164,13 @@ export function AgentDial({ steps, className = '' }: AgentDialProps) {
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
             >
-              <div className="font-mono text-xs text-gold-500/60 uppercase tracking-[0.2em] mb-3">
+              <div className="font-mono text-xs text-gold-500/80 uppercase tracking-[0.2em] mb-3">
                 Step {steps[activeStep].number}
               </div>
               <h3 className="text-3xl md:text-4xl font-bold text-white mb-4 tracking-tight">
                 {steps[activeStep].title}
               </h3>
-              <p className="text-gray-400 text-lg leading-relaxed max-w-md">
+              <p className="text-gray-300 text-lg leading-relaxed max-w-md">
                 {steps[activeStep].description}
               </p>
             </motion.div>

@@ -65,7 +65,7 @@ export function SuccessAnimation({
               <div
                 key={i}
                 className={`
-                  absolute w-2 h-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full
+                  absolute w-2 h-2 bg-gradient-to-r from-violet-500 to-gold-500 rounded-full
                   transition-all duration-1000 transform
                   ${isAnimating ? 'opacity-0 scale-0' : 'opacity-100 scale-100'}
                 `}

@@ -30,12 +30,20 @@ export function RouteMap({ stations, className = '' }: RouteMapProps) {
     const track = trackRef.current
     if (!section || !track) return
 
+    const isMobile = window.innerWidth < 768
+    if (isMobile) {
+      section.classList.add('route-map--mobile')
+      return
+    }
+
+    section.classList.remove('route-map--mobile')
+
     const totalWidth = track.scrollWidth
     const viewWidth = section.offsetWidth
     const scrollDistance = totalWidth - viewWidth
 
     const ctx = gsap.context(() => {
-      gsap.to(track, {
+      const scrollTween = gsap.to(track, {
         x: -scrollDistance,
         ease: 'none',
         scrollTrigger: {
@@ -70,7 +78,7 @@ export function RouteMap({ stations, className = '' }: RouteMapProps) {
           stagger: 0.08,
           scrollTrigger: {
             trigger: station,
-            containerAnimation: gsap.getById('routeScroll') || undefined,
+            containerAnimation: scrollTween,
             start: 'left 70%',
             end: 'left 40%',
             scrub: true,
@@ -137,7 +145,7 @@ export function RouteMap({ stations, className = '' }: RouteMapProps) {
               </h3>
 
               {/* Description */}
-              <p className="text-gray-400 text-sm leading-relaxed max-w-xs mx-auto">
+              <p className="text-white/60 text-sm leading-relaxed max-w-xs mx-auto">
                 {station.description}
               </p>
 
@@ -149,7 +157,7 @@ export function RouteMap({ stations, className = '' }: RouteMapProps) {
       </div>
 
       {/* Scroll indicator */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2 text-gray-500 text-xs font-mono">
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2 text-white/60 text-xs font-mono">
         <span>scroll</span>
         <div className="w-8 h-px bg-gray-500/50" />
         <svg width="8" height="8" viewBox="0 0 8 8" fill="none">

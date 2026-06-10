@@ -143,8 +143,8 @@ function Toast({ toast, onRemove }: { toast: ToastData; onRemove: () => void }) 
         };
       case "achievement":
         return {
-          bg: "bg-gradient-to-r from-purple-500/90 to-pink-500/90",
-          border: "border-purple-400/50",
+          bg: "bg-gradient-to-r from-violet-500/90 to-gold-500/90",
+          border: "border-violet-400/50",
           icon: "🏆",
         };
       default:

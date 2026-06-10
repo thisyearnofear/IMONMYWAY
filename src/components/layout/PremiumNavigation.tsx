@@ -84,7 +84,7 @@ export function PremiumNavigation() {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-graphite-900/80 backdrop-blur-xl border-b border-violet-500/20 ${isScrolled ? "py-3" : "py-4"}`}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-graphite-900/60 border-b border-white/5 ${isScrolled ? "py-3" : "py-4"}`}
     >
       <div className="container mx-auto px-4 md:px-6 flex items-center justify-between">
         {/* Logo */}
@@ -126,7 +126,7 @@ export function PremiumNavigation() {
                     size="sm"
                     className={`relative group rounded-lg px-4 py-2 transition-all duration-200 ${
                       active
-                        ? "text-white bg-gradient-to-r from-violet-600 to-purple-600 shadow-lg"
+                        ? "text-white bg-gradient-to-r from-violet-600 to-violet-700 shadow-lg"
                         : "text-gray-300 hover:text-white hover:bg-violet-500/10"
                     }`}
                   >
@@ -169,7 +169,7 @@ export function PremiumNavigation() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="items-center gap-2 border-violet-500/50 hover:bg-violet-500/10 rounded-lg"
+                  className="items-center gap-2 border-white/10 hover:bg-violet-500/10 rounded-lg"
                   onClick={() => setIsWalletDropdownOpen(!isWalletDropdownOpen)}
                 >
                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
@@ -191,11 +191,11 @@ export function PremiumNavigation() {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: -10, scale: 0.95 }}
                       transition={{ duration: 0.2 }}
-                      className="absolute right-0 mt-2 w-80 bg-graphite-800/95 backdrop-blur-xl border border-violet-500/20 rounded-xl shadow-2xl z-50"
+                      className="absolute right-0 mt-2 w-80 bg-graphite-800 border border-white/5 rounded-xl shadow-2xl z-50"
                     >
                       <div className="p-4 space-y-4">
                         {/* Wallet Info Header */}
-                        <div className="flex items-center gap-3 pb-3 border-b border-violet-500/20">
+                        <div className="flex items-center gap-3 pb-3 border-b border-white/5">
                           <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                           <div>
                             <p className="text-white font-medium">Wallet Connected</p>
@@ -227,12 +227,12 @@ export function PremiumNavigation() {
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="pt-3 border-t border-violet-500/20 space-y-2">
+                        <div className="pt-3 border-t border-white/5 space-y-2">
                           <Link href="/dashboard">
                             <Button
                               variant="outline"
                               size="sm"
-                              className="w-full justify-start border-violet-500/30 hover:bg-violet-500/10"
+                              className="w-full justify-start border-white/10 hover:bg-violet-500/10"
                               onClick={() => setIsWalletDropdownOpen(false)}
                             >
                               View Dashboard
@@ -298,7 +298,7 @@ export function PremiumNavigation() {
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: "auto" }}
           exit={{ opacity: 0, height: 0 }}
-          className="md:hidden border-t border-violet-500/20 bg-graphite-800/90 backdrop-blur-lg"
+          className="md:hidden border-t border-white/5 bg-graphite-900/90"
         >
           <nav className="container mx-auto px-4 py-4 space-y-2">
             {NAV_ITEMS.map((item) => {
@@ -313,14 +313,14 @@ export function PremiumNavigation() {
                     whileTap={{ scale: 0.98 }}
                     className={`flex items-center justify-between py-3 px-4 rounded-lg transition-all duration-200 ${
                       active 
-                        ? "bg-gradient-to-r from-violet-600/20 to-purple-600/20 border border-violet-500/30 text-white" 
+                        ? "bg-violet-500/15 border border-violet-500/30 text-white" 
                         : "text-gray-300 hover:text-white hover:bg-violet-500/10"
                     }`}
                   >
                     <div className="flex items-center gap-3">
                       <div>
                         <div className={`font-medium ${active ? 'text-white' : ''}`}>{item.label}</div>
-                        <div className={`text-xs ${active ? 'text-violet-200' : 'text-gray-500'}`}>
+                        <div className={`text-xs ${active ? 'text-gold-500' : 'text-white/60'}`}>
                           {item.description}
                         </div>
                       </div>
@@ -349,7 +349,7 @@ export function PremiumNavigation() {
               }>
                 {isConnected ? (
                   <>
-                    <div className="p-4 bg-graphite-700/50 rounded-lg border border-violet-500/20">
+                    <div className="p-4 bg-graphite-800/50 rounded-lg border border-white/5">
                       <div className="flex items-center gap-3 mb-3">
                         <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                         <div>
@@ -377,7 +377,7 @@ export function PremiumNavigation() {
                       <Link href="/dashboard">
                         <Button
                           variant="outline"
-                          className="w-full justify-start border-violet-500/30 hover:bg-violet-500/10"
+                              className="w-full justify-start border-white/10 hover:bg-violet-500/10"
                           onClick={() => setIsMobileMenuOpen(false)}
                         >
                           View Dashboard

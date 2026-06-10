@@ -102,7 +102,7 @@ export function AgentBettingView({
 
         {/* Progress Bar */}
         <div className="mb-4">
-          <div className="flex justify-between text-[10px] font-mono text-white/50 mb-1">
+          <div className="flex justify-between text-[10px] font-mono text-white/70 mb-1">
             <span>Progress: {progressPct}%</span>
             <span>{timeRemaining > 0 ? `${Math.floor(timeRemaining / 60)}m remaining` : 'Time up'}</span>
           </div>
@@ -173,7 +173,7 @@ export function AgentBettingView({
         )}
 
         {!isConnected && (
-          <p className="text-center text-xs text-white/40 font-mono">Connect wallet to place bets</p>
+          <p className="text-center text-xs text-white/60 font-mono">Connect wallet to place bets</p>
         )}
       </CardContent>
     </Card>

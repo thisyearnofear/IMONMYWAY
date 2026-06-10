@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 // Consolidated LoadingSpinner (AGGRESSIVE CONSOLIDATION)
 interface LoadingSpinnerProps {
   size?: 'sm' | 'md' | 'lg'
-  color?: 'blue' | 'green' | 'purple' | 'white' | 'current'
+  color?: 'blue' | 'green' | 'purple' | 'violet' | 'white' | 'current'
   className?: string
 }
 
@@ -23,6 +23,7 @@ export function LoadingSpinner({
     blue: 'border-blue-600 border-t-transparent',
     green: 'border-green-600 border-t-transparent',
     purple: 'border-purple-600 border-t-transparent',
+    violet: 'border-violet-600 border-t-transparent',
     white: 'border-white border-t-transparent',
     current: 'border-current border-t-transparent'
   }
@@ -238,7 +239,7 @@ export const Button = forwardRef<HTMLButtonElement, PremiumButtonProps>(
             glow && glowClasses,
             pulse && "animate-pulse",
             gradient && "bg-gradient-to-r",
-            glass && "bg-gradient-to-br from-gold/15 to-violet/15 border border-gold/30 rounded-xl",
+            glass && "border border-gold-500/20 rounded-xl",
             !isDisabled && "hover:scale-105 hover:-translate-y-1",
             !isDisabled && "active:scale-95 active:translate-y-0",
             isDisabled && "opacity-50 cursor-not-allowed",

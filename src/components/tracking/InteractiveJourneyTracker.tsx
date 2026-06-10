@@ -92,7 +92,7 @@ export function InteractiveJourneyTracker({
   const getProgressPercentage = () => Math.round(progress * 100);
 
   return (
-    <div className="relative w-full h-full bg-gradient-to-br from-indigo-950/30 to-purple-950/30 rounded-xl overflow-hidden border border-white/20 shadow-2xl">
+    <div className="relative w-full h-full bg-gradient-to-br from-violet-950/30 to-graphite-900/30 rounded-xl overflow-hidden border border-white/20 shadow-2xl">
       {/* Progress Overlay */}
       <div className="absolute top-4 left-4 right-4 z-10">
         <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
@@ -103,7 +103,7 @@ export function InteractiveJourneyTracker({
 
           <div className="w-full bg-gray-700 rounded-full h-3 mb-3 relative overflow-hidden">
             <motion.div
-              className="h-3 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-full"
+              className="h-3 bg-gradient-to-r from-violet-500 via-gold-500 to-violet-500 rounded-full"
               initial={{ width: 0 }}
               animate={{ width: `${progress * 100}%` }}
               transition={{ duration: 0.5, ease: "easeOut" }}

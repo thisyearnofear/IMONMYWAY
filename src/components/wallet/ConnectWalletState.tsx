@@ -27,7 +27,7 @@ export const ConnectWalletState = memo(function ConnectWalletState({
       <button 
         onClick={onConnect}
         disabled={isConnecting}
-        className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-6 rounded-xl font-bold text-xl shadow-2xl transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+        className="w-full bg-gradient-to-r from-violet-600 to-gold-500 text-white py-6 rounded-xl font-bold text-xl shadow-2xl transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
       >
         {isConnecting ? '🔄 Connecting...' : '🔗 Connect Wallet to Start'}
       </button>
