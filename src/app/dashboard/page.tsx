@@ -15,6 +15,7 @@ import { AgentStatusView } from '@/components/agent/AgentStatusView';
 import { AgentSocialFeed } from '@/components/agent/AgentSocialFeed';
 import { OnboardingTooltip } from '@/components/ui/OnboardingTooltip';
 import { getContractAddresses, getNetworkConfig } from '@/contracts/addresses';
+import { DEMO_EVENTS, DEMO_AGENT, DEMO_TXNS } from '@/lib/demo-data';
 
 const AGENT_ADDRESS = getContractAddresses().PunctualityAgent;
 
@@ -39,6 +40,7 @@ export default function AgentDashboardPage() {
   const [reputationScore, setReputationScore] = useState<number>(0);
   const [lastEventTime, setLastEventTime] = useState<number>(0);
   const [historyLoaded, setHistoryLoaded] = useState(false);
+  const [isDemo, setIsDemo] = useState(false);
 
   // ── Read-only spectator: query historical events + stream live ──
 
@@ -54,10 +56,17 @@ export default function AgentDashboardPage() {
       const history = await somniaReactivity.queryHistory(provider, AGENT_ADDRESS, { limit: 100 });
       if (cancelled) return;
 
-      setActivityLog(history);
-      setDecisions(history.filter(e => e.type === 'decision' || e.type === 'commitment_created' || e.type === 'commitment_settled').slice(0, 50));
-      setSocialPosts(history.filter(e => e.type === 'social_update').slice(0, 50));
-      if (history.length > 0) setLastEventTime(Date.now());
+      const hasLive = history.length > 0;
+      if (hasLive) {
+        setActivityLog(history);
+        setDecisions(history.filter(e => e.type === 'decision' || e.type === 'commitment_created' || e.type === 'commitment_settled').slice(0, 50));
+        setSocialPosts(history.filter(e => e.type === 'social_update').slice(0, 50));
+        setLastEventTime(Date.now());
+      } else {
+        setActivityLog(DEMO_EVENTS);
+        setDecisions(DEMO_EVENTS);
+        setIsDemo(true);
+      }
       setHistoryLoaded(true);
       setIsLoading(false);
 
@@ -170,13 +179,26 @@ export default function AgentDashboardPage() {
         >
           <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <span className="px-2 py-0.5 bg-violet-500/30 border border-violet-400/40 rounded text-[10px] font-mono uppercase tracking-wider text-violet-300">
-                {hasActivity ? 'Live' : 'Spectator'}
+              <span className={`px-2 py-0.5 border rounded text-[10px] font-mono uppercase tracking-wider ${
+                hasActivity
+                  ? 'bg-green-500/30 border-green-400/40 text-green-300'
+                  : isDemo
+                  ? 'bg-gold-500/20 border-gold-400/30 text-gold-400'
+                  : 'bg-violet-500/30 border-violet-400/40 text-violet-300'
+              }`}>
+                {hasActivity ? 'Live' : isDemo ? 'Demo' : 'Spectator'}
               </span>
               <p className="text-sm text-white/70">
                 {hasActivity
                   ? 'Viewing live agent activity from the contract. Connect to deploy your own.'
+                  : isDemo
+                  ? 'Live agent idle — showing proven on-chain demo. '
                   : 'No on-chain activity yet. Connect your wallet to deploy an agent.'}
+                {isDemo && (
+                  <a href={DEMO_TXNS.callback} target="_blank" rel="noopener noreferrer" className="text-gold-500 underline hover:text-gold-400">
+                    View 5 explorer txns →
+                  </a>
+                )}
               </p>
             </div>
             <Button onClick={connect} variant="primary" size="sm">
