@@ -212,6 +212,11 @@ contract PunctualityAgent is IAgentRequesterHandler, SomniaEventHandler {
     // requestId => pending request metadata
     mapping(uint256 => PendingRequest) public pendingRequests;
 
+    // tempId => number of LLM retries attempted
+    mapping(bytes32 => uint256) private _retryCount;
+
+    uint256 constant MAX_RETRIES = 3;
+
     // principal => authorization status
     mapping(address => bool) public authorizedPrincipals;
 
@@ -410,6 +415,16 @@ contract PunctualityAgent is IAgentRequesterHandler, SomniaEventHandler {
         delete pendingRequests[requestId];
 
         if (status != ResponseStatus.Success || responses.length == 0) {
+            if (pending.requestType == RequestType.PaceDecision) {
+                bytes32 tempId = pending.commitmentId;
+                if (_retryCount[tempId] < MAX_RETRIES) {
+                    _retryCount[tempId]++;
+                    _autoRetryLLM(tempId, pending.principal);
+                    return;
+                }
+                delete _stashedParams[tempId];
+                delete _retryCount[tempId];
+            }
             emit AgentDecisionMade(requestId, pending.requestType, pending.commitmentId, "FAILED: agent execution unsuccessful");
             return;
         }
@@ -473,8 +488,9 @@ contract PunctualityAgent is IAgentRequesterHandler, SomniaEventHandler {
         // Track commitment ID for deadline monitoring
         _activeCommitmentIds[pending.principal].push(commitmentId);
 
-        // Clean up stashed params (prevent unbounded storage growth)
+        // Clean up stashed params and retry state
         delete _stashedParams[pending.commitmentId];
+        delete _retryCount[pending.commitmentId];
 
         // List in registry for counterparty discovery
         registry.listAgent(
@@ -509,6 +525,52 @@ contract PunctualityAgent is IAgentRequesterHandler, SomniaEventHandler {
         string memory message = abi.decode(responses[0].result, (string));
 
         emit AgentSocialUpdate(pending.commitmentId, "agent_generated", message);
+    }
+
+    function _autoRetryLLM(bytes32 tempId, address principal) internal {
+        StashedParams memory params = _getStashedParams(tempId);
+        uint256 distance = punctualityCore.calculateDistance(
+            params.startLocation.latitude, params.startLocation.longitude,
+            params.targetLocation.latitude, params.targetLocation.longitude
+        );
+        uint256 reputation = punctualityCore.getUserReputation(principal);
+
+        string memory prompt = string.concat(
+            "Principal address: ", _addressToString(principal), ". ",
+            "Reputation score: ", _uint2str(reputation), "/10000. ",
+            "Distance: ", _uint2str(distance), " units. ",
+            "Context: ", params.context, ". ",
+            "Recommend the optimal travel pace in seconds per kilometer. ",
+            "Lower reputation = more conservative (slower) pace. ",
+            "Urgent context = faster pace with less buffer. ",
+            "Return a single integer representing seconds per kilometer."
+        );
+
+        bytes memory payload = abi.encodeWithSelector(
+            ILLMAgent.inferNumber.selector,
+            prompt,
+            "You are a punctuality optimization agent. Analyze the principal's reputation and journey context to recommend the optimal travel pace in seconds per kilometer. Be precise and evidence-based. Return only an integer.",
+            int256(30),
+            int256(600),
+            true
+        );
+
+        uint256 deposit = platform.getRequestDeposit() + (LLM_COST_PER_AGENT * SUBCOMMITTEE_SIZE);
+        uint256 newRequestId = platform.createRequest{value: deposit}(
+            llmAgentId,
+            address(this),
+            this.handleResponse.selector,
+            payload
+        );
+
+        pendingRequests[newRequestId] = PendingRequest({
+            requestType: RequestType.PaceDecision,
+            commitmentId: tempId,
+            principal: principal,
+            exists: true
+        });
+
+        emit AgentRequestSent(newRequestId, RequestType.PaceDecision, tempId);
     }
 
     // ──────────────────────────────────────────────
@@ -679,63 +741,7 @@ contract PunctualityAgent is IAgentRequesterHandler, SomniaEventHandler {
         }
     }
 
-    // ──────────────────────────────────────────────
-    // AGENT-TO-AGENT NEGOTIATION
-    // ──────────────────────────────────────────────
 
-    /**
-     * @dev Evaluate and respond to an incoming proposal from a counterparty agent
-     */
-    function evaluateProposal(
-        bytes32 ourCommitmentId,
-        uint256 proposalIndex
-    ) external {
-        require(authorizedPrincipals[msg.sender] || msg.sender == address(this),
-            "Unauthorized");
-
-        AgentRegistry.Proposal[] memory proposals = registry.getProposals(ourCommitmentId);
-        require(proposalIndex < proposals.length, "Invalid proposal index");
-
-        AgentRegistry.Proposal memory proposal = proposals[proposalIndex];
-        CommitmentState memory state = commitmentStates[ourCommitmentId];
-
-        AgentConfig memory config = agentConfigs[state.principal];
-
-        // Auto-evaluate if enabled
-        if (config.autoAcceptProposals) {
-            uint256 proposerRep = punctualityCore.getUserReputation(proposal.proposerPrincipal);
-            bool acceptable = proposerRep >= config.minReputation;
-
-            registry.respondToProposal(ourCommitmentId, proposalIndex, acceptable);
-
-            emit AgentProposalHandled(ourCommitmentId, proposal.proposerAgent, acceptable);
-        }
-    }
-
-    /**
-     * @dev Send a proposal to a counterparty agent discovered in the registry
-     */
-    function proposeToCounterparty(
-        bytes32 ourCommitmentId,
-        bytes32 targetCommitmentId,
-        string calldata message
-    ) external payable {
-        CommitmentState memory state = commitmentStates[ourCommitmentId];
-        require(state.principal != address(0), "Unknown commitment");
-        require(authorizedPrincipals[state.principal], "Not authorized");
-
-        AgentRegistry.AgentListing memory target = registry.getListing(targetCommitmentId);
-        require(target.active, "Target not active");
-
-        registry.sendProposal(
-            targetCommitmentId,
-            ourCommitmentId,
-            state.principal,
-            state.deadline,
-            state.stakeAmount,
-            message
-        );
-    }
 
     // ──────────────────────────────────────────────
     // SOCIAL UPDATE GENERATION
