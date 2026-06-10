@@ -20,7 +20,7 @@ async function main() {
   // 1. Deploy
   console.log("── 1. Deploy Agent ──");
   const f = await ethers.getContractFactory("PunctualityAgent", d);
-  const agent = await f.deploy(PLATFORM, CORE, REGISTRY, LLM_ID, JSON_ID, { value: ethers.parseEther("8") });
+  const agent = await f.deploy(PLATFORM, CORE, REGISTRY, LLM_ID, JSON_ID, { value: ethers.parseEther("5") });
   await agent.waitForDeployment();
   const addr = await agent.getAddress();
   mark("Deploy", agent.deploymentTransaction());
