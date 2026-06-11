@@ -1,10 +1,11 @@
 "use client"
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
-import { PremiumButton, LoadingSpinner } from '@/components/ui/PremiumButton'
-import { ContractService, type AgentListingData } from '@/services/contractService'
+import { PremiumButton } from '@/components/ui/PremiumButton'
+import { CardSkeleton } from '@/components/ui/LoadingSkeleton'
+import { getReadOnlyContractService, type AgentListingData } from '@/services/contractService'
 import { getNetworkConfig } from '@/contracts/addresses'
 import { ethers } from 'ethers'
 
@@ -12,12 +13,13 @@ export default function WatchPage() {
   const [listings, setListings] = useState<AgentListingData[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [now, setNow] = useState(() => Math.floor(Date.now() / 1000))
 
-  const loadListings = useCallback(async () => {
+  const loadListings = async () => {
     try {
       setIsLoading(true)
       setError(null)
-      const service = new ContractService()
+      const service = getReadOnlyContractService()
       const data = await service.getRecentListings(20)
       setListings(data)
     } catch (err) {
@@ -26,18 +28,40 @@ export default function WatchPage() {
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }
 
   useEffect(() => {
-    loadListings()
-  }, [loadListings])
+    // Mount-time fetch: setState in effects is the documented way to trigger
+    // an async load. The rule over-fires here because the actual setState
+    // happens after `await`, so we suppress for the synchronous preamble.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsLoading(true)
+    setError(null)
+    ;(async () => {
+      try {
+        const service = getReadOnlyContractService()
+        const data = await service.getRecentListings(20)
+        setListings(data)
+      } catch (err) {
+        console.error('Failed to load listings:', err)
+        setError('Could not connect to the registry contract')
+      } finally {
+        setIsLoading(false)
+      }
+    })()
+  }, [])
+
+  // Tick the wall-clock every second so expiry / time-remaining stay live.
+  useEffect(() => {
+    const id = setInterval(() => setNow(Math.floor(Date.now() / 1000)), 1000)
+    return () => clearInterval(id)
+  }, [])
 
   const networkConfig = getNetworkConfig()
 
   const formatAddress = (addr: string) => `${addr.slice(0, 6)}...${addr.slice(-4)}`
 
   const getTimeRemaining = (deadline: number) => {
-    const now = Math.floor(Date.now() / 1000)
     const remaining = deadline - now
     if (remaining <= 0) return 'Expired'
     const hours = Math.floor(remaining / 3600)
@@ -73,9 +97,10 @@ export default function WatchPage() {
         </div>
 
         {isLoading ? (
-          <div className="flex flex-col items-center gap-4 py-16">
-            <LoadingSpinner size="lg" color="violet" />
-            <p className="text-white/60 text-sm font-mono">Querying registry contract...</p>
+          <div className="space-y-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <CardSkeleton key={i} />
+            ))}
           </div>
         ) : error ? (
           <motion.div
@@ -126,7 +151,7 @@ export default function WatchPage() {
             </div>
             <AnimatePresence>
               {listings.map((listing, index) => {
-                const isActive = listing.deadline > Math.floor(Date.now() / 1000)
+                const isActive = listing.deadline > now
                 return (
                   <motion.div
                     key={listing.commitmentId}

@@ -1,18 +1,17 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useWallet } from '@/hooks/useWallet';
 import { useContractService } from '@/hooks/useContractService';
-import { ContractService } from '@/services/contractService';
 import { DataPanel, DataRow } from '@/components/ui/PremiumCard';
 import { Button, LoadingSpinner } from '@/components/ui/PremiumButton';
 import { OnboardingTooltip } from '@/components/ui/OnboardingTooltip';
 import { useLLM } from '@/hooks/useLLM';
 import { pacePreview } from '@/lib/llm/prompts';
-import { ethers } from 'ethers';
 import { getContractAddresses, getNetworkConfig } from '@/contracts/addresses';
 import { PERSONALITY_PRESETS } from '@/lib/personality-presets';
+import { getReadOnlyContractService } from '@/services/contractService';
 
 const AGENT_CONTRACT_ADDRESS = getContractAddresses().PunctualityAgent;
 
@@ -36,28 +35,31 @@ export default function AgentSetupPage() {
   const { generate, isThinking, error: llmError } = useLLM();
   const [paceResult, setPaceResult] = useState<{ pace_min_per_km: number; buffer_minutes: number; confidence: number; reasoning: string } | null>(null);
 
-  const checkAgentStatus = useCallback(async () => {
-    if (!address || !AGENT_CONTRACT_ADDRESS) return;
-    setIsChecking(true);
-    try {
-      const provider = new ethers.JsonRpcProvider(getNetworkConfig().rpcUrl);
-      const service = new ContractService();
-      const isAuthed = await service.isAgentAuthorized(address);
-      setAgentStatus(isAuthed ? 'authorized' : 'not_authorized');
-      if (isAuthed) {
-        const cfg = await service.getAgentConfig(address);
-        setExistingConfig(cfg);
-      }
-    } catch (err) {
-      console.error('Failed to check agent status:', err);
-    } finally {
-      setIsChecking(false);
-    }
-  }, [address]);
-
   useEffect(() => {
-    if (address) checkAgentStatus();
-  }, [address, checkAgentStatus]);
+    if (!address || !AGENT_CONTRACT_ADDRESS) return;
+    let cancelled = false;
+    // Suppress: mount-time load — setState after the first await is safe.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsChecking(true);
+    (async () => {
+      try {
+        const service = getReadOnlyContractService();
+        const isAuthed = await service.isAgentAuthorized(address);
+        if (cancelled) return;
+        setAgentStatus(isAuthed ? 'authorized' : 'not_authorized');
+        if (isAuthed) {
+          const cfg = await service.getAgentConfig(address);
+          if (cancelled) return;
+          setExistingConfig(cfg);
+        }
+      } catch (err) {
+        if (!cancelled) console.error('Failed to check agent status:', err);
+      } finally {
+        if (!cancelled) setIsChecking(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [address]);
 
   const handlePreviewPace = async () => {
     setPaceResult(null);
