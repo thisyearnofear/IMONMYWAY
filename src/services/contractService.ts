@@ -105,6 +105,8 @@ export interface AgentListingData {
   deadline: number;
   stakeAmount: bigint;
   context: string;
+  /** Pre-formatted stake (ether units) — populated by UI loaders to avoid pulling ethers into the bundle. */
+  stakeAmountFormatted?: string;
 }
 
 export interface LeaderboardUserData {

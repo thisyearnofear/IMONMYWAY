@@ -7,7 +7,6 @@ import { PremiumButton } from '@/components/ui/PremiumButton'
 import { CardSkeleton } from '@/components/ui/LoadingSkeleton'
 import { getReadOnlyContractService, type AgentListingData } from '@/services/contractService'
 import { getNetworkConfig } from '@/contracts/addresses'
-import { ethers } from 'ethers'
 
 export default function WatchPage() {
   const [listings, setListings] = useState<AgentListingData[]>([])
@@ -40,7 +39,11 @@ export default function WatchPage() {
     ;(async () => {
       try {
         const service = getReadOnlyContractService()
-        const data = await service.getRecentListings(20)
+        const raw = await service.getRecentListings(20)
+        // Defer ethers import to the load path so the initial bundle
+        // for /watch stays small; formatEther is the only ethers call here.
+        const { formatEther } = await import('ethers')
+        const data = raw.map((l) => ({ ...l, stakeAmountFormatted: formatEther(l.stakeAmount) }))
         setListings(data)
       } catch (err) {
         console.error('Failed to load listings:', err)
@@ -183,7 +186,7 @@ export default function WatchPage() {
                           )}
                           <div className="flex items-center gap-4 text-xs text-white/60">
                             <span>
-                              {ethers.formatEther(listing.stakeAmount)} {networkConfig.nativeCurrency.symbol}
+                              {listing.stakeAmountFormatted} {networkConfig.nativeCurrency.symbol}
                             </span>
                             <span>
                               Agent: {formatAddress(listing.agentContract)}
