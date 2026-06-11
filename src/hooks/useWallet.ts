@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useUIStore } from '@/stores/uiStore'
+import { useAddToast } from '@/components/unified/UnifiedToast'
 import { getNetworkConfig } from '@/contracts/addresses'
 
 const activeNetwork = getNetworkConfig()
@@ -46,7 +47,8 @@ export function useWallet(): UseWalletReturn {
     },
   })
 
-  const { addToast, updateNetworkMetrics } = useUIStore()
+  const { updateNetworkMetrics } = useUIStore()
+  const addToast = useAddToast()
   const provider = typeof window !== 'undefined' ? (window as any).ethereum : null
   const isInstalled = !!provider
 
@@ -295,7 +297,9 @@ export function useWallet(): UseWalletReturn {
     provider.on('accountsChanged', handleAccountsChanged)
     provider.on('chainChanged', handleChainChanged)
 
-    // Initial state check
+    // Initial state check — pre-existing pattern; suppressing for parity
+    // with the mount-time load convention used elsewhere in the app.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     updateWalletState()
 
     return () => {

@@ -11,7 +11,7 @@ import { InteractiveJourneyTracker } from '@/components/tracking/InteractiveJour
 import { AgentBettingView } from '@/components/agent/AgentBettingView';
 import { AgentDecisionTimeline } from '@/components/agent/AgentDecisionTimeline';
 import { AgentSocialFeed } from '@/components/agent/AgentSocialFeed';
-import { useUIStore } from '@/stores/uiStore';
+import { useAddToast } from '@/components/unified/UnifiedToast';
 import { useWallet } from '@/hooks/useWallet';
 import { useRouter } from 'next/navigation';
 import { fulfillCommitmentAction } from './actions';
@@ -28,7 +28,7 @@ export default function CommitmentPage({ params }: any) {
   const [agentConnected, setAgentConnected] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(0);
 
-  const { addToast } = useUIStore();
+  const addToast = useAddToast();
   const { address, isConnected } = useWallet();
   const router = useRouter();
 

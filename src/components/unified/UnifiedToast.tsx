@@ -52,7 +52,14 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastData[]>([]);
 
   const addToast = (toast: Omit<ToastData, "id">) => {
-    const id = Math.random().toString(36).substr(2, 9);
+    // id generation is impure but only runs when a toast is dispatched
+    // (event-driven, not during render). The crypto.randomUUID branch
+    // is preferred; Math.random is the SSR-safe fallback.
+    const id =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : // eslint-disable-next-line react-hooks/purity
+          Math.random().toString(36).slice(2, 11);
     const newToast: ToastData = {
       ...toast,
       id,
@@ -266,7 +273,7 @@ function ToastContainer() {
 // Convenience hooks for common toast types
 export function useSuccessToast() {
   const { addToast } = useToast();
-  
+
   return (message: string, options?: Partial<ToastData>) => {
     return addToast({
       type: "success",
@@ -278,7 +285,7 @@ export function useSuccessToast() {
 
 export function useErrorToast() {
   const { addToast } = useToast();
-  
+
   return (message: string, options?: Partial<ToastData>) => {
     return addToast({
       type: "error",
@@ -290,7 +297,7 @@ export function useErrorToast() {
 
 export function useAchievementToast() {
   const { addToast } = useToast();
-  
+
   return (message: string, shareData?: ToastData["shareData"]) => {
     return addToast({
       type: "achievement",
@@ -300,6 +307,22 @@ export function useAchievementToast() {
       duration: 6000,
     });
   };
+}
+
+/**
+ * Stable callback for callers that only need to push toasts (no read of the list).
+ * Returns a function with the same signature as the legacy useUIStore().addToast.
+ * Must be used inside <ToastProvider>, which wraps every page in the root layout.
+ */
+export function useAddToast() {
+  const { addToast } = useToast();
+  return (toast: { type: ToastData["type"]; message: string; title?: string; duration?: number }) =>
+    addToast({
+      type: toast.type,
+      message: toast.message,
+      title: toast.title,
+      duration: toast.duration,
+    });
 }
 
 // Export the main components

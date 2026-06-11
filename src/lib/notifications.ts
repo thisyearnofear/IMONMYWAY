@@ -4,7 +4,7 @@
  * For now, uses in-app toast notifications as the delivery mechanism.
  */
 
-import { useUIStore } from '@/stores/uiStore';
+import { useAddToast } from '@/components/unified/UnifiedToast';
 
 export interface NotificationPayload {
   title: string;
@@ -41,7 +41,7 @@ export const notificationService = new NotificationService();
  * In production, integrate with a push notification backend.
  */
 export function useNotifications() {
-  const { addToast } = useUIStore();
+  const addToast = useAddToast();
 
   const sendNotification = (payload: NotificationPayload) => {
     // Always show in-app toast

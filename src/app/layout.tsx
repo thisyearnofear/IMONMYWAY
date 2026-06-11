@@ -3,7 +3,7 @@ import { Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { PremiumNavigation } from "@/components/layout/PremiumNavigation";
 import { GlobalErrorBoundary } from '@/components/core/GlobalErrorBoundary';
-import { ToastProvider, ToastContainer } from '@/components/unified/UnifiedToast';
+import { ToastProvider } from '@/components/unified/UnifiedToast';
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -55,7 +55,6 @@ export default function RootLayout({
             <main id="main-content" className="relative pt-20">
               {children}
             </main>
-            <ToastContainer />
           </GlobalErrorBoundary>
         </ToastProvider>
       </body>

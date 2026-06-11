@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useWallet } from '@/hooks/useWallet';
-import { useUIStore } from '@/stores/uiStore';
+import { useAddToast } from '@/components/unified/UnifiedToast';
 import { ContractService } from '@/services/contractService';
 import { Card, CardContent } from '@/components/ui/PremiumCard';
 import { Button, LoadingSpinner } from '@/components/ui/PremiumButton';
@@ -35,7 +35,7 @@ export function AgentBettingView({
   agentReasoning,
 }: AgentBettingViewProps) {
   const { address, isConnected } = useWallet();
-  const { addToast } = useUIStore();
+  const addToast = useAddToast();
   const [betAmount, setBetAmount] = useState('');
   const [isBetting, setIsBetting] = useState(false);
   const [userBet, setUserBet] = useState<{ amount: string; prediction: 'success' | 'failure' } | null>(null);

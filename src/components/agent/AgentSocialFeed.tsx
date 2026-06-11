@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { type AgentActivityEvent } from '@/lib/somnia-reactivity';
-import { useUIStore } from '@/stores/uiStore';
+import { useAddToast } from '@/components/unified/UnifiedToast';
 
 interface AgentSocialFeedProps {
   posts: AgentActivityEvent[];
@@ -54,7 +54,7 @@ export function AgentSocialFeed({ posts }: AgentSocialFeedProps) {
 
 function SocialPostCard({ post, index }: { post: AgentActivityEvent; index: number }) {
   const [isSharing, setIsSharing] = useState(false);
-  const { addToast } = useUIStore();
+  const addToast = useAddToast();
 
   const handleShare = useCallback(async () => {
     setIsSharing(true);

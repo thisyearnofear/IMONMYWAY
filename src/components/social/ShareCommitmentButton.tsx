@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/PremiumButton';
-import { useUIStore } from '@/stores/uiStore';
+import { useAddToast } from '@/components/unified/UnifiedToast';
 
 interface ShareCommitmentButtonProps {
   commitmentId: string;
@@ -18,7 +18,7 @@ export function ShareCommitmentButton({
   size = 'sm',
 }: ShareCommitmentButtonProps) {
   const [isSharing, setIsSharing] = useState(false);
-  const { addToast } = useUIStore();
+  const addToast = useAddToast();
 
   const shareUrl = typeof window !== 'undefined'
     ? `${window.location.origin}/commitment/${commitmentId}`
