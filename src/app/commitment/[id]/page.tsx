@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/PremiumButton';
 import { Card, CardContent, DataPanel, DataRow } from '@/components/ui/PremiumCard';
+import { RouteCardSkeleton } from '@/components/ui/LoadingSkeleton';
 import { InteractiveJourneyTracker } from '@/components/tracking/InteractiveJourneyTracker';
 import { AgentBettingView } from '@/components/agent/AgentBettingView';
 import { AgentDecisionTimeline } from '@/components/agent/AgentDecisionTimeline';
@@ -37,11 +38,18 @@ export default function CommitmentPage({ params }: any) {
     const update = () => {
       const remaining = Math.max(0, Math.floor((journey.deadline.getTime() - Date.now()) / 1000));
       setTimeRemaining(remaining);
+      // Derive progress from elapsed-vs-deadline (skip if already settled)
+      if (journey.startTime && !journey.fulfilled) {
+        const total = Math.max(1, journey.deadline.getTime() - journey.startTime.getTime());
+        const elapsed = Math.max(0, Math.min(total, Date.now() - journey.startTime.getTime()));
+        const next = elapsed / total;
+        setJourney((prev: any) => (prev && Math.abs(prev.progress - next) > 0.001 ? { ...prev, progress: next } : prev));
+      }
     };
     update();
     const interval = setInterval(update, 1000);
     return () => clearInterval(interval);
-  }, [journey?.deadline]);
+  }, [journey?.deadline, journey?.startTime, journey?.fulfilled]);
 
   // Load commitment data from blockchain
   useEffect(() => {
@@ -49,11 +57,11 @@ export default function CommitmentPage({ params }: any) {
       if (!params.id) return;
       setIsLoading(true);
       try {
-        const [{ ethers }, { ContractService }] = await Promise.all([
+        const [{ ethers }, { getReadOnlyContractService }] = await Promise.all([
           import('ethers'),
           import('@/services/contractService'),
         ]);
-        const service = new ContractService();
+        const service = getReadOnlyContractService();
         const blockchainData = await service.getCommitment(params.id);
 
         if (blockchainData) {
@@ -69,7 +77,15 @@ export default function CommitmentPage({ params }: any) {
             end: { lat: endLat, lng: endLng },
             deadline: new Date(Number(blockchainData.arrivalDeadline) * 1000),
             startTime: new Date(Number(blockchainData.startTime) * 1000),
-            progress: blockchainData.fulfilled ? 1.0 : 0.45,
+            progress: blockchainData.fulfilled
+              ? 1.0
+              : (() => {
+                  const start = Number(blockchainData.startTime) * 1000;
+                  const end = Number(blockchainData.arrivalDeadline) * 1000;
+                  const total = Math.max(1, end - start);
+                  const elapsed = Math.max(0, Math.min(total, Date.now() - start));
+                  return elapsed / total;
+                })(),
             status: blockchainData.fulfilled ? (blockchainData.successful ? 'completed' : 'failed') : 'active',
             stakeAmount: ethers.formatEther(blockchainData.stakeAmount),
             distance: Number(blockchainData.distance),
@@ -129,8 +145,11 @@ export default function CommitmentPage({ params }: any) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-white/60">Loading commitment...</p>
+      <div className="min-h-screen pb-16">
+        <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+          <RouteCardSkeleton />
+          <RouteCardSkeleton />
+        </div>
       </div>
     );
   }

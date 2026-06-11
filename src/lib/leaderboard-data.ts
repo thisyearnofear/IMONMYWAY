@@ -1,7 +1,7 @@
 // Leaderboard Data Service
 // Reads on-chain reputation events from PunctualityCore to build rankings
 
-import { ContractService } from '@/services/contractService'
+import { getReadOnlyContractService } from '@/services/contractService'
 
 export interface LeaderboardEntry {
   walletAddress: string
@@ -35,7 +35,7 @@ class LeaderboardDataService {
     currentUserAddress?: string
   ): Promise<LeaderboardEntry[]> {
     try {
-      const service = new ContractService()
+      const service = getReadOnlyContractService()
       const users = await service.getLeaderboardUsers()
 
       if (users.length === 0) return []
@@ -75,7 +75,7 @@ class LeaderboardDataService {
 
   async getUserRank(walletAddress: string): Promise<{ rank: number; total: number } | null> {
     try {
-      const service = new ContractService()
+      const service = getReadOnlyContractService()
       const users = await service.getLeaderboardUsers()
       if (users.length === 0) return null
       const idx = users.findIndex(u => u.address.toLowerCase() === walletAddress.toLowerCase())

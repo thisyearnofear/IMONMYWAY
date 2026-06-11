@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { ethers } from 'ethers';
-import { ContractService } from '@/services/contractService';
+import { ContractService, getReadOnlyContractService } from '@/services/contractService';
 import { useWallet } from '@/hooks/useWallet';
 
 export function useContractService() {
@@ -31,7 +31,7 @@ export function useContractService() {
   }, [isConnected, address]);
 
   const getReadOnly = useCallback((): ContractService => {
-    return new ContractService();
+    return getReadOnlyContractService();
   }, []);
 
   return { service, isLoading, isConnected, getReadOnly };

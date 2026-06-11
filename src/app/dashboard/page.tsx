@@ -9,7 +9,8 @@ import type { AgentCommitmentState, AgentConfig } from '@/services/contractServi
 import { somniaReactivity, type AgentActivityEvent } from '@/lib/somnia-reactivity';
 import { useNotifications } from '@/lib/notifications';
 import { DataPanel } from '@/components/ui/PremiumCard';
-import { Button, LoadingSpinner } from '@/components/ui/PremiumButton';
+import { Button } from '@/components/ui/PremiumButton';
+import { RouteCardSkeleton, NavigationSkeleton } from '@/components/ui/LoadingSkeleton';
 import { AgentDecisionTimeline } from '@/components/agent/AgentDecisionTimeline';
 import { AgentStatusView } from '@/components/agent/AgentStatusView';
 import { AgentSocialFeed } from '@/components/agent/AgentSocialFeed';
@@ -116,11 +117,11 @@ export default function AgentDashboardPage() {
   const loadAgentData = useCallback(async () => {
     if (!address || !AGENT_ADDRESS) return;
     try {
-      const [{ ethers }, { ContractService }] = await Promise.all([
+      const [{ ethers }, { getReadOnlyContractService }] = await Promise.all([
         import('ethers'),
         import('@/services/contractService'),
       ]);
-      const service = new ContractService();
+      const service = getReadOnlyContractService();
       const authed = await service.isAgentAuthorized(address);
       setIsAuthorized(authed);
 
@@ -149,10 +150,14 @@ export default function AgentDashboardPage() {
 
   if (isSpectator) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <LoadingSpinner size="lg" color="violet" />
-          <p className="text-white/60 text-sm">Loading agent state...</p>
+      <div className="min-h-screen pb-16">
+        <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
+          <NavigationSkeleton />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <RouteCardSkeleton />
+            <RouteCardSkeleton />
+          </div>
+          <RouteCardSkeleton />
         </div>
       </div>
     );

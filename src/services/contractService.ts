@@ -151,6 +151,14 @@ class TTLCache {
 
 // ── ContractService ────────────────────────────────────────
 
+let _readOnlyInstance: ContractService | null = null;
+
+/** Shared read-only instance. Caches + provider live for the page lifetime. */
+export function getReadOnlyContractService(): ContractService {
+  if (!_readOnlyInstance) _readOnlyInstance = new ContractService();
+  return _readOnlyInstance;
+}
+
 export class ContractService {
   private contract: ethers.Contract;
   private agentContract: ethers.Contract | null;
@@ -402,10 +410,18 @@ export class ContractService {
 
   async getUserPerformanceHistory(userAddress: string): Promise<UserPerformanceHistory[]> {
     try {
+      const rpc = getNetworkConfig().rpcUrl;
+      const latestBlock = await Promise.race([
+        new ethers.JsonRpcProvider(rpc).getBlockNumber(),
+        new Promise<number>(r => setTimeout(() => r(0), 5_000)),
+      ]);
+      if (latestBlock === 0) return [];
+
+      const fromBlock = Math.max(0, latestBlock - 5000);
       const createdFilter = this.contract.filters.CommitmentCreated(null, userAddress);
-      const createdEvents = await this.contract.queryFilter(createdFilter);
+      const createdEvents = await this.contract.queryFilter(createdFilter, fromBlock, latestBlock);
       const fulfilledFilter = this.contract.filters.CommitmentFulfilled(null, userAddress);
-      const fulfilledEvents = await this.contract.queryFilter(fulfilledFilter);
+      const fulfilledEvents = await this.contract.queryFilter(fulfilledFilter, fromBlock, latestBlock);
 
       // Build a lookup map from fulfilled events — no per-commitment RPC calls
       const fulfilledMap = new Map<string, typeof fulfilledEvents[0]>();
@@ -445,8 +461,15 @@ export class ContractService {
   async getRecentListings(limit: number = 20): Promise<AgentListingData[]> {
     if (!this.registryContract) return [];
     try {
+      const rpc = getNetworkConfig().rpcUrl;
+      const latestBlock = await Promise.race([
+        new ethers.JsonRpcProvider(rpc).getBlockNumber(),
+        new Promise<number>(r => setTimeout(() => r(0), 5_000)),
+      ]);
+      if (latestBlock === 0) return [];
+
       const filter = this.registryContract.filters.AgentListed();
-      const events = await this.registryContract.queryFilter(filter);
+      const events = await this.registryContract.queryFilter(filter, Math.max(0, latestBlock - 5000), latestBlock);
       const listings: AgentListingData[] = [];
       for (const event of events.slice(-limit).reverse()) {
         if ('args' in event && event.args) {
